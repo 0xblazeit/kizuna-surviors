@@ -112,6 +112,104 @@ const GameScene = {
     bounds.lineTo(worldWidth, worldHeight);
     bounds.strokePath();
 
+    // Initialize game state
+    this.gameState = {
+      level: 1,
+      xp: 0,
+      xpToNextLevel: 100,
+      gold: 0,
+      kills: 0,
+      gameTimer: 0
+    };
+
+    // Create UI Container that stays fixed to camera
+    const uiContainer = this.add.container(0, 0);
+    uiContainer.setScrollFactor(0);
+
+    // XP Progress Bar (at top of screen)
+    const xpBarWidth = width - 40;  // 20px padding on each side
+    const xpBarHeight = 20;
+    const xpBarY = 20;
+
+    // XP Bar background
+    const xpBarBg = this.add.rectangle(20, xpBarY, xpBarWidth, xpBarHeight, 0x000000);
+    xpBarBg.setOrigin(0, 0);
+    xpBarBg.setStrokeStyle(2, 0x666666);
+    
+    // XP Bar fill
+    this.xpBarFill = this.add.rectangle(22, xpBarY + 2, 0, xpBarHeight - 4, 0x4444ff);
+    this.xpBarFill.setOrigin(0, 0);
+
+    // XP Text
+    this.xpText = this.add.text(width/2, xpBarY + xpBarHeight/2, 'Level 1 - 0/100 XP', {
+      fontFamily: 'VT323',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0.5);
+
+    // Create main UI row (below XP bar with more padding)
+    const uiRowY = xpBarY + xpBarHeight + 40;  // Increased from 20 to 40
+
+    // 1. Weapon/Upgrade Grid (Left with more padding)
+    const gridCellSize = 40;
+    const gridRows = 2;
+    const gridCols = 6;
+    const gridWidth = gridCellSize * gridCols;
+    const gridHeight = gridCellSize * gridRows;
+    const gridX = 40;  // Increased from 20 to 40 for more left padding
+
+    // Create grid cells and store them in an array
+    const gridCells = [];
+    for(let row = 0; row < gridRows; row++) {
+      for(let col = 0; col < gridCols; col++) {
+        const cell = this.add.rectangle(
+          gridX + col * gridCellSize,
+          uiRowY + row * gridCellSize,
+          gridCellSize - 4,
+          gridCellSize - 4,
+          0x000000
+        );
+        cell.setStrokeStyle(2, 0x666666);
+        gridCells.push(cell);
+      }
+    }
+
+    // 2. Timer (Middle) - Adjust Y position to match new grid position
+    this.timerText = this.add.text(width/2, uiRowY + gridHeight/2, '0:00', {
+      fontFamily: 'VT323',
+      fontSize: '32px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0.5);
+
+    // 3. Stats (Right)
+    const statsX = width - 20;  // 20px from right edge
+    this.goldText = this.add.text(statsX, uiRowY + 10, 'Gold: 0', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffdd00'
+    }).setOrigin(1, 0);
+
+    this.killsText = this.add.text(statsX, uiRowY + 40, 'Kills: 0', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ff4444'
+    }).setOrigin(1, 0);
+
+    // Add all UI elements to the container
+    uiContainer.add([
+      xpBarBg, this.xpBarFill, this.xpText,
+      ...gridCells,  // Add all grid cells to the container
+      this.timerText, this.goldText, this.killsText
+    ]);
+
+    // Start the game timer
+    this.time.addEvent({
+      delay: 1000,
+      callback: this.updateTimer,
+      callbackScope: this,
+      loop: true
+    });
+
     // Create player with physics
     this.player = this.add.circle(width / 2, height / 2, 20, 0x00ff00);
     this.physics.add.existing(this.player);
@@ -163,6 +261,28 @@ const GameScene = {
     this.input.keyboard.on('keydown-ESC', () => {
       this.scene.start('MenuScene');
     });
+  },
+
+  updateTimer: function() {
+    if (this.gameState.gameTimer < 30) {
+      this.gameState.gameTimer++;
+      const minutes = Math.floor(this.gameState.gameTimer / 60);
+      const seconds = this.gameState.gameTimer % 60;
+      this.timerText.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    }
+  },
+
+  gainXP: function(amount) {
+    this.gameState.xp += amount;
+    if (this.gameState.xp >= this.gameState.xpToNextLevel) {
+      this.gameState.level++;
+      this.gameState.xp -= this.gameState.xpToNextLevel;
+      this.gameState.xpToNextLevel *= 1.5;  // Increase XP needed for next level
+    }
+    // Update XP bar fill
+    const fillWidth = (this.gameState.xp / this.gameState.xpToNextLevel) * (this.scale.width - 44);
+    this.xpBarFill.width = fillWidth;
+    this.xpText.setText(`Level ${this.gameState.level} - ${Math.floor(this.gameState.xp)}/${Math.floor(this.gameState.xpToNextLevel)} XP`);
   },
 
   update: function() {
