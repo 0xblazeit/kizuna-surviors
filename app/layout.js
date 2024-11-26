@@ -1,5 +1,13 @@
 import localFont from "next/font/local";
+import { VT323 } from 'next/font/google'
 import "./globals.css";
+
+const vt323 = VT323({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-vt323',
+})
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -22,10 +30,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
-        <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${vt323.variable} antialiased`}
       >
         {children}
       </body>

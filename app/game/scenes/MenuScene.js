@@ -6,14 +6,14 @@ const MenuScene = {
 
     // Add title text
     const titleText = this.add.text(width / 2, height / 3, 'Kizuna Survivors', {
-      fontFamily: 'VT323',
+      fontFamily: 'var(--font-vt323)',
       fontSize: '64px',
       color: '#ffffff'
     }).setOrigin(0.5);
 
     // Add start text
     const startText = this.add.text(width / 2, height / 2, 'Click or Press Movement Keys to Start', {
-      fontFamily: 'VT323',
+      fontFamily: 'var(--font-vt323)',
       fontSize: '32px',
       color: '#ffdd00'
     }).setOrigin(0.5);
