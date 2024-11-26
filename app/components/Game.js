@@ -119,6 +119,7 @@ const GameScene = {
       xpToNextLevel: 100,
       gold: 0,
       kills: 0,
+      timerStarted: false,
       gameTimer: 0
     };
 
@@ -198,17 +199,28 @@ const GameScene = {
     // Add all UI elements to the container
     uiContainer.add([
       xpBarBg, this.xpBarFill, this.xpText,
-      ...gridCells,  // Add all grid cells to the container
+      ...gridCells,
       this.timerText, this.goldText, this.killsText
     ]);
 
-    // Start the game timer
-    this.time.addEvent({
-      delay: 1000,
-      callback: this.updateTimer,
-      callbackScope: this,
-      loop: true
-    });
+    // Add control instructions below the grid
+    const bottomUIY = uiRowY + gridHeight + 30; // 30px padding below grid
+
+    // Controls text (left side) with smaller font
+    const controlsText = this.add.text(40, bottomUIY, 'ESC - Back to Menu', {
+      fontFamily: 'VT323',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0, 0);
+
+    const controlsText2 = this.add.text(40, bottomUIY + 24, 'Controls: Arrow Keys / WASD', {
+      fontFamily: 'VT323',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0, 0);
+
+    // Add bottom UI elements to container
+    uiContainer.add([controlsText, controlsText2]);
 
     // Create player with physics
     this.player = this.add.circle(width / 2, height / 2, 20, 0x00ff00);
@@ -222,26 +234,6 @@ const GameScene = {
 
     // Add position debug text (make it fixed to camera)
     this.debugText = this.add.text(16, height - 40, '', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-
-    // Add controls text (fixed to camera)
-    this.add.text(16, 16, 'ESC - Back to Menu', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-
-    this.add.text(16, 48, 'Controls: Arrow Keys / WASD', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-
-    // Add world bounds text (fixed to camera)
-    this.add.text(16, 80, `World Size: ${worldWidth}x${worldHeight}`, {
       fontFamily: 'VT323',
       fontSize: '24px',
       color: '#ffffff'
@@ -264,7 +256,7 @@ const GameScene = {
   },
 
   updateTimer: function() {
-    if (this.gameState.gameTimer < 30) {
+    if (this.gameState.timerStarted && this.gameState.gameTimer < 30) {
       this.gameState.gameTimer++;
       const minutes = Math.floor(this.gameState.gameTimer / 60);
       const seconds = this.gameState.gameTimer % 60;
@@ -287,6 +279,27 @@ const GameScene = {
 
   update: function() {
     // Handle player movement
+    const isMoving = this.cursors.left.isDown || 
+                    this.cursors.right.isDown || 
+                    this.cursors.up.isDown || 
+                    this.cursors.down.isDown ||
+                    this.wasd.left.isDown || 
+                    this.wasd.right.isDown || 
+                    this.wasd.up.isDown || 
+                    this.wasd.down.isDown;
+
+    // Start timer on first movement
+    if (isMoving && !this.gameState.timerStarted) {
+      this.gameState.timerStarted = true;
+      this.time.addEvent({
+        delay: 1000,
+        callback: this.updateTimer,
+        callbackScope: this,
+        loop: true
+      });
+    }
+
+    // Handle movement
     if (this.cursors.left.isDown || this.wasd.left.isDown) {
       this.player.x -= this.player.moveSpeed;
     }
