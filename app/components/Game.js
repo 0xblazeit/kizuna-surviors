@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import Enemy from '../game/entities/Enemy';
+import Weapon from '../game/weapons/Weapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -73,6 +74,11 @@ const GameScene = {
 
     // Load enemy sprite
     this.load.svg('enemy', '/assets/game/enemy.svg');
+
+    // Load weapon sprite
+    this.load.svg('hotdog', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
+      scale: 0.1
+    });
   },
 
   init: function() {
@@ -109,7 +115,7 @@ const GameScene = {
   create: function() {
     const { width, height } = this.scale;
 
-    // Set world bounds (2x2 screens)
+    // Enable physics with proper world bounds
     const worldWidth = width * 2;
     const worldHeight = height * 2;
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
@@ -140,34 +146,39 @@ const GameScene = {
       gridGraphics.strokePath();
     }
 
-    // Add world bounds visualization with dark gray color
+    // Add world bounds visualization
     const bounds = this.add.graphics();
-    bounds.lineStyle(6, 0x333333, 1);  // Thicker, dark gray lines
+    bounds.lineStyle(4, 0x4444ff, 0.5);  // Thicker, semi-transparent blue lines
+
+    // Draw world bounds
+    bounds.strokeRect(0, 0, worldWidth, worldHeight);
+
+    // Set up camera
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.setZoom(1);
     
-    // Draw each boundary line separately to ensure visibility
-    // Top
-    bounds.beginPath();
-    bounds.moveTo(0, 0);
-    bounds.lineTo(worldWidth, 0);
-    bounds.strokePath();
+    // Create player
+    this.player = new MainPlayer(this, width / 2, height / 2);
     
-    // Bottom
-    bounds.beginPath();
-    bounds.moveTo(0, worldHeight);
-    bounds.lineTo(worldWidth, worldHeight);
-    bounds.strokePath();
-    
-    // Left
-    bounds.beginPath();
-    bounds.moveTo(0, 0);
-    bounds.lineTo(0, worldHeight);
-    bounds.strokePath();
-    
-    // Right
-    bounds.beginPath();
-    bounds.moveTo(worldWidth, 0);
-    bounds.lineTo(worldWidth, worldHeight);
-    bounds.strokePath();
+    // Make camera follow player with deadzone
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.cameras.main.setDeadzone(100, 100);
+
+    // Create weapon for player
+    this.player.weapon = new Weapon(this, this.player);
+
+    // Listen for XP events
+    this.events.on('playerXPGained', (data) => {
+      this.gameState.xp = data.current;
+      this.gameState.level = data.level;
+      this.gameState.xpToNextLevel = data.toNext;
+      this.updateXPBar();
+    });
+
+    // Add spacebar XP debug handler
+    this.input.keyboard.addKey('SPACE').on('down', () => {
+      this.gainXP(50);
+    }, this);
 
     // Create UI Container that stays fixed to camera
     const uiContainer = this.add.container(0, 0);
@@ -274,38 +285,6 @@ const GameScene = {
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
 
-    // Create player with physics and pass trail container
-    this.player = new MainPlayer(this, width / 2, height / 2, 'player', {
-      trailContainer: this.trailContainer,
-      scale: 1,
-      spriteKey: 'player'
-    });
-
-    // Listen for XP events
-    this.events.on('playerXPGained', (data) => {
-      this.gameState.xp = data.current;
-      this.gameState.level = data.level;
-      this.gameState.xpToNextLevel = data.toNext;
-      this.updateXPBar();
-    });
-
-    // Add spacebar XP debug handler
-    this.input.keyboard.addKey('SPACE').on('down', () => {
-      this.gainXP(50);
-    }, this);
-
-    // Setup camera to follow player
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
-    this.cameras.main.setZoom(1);
-
-    // Add position debug text (make it fixed to camera)
-    this.debugText = this.add.text(16, height - 40, '', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-
     // Setup keyboard input
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
@@ -319,9 +298,17 @@ const GameScene = {
     this.input.keyboard.on('keydown-ESC', () => {
       this.scene.start('MenuScene');
     });
+
+    // Enable collisions between projectiles and world bounds
+    this.physics.world.on('worldbounds', (body) => {
+      const gameObject = body.gameObject;
+      if (gameObject instanceof Projectile) {
+        gameObject.destroy();
+      }
+    });
   },
 
-  update: function() {
+  update: function(time, delta) {
     if (!this.gameState) return;
 
     // Handle player movement using the new system
@@ -332,7 +319,14 @@ const GameScene = {
       down: this.cursors.down.isDown || this.wasd.down.isDown
     };
     
-    this.player.handleMovement(input);
+    if (this.player) {
+      this.player.handleMovement(input);
+      
+      // Update weapon firing
+      if (this.player.weapon) {
+        this.player.weapon.update(time);
+      }
+    }
 
     // Check for timer start
     if ((this.cursors.left.isDown || this.cursors.right.isDown || 
@@ -367,6 +361,11 @@ const GameScene = {
     }
 
     // Update debug text with world position
+    this.debugText = this.add.text(16, 600 - 40, '', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setScrollFactor(0);
     this.debugText.setText(
       `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
     );

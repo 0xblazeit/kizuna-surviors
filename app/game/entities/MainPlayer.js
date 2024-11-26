@@ -1,25 +1,32 @@
-import BasePlayer from './BasePlayer';
+import Phaser from 'phaser';
 
-class MainPlayer extends BasePlayer {
-    constructor(scene, x, y, texture, config = {}) {
-        // Set main player specific defaults
-        const mainPlayerConfig = {
-            maxHealth: 150,
-            moveSpeed: 5,
-            defense: 5,
-            attackSpeed: 1.2,
-            attackDamage: 15,
-            scale: 1,
-            ...config
-        };
-
-        super(scene, x, y, texture, mainPlayerConfig);
-
-        // Main player specific properties
+export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
+    constructor(scene, x, y) {
+        super(scene, x, y, 'player');
+        
+        // Add to scene and enable physics
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
+        
+        // Configure physics body
+        this.body.setCollideWorldBounds(true);
+        this.moveSpeed = 200;
+        
+        this.lastMoveDirection = 0; // angle in radians
+        this.lastNonZeroDirection = 0; // Keep track of last non-zero direction
+        
+        // Initialize stats
         this.experience = {
             current: 0,
-            toNextLevel: 100,
-            level: 1
+            level: 1,
+            toNext: 100
+        };
+
+        this.stats = {
+            health: 100,
+            maxHealth: 100,
+            defense: 10,
+            speed: this.moveSpeed
         };
 
         this.inventory = {
@@ -28,47 +35,63 @@ class MainPlayer extends BasePlayer {
         };
     }
 
-    // XP related getters
-    get xp() {
-        return this.experience.current;
-    }
+    handleMovement(input) {
+        const speed = this.moveSpeed;
+        let dx = 0;
+        let dy = 0;
 
-    get level() {
-        return this.experience.level;
-    }
+        if (input.left) dx -= speed;
+        if (input.right) dx += speed;
+        if (input.up) dy -= speed;
+        if (input.down) dy += speed;
 
-    get xpToNextLevel() {
-        return this.experience.toNextLevel;
-    }
-
-    gainXP(amount) {
-        this.experience.current += amount;
-        
-        while (this.experience.current >= this.experience.toNextLevel) {
-            this.levelUp();
+        // Normalize diagonal movement
+        if (dx !== 0 && dy !== 0) {
+            const factor = 1 / Math.sqrt(2);
+            dx *= factor;
+            dy *= factor;
         }
 
-        // Emit XP gained event
+        // Update velocity
+        this.setVelocity(dx, dy);
+
+        // Update direction only if moving
+        if (dx !== 0 || dy !== 0) {
+            const currentDirection = Math.atan2(dy, dx);
+            this.lastMoveDirection = currentDirection;
+            this.lastNonZeroDirection = currentDirection; // Save non-zero direction
+        }
+
+        // Use last non-zero direction for weapon firing
+        if (this.weapon) {
+            this.weapon.updateDirection(this.lastNonZeroDirection);
+        }
+    }
+
+    // XP related methods
+    gainXP(amount) {
+        this.experience.current += amount;
+        while (this.experience.current >= this.experience.toNext) {
+            this.levelUp();
+        }
+        
+        // Emit XP gain event
         this.scene.events.emit('playerXPGained', {
             current: this.experience.current,
-            toNext: this.experience.toNextLevel,
-            level: this.experience.level
+            level: this.experience.level,
+            toNext: this.experience.toNext
         });
     }
 
     levelUp() {
-        this.experience.level++;
-        this.experience.current -= this.experience.toNextLevel;
-        this.experience.toNextLevel = Math.floor(this.experience.toNextLevel * 1.5);
-
+        this.experience.current -= this.experience.toNext;
+        this.experience.level += 1;
+        this.experience.toNext = Math.floor(this.experience.toNext * 1.2);
+        
         // Increase stats on level up
         this.stats.maxHealth += 10;
-        this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
-        this.stats.attackDamage += 2;
-        this.stats.defense += 1;
-
-        // Emit level up event that the scene can listen to
-        this.scene.events.emit('playerLevelUp', this.experience.level);
+        this.stats.health = this.stats.maxHealth;
+        this.stats.defense += 2;
     }
 
     collectGold(amount) {
@@ -76,7 +99,6 @@ class MainPlayer extends BasePlayer {
         this.scene.events.emit('goldCollected', this.inventory.gold);
     }
 
-    // Override the base class death behavior
     onDeath() {
         // Emit death event before cleanup
         this.scene.events.emit('playerDeath', {
@@ -95,5 +117,3 @@ class MainPlayer extends BasePlayer {
         };
     }
 }
-
-export default MainPlayer;
