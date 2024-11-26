@@ -49,6 +49,26 @@ const MenuScene = {
 
 const GameScene = {
   key: 'GameScene',
+
+  preload: function() {
+    // Load player sprite
+    this.load.svg('player', '/assets/game/player.svg', { scale: 0.20 });  // Scale down the loaded SVG
+  },
+
+  init: function() {
+    // Initialize game state
+    this.gameState = {
+      timerStarted: false,
+      gameTimer: 0,
+      level: 1,
+      xp: 0,
+      xpToNextLevel: 100,
+      gold: 0,
+      kills: 0,
+      isMoving: false
+    };
+  },
+
   create: function() {
     const { width, height } = this.scale;
 
@@ -112,17 +132,6 @@ const GameScene = {
     bounds.lineTo(worldWidth, worldHeight);
     bounds.strokePath();
 
-    // Initialize game state
-    this.gameState = {
-      level: 1,
-      xp: 0,
-      xpToNextLevel: 100,
-      gold: 0,
-      kills: 0,
-      timerStarted: false,
-      gameTimer: 0
-    };
-
     // Create UI Container that stays fixed to camera
     const uiContainer = this.add.container(0, 0);
     uiContainer.setScrollFactor(0);
@@ -182,6 +191,9 @@ const GameScene = {
       color: '#ffffff'
     }).setOrigin(0.5, 0.5);
 
+    // Store timer event reference
+    this.timerEvent = null;
+
     // 3. Stats (Right)
     const statsX = width - 20;  // 20px from right edge
     this.goldText = this.add.text(statsX, uiRowY + 10, 'Gold: 0', {
@@ -223,10 +235,17 @@ const GameScene = {
     uiContainer.add([controlsText, controlsText2]);
 
     // Create player with physics
-    this.player = this.add.circle(width / 2, height / 2, 20, 0x00ff00);
+    this.player = this.add.sprite(width / 2, height / 2, 'player');
+    this.player.setScale(0.55);
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
-    
+    this.player.moveSpeed = 5;
+
+    // Create trail effect container
+    this.trailContainer = this.add.container(0, 0);
+    this.trailEffects = [];
+    this.lastTrailTime = 0;
+
     // Setup camera to follow player
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
@@ -247,7 +266,6 @@ const GameScene = {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D
     });
-    this.player.moveSpeed = 5;
 
     // Handle ESC key
     this.input.keyboard.on('keydown-ESC', () => {
@@ -255,68 +273,111 @@ const GameScene = {
     });
   },
 
-  updateTimer: function() {
-    if (this.gameState.timerStarted && this.gameState.gameTimer < 30) {
-      this.gameState.gameTimer++;
-      const minutes = Math.floor(this.gameState.gameTimer / 60);
-      const seconds = this.gameState.gameTimer % 60;
-      this.timerText.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-    }
-  },
-
-  gainXP: function(amount) {
-    this.gameState.xp += amount;
-    if (this.gameState.xp >= this.gameState.xpToNextLevel) {
-      this.gameState.level++;
-      this.gameState.xp -= this.gameState.xpToNextLevel;
-      this.gameState.xpToNextLevel *= 1.5;  // Increase XP needed for next level
-    }
-    // Update XP bar fill
-    const fillWidth = (this.gameState.xp / this.gameState.xpToNextLevel) * (this.scale.width - 44);
-    this.xpBarFill.width = fillWidth;
-    this.xpText.setText(`Level ${this.gameState.level} - ${Math.floor(this.gameState.xp)}/${Math.floor(this.gameState.xpToNextLevel)} XP`);
-  },
-
   update: function() {
-    // Handle player movement
-    const isMoving = this.cursors.left.isDown || 
-                    this.cursors.right.isDown || 
-                    this.cursors.up.isDown || 
-                    this.cursors.down.isDown ||
-                    this.wasd.left.isDown || 
-                    this.wasd.right.isDown || 
-                    this.wasd.up.isDown || 
-                    this.wasd.down.isDown;
+    if (!this.gameState) return;
 
-    // Start timer on first movement
-    if (isMoving && !this.gameState.timerStarted) {
-      this.gameState.timerStarted = true;
-      this.time.addEvent({
-        delay: 1000,
-        callback: this.updateTimer,
-        callbackScope: this,
-        loop: true
-      });
-    }
-
-    // Handle movement
+    let moved = false;
+      
     if (this.cursors.left.isDown || this.wasd.left.isDown) {
       this.player.x -= this.player.moveSpeed;
+      moved = true;
     }
     if (this.cursors.right.isDown || this.wasd.right.isDown) {
       this.player.x += this.player.moveSpeed;
+      moved = true;
     }
     if (this.cursors.up.isDown || this.wasd.up.isDown) {
       this.player.y -= this.player.moveSpeed;
+      moved = true;
     }
     if (this.cursors.down.isDown || this.wasd.down.isDown) {
       this.player.y += this.player.moveSpeed;
+      moved = true;
+    }
+
+    // Create trail effect
+    if (moved && this.time.now - this.lastTrailTime > 50) {  // Create trail every 50ms while moving
+      this.lastTrailTime = this.time.now;
+      
+      const trail = this.add.sprite(this.player.x, this.player.y, 'player');
+      trail.setScale(0.55);
+      trail.setAlpha(0.5);
+      trail.setTint(0x999999);
+      
+      this.trailContainer.add(trail);
+      this.trailEffects.push({
+        sprite: trail,
+        createTime: this.time.now
+      });
+    }
+
+    // Update existing trail effects
+    for (let i = this.trailEffects.length - 1; i >= 0; i--) {
+      const effect = this.trailEffects[i];
+      const age = this.time.now - effect.createTime;
+      
+      if (age > 500) {  // Remove after 500ms
+        effect.sprite.destroy();
+        this.trailEffects.splice(i, 1);
+      } else {
+        effect.sprite.setAlpha(0.5 * (1 - age / 500));  // Fade out
+      }
+    }
+
+    // Check for timer start
+    if ((this.cursors.left.isDown || this.cursors.right.isDown || 
+         this.cursors.up.isDown || this.cursors.down.isDown || 
+         this.wasd.left.isDown || this.wasd.right.isDown || 
+         this.wasd.up.isDown || this.wasd.down.isDown) && 
+        !this.gameState.timerStarted) {
+      console.log('Starting timer...'); // Debug log
+      this.gameState.timerStarted = true;
+      
+      // Clear any existing timer
+      if (this.timerEvent) {
+        this.timerEvent.remove();
+      }
+      
+      // Create new timer
+      this.timerEvent = this.time.addEvent({
+        delay: 1000,
+        callback: () => {
+          if (!this.gameState.timerStarted || this.gameState.gameTimer >= 1800) return;  // 30 minutes = 1800 seconds
+  
+          this.gameState.gameTimer++;
+          const minutes = Math.floor(this.gameState.gameTimer / 60);
+          const seconds = this.gameState.gameTimer % 60;
+          this.timerText.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+          
+          console.log('Timer updated:', this.gameState.gameTimer); // Debug log
+        },
+        callbackScope: this,
+        loop: true
+      });
     }
 
     // Update debug text with world position
     this.debugText.setText(
       `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
     );
+  },
+
+  gainXP: function(amount) {
+    if (!this.gameState) return; // Safety check
+    this.gameState.xp += amount;
+    if (this.gameState.xp >= this.gameState.xpToNextLevel) {
+      this.gameState.level++;
+      this.gameState.xp -= this.gameState.xpToNextLevel;
+      // Update XP bar
+      this.updateXPBar();
+    }
+  },
+
+  updateXPBar: function() {
+    if (!this.gameState) return; // Safety check
+    const fillWidth = (this.gameState.xp / this.gameState.xpToNextLevel) * (this.scale.width - 44);
+    this.xpBarFill.width = fillWidth;
+    this.xpText.setText(`Level ${this.gameState.level} - ${Math.floor(this.gameState.xp)}/${Math.floor(this.gameState.xpToNextLevel)} XP`);
   }
 };
 
@@ -349,7 +410,7 @@ export default function Game() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900">
+    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
       <div 
         ref={gameRef}
         className="w-[800px] h-[600px] bg-black border-2 border-white"
