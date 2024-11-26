@@ -79,6 +79,11 @@ const GameScene = {
     this.load.svg('hotdog', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
       scale: 0.1
     });
+
+    // Load weapon icons
+    this.load.svg('hotdog-icon', '/assets/game/weapons/weapon-hotdog-icon.svg', {
+      scale: 0.1
+    });
   },
 
   init: function() {
@@ -238,7 +243,19 @@ const GameScene = {
           0x000000
         );
         cell.setStrokeStyle(2, 0x666666);
+        cell.setScrollFactor(0);  // Fix cell to screen
         gridCells.push(cell);
+        
+        // Add hotdog icon to first slot
+        if (row === 0 && col === 0) {
+          const icon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'hotdog-icon'
+          );
+          icon.setDisplaySize(gridCellSize - 8, gridCellSize - 8);
+          icon.setScrollFactor(0);  // Fix icon to screen
+        }
       }
     }
 
