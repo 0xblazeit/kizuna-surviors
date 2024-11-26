@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import MainPlayer from '../game/entities/MainPlayer';
+import Enemy from '../game/entities/Enemy';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -65,7 +67,12 @@ const GameScene = {
 
   preload: function() {
     // Load player sprite
-    this.load.svg('player', '/assets/game/player.svg', { scale: 0.20 });  // Scale down the loaded SVG
+    this.load.svg('player', '/assets/game/player.svg', {
+      scale: 0.1
+    });
+
+    // Load enemy sprite
+    this.load.svg('enemy', '/assets/game/enemy.svg');
   },
 
   init: function() {
@@ -77,28 +84,23 @@ const GameScene = {
       xp: 0,
       xpToNextLevel: 100,
       gold: 0,
-      kills: 0,
-      isMoving: false
+      kills: 0
     };
 
     // Bind methods to this scene
     this.gainXP = (amount) => {
-      this.gameState.xp += amount;
-      if (this.gameState.xp >= this.gameState.xpToNextLevel) {
-        this.gameState.level++;
-        this.gameState.xp = 0;
-        this.gameState.xpToNextLevel = Math.floor(this.gameState.xpToNextLevel * 1.5);
+      if (this.player) {
+        this.player.gainXP(amount);
       }
-      this.updateXPBar();
     };
 
     this.updateXPBar = () => {
       const progress = this.gameState.xp / this.gameState.xpToNextLevel;
-      const xpBarWidth = this.scale.width - 40; // Same as defined in create()
-      const fillWidth = (xpBarWidth - 4); // Account for 2px padding on each side
+      const xpBarWidth = this.scale.width - 40;
+      const fillWidth = (xpBarWidth - 4);
       
       this.xpBarFill.clear();
-      this.xpBarFill.fillStyle(0x4444ff, 0.8); // Darker blue with slight transparency
+      this.xpBarFill.fillStyle(0x4444ff, 0.8);
       this.xpBarFill.fillRect(22, 22, progress * fillWidth, 16);
       this.xpText.setText(`Level ${this.gameState.level} (${this.gameState.xp}/${this.gameState.xpToNextLevel} XP)`);
     };
@@ -269,22 +271,28 @@ const GameScene = {
     // Add bottom UI elements to container
     uiContainer.add([controlsText, controlsText2]);
 
-    // Create player with physics
-    this.player = this.add.sprite(width / 2, height / 2, 'player');
-    this.player.setScale(0.55);
-    this.physics.add.existing(this.player);
-    this.player.body.setCollideWorldBounds(true);
-    this.player.moveSpeed = 5;
-
-    // Add spacebar XP debug handler
-    this.input.keyboard.addKey('SPACE').on('down', function() {
-      this.gainXP(50);
-    }, this);
-
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
-    this.trailEffects = [];
-    this.lastTrailTime = 0;
+
+    // Create player with physics and pass trail container
+    this.player = new MainPlayer(this, width / 2, height / 2, 'player', {
+      trailContainer: this.trailContainer,
+      scale: 1,
+      spriteKey: 'player'
+    });
+
+    // Listen for XP events
+    this.events.on('playerXPGained', (data) => {
+      this.gameState.xp = data.current;
+      this.gameState.level = data.level;
+      this.gameState.xpToNextLevel = data.toNext;
+      this.updateXPBar();
+    });
+
+    // Add spacebar XP debug handler
+    this.input.keyboard.addKey('SPACE').on('down', () => {
+      this.gainXP(50);
+    }, this);
 
     // Setup camera to follow player
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
@@ -316,53 +324,15 @@ const GameScene = {
   update: function() {
     if (!this.gameState) return;
 
-    let moved = false;
-      
-    if (this.cursors.left.isDown || this.wasd.left.isDown) {
-      this.player.x -= this.player.moveSpeed;
-      moved = true;
-    }
-    if (this.cursors.right.isDown || this.wasd.right.isDown) {
-      this.player.x += this.player.moveSpeed;
-      moved = true;
-    }
-    if (this.cursors.up.isDown || this.wasd.up.isDown) {
-      this.player.y -= this.player.moveSpeed;
-      moved = true;
-    }
-    if (this.cursors.down.isDown || this.wasd.down.isDown) {
-      this.player.y += this.player.moveSpeed;
-      moved = true;
-    }
-
-    // Create trail effect
-    if (moved && this.time.now - this.lastTrailTime > 50) {  // Create trail every 50ms while moving
-      this.lastTrailTime = this.time.now;
-      
-      const trail = this.add.sprite(this.player.x, this.player.y, 'player');
-      trail.setScale(0.55);
-      trail.setAlpha(0.5);
-      trail.setTint(0x999999);
-      
-      this.trailContainer.add(trail);
-      this.trailEffects.push({
-        sprite: trail,
-        createTime: this.time.now
-      });
-    }
-
-    // Update existing trail effects
-    for (let i = this.trailEffects.length - 1; i >= 0; i--) {
-      const effect = this.trailEffects[i];
-      const age = this.time.now - effect.createTime;
-      
-      if (age > 500) {  // Remove after 500ms
-        effect.sprite.destroy();
-        this.trailEffects.splice(i, 1);
-      } else {
-        effect.sprite.setAlpha(0.5 * (1 - age / 500));  // Fade out
-      }
-    }
+    // Handle player movement using the new system
+    const input = {
+      left: this.cursors.left.isDown || this.wasd.left.isDown,
+      right: this.cursors.right.isDown || this.wasd.right.isDown,
+      up: this.cursors.up.isDown || this.wasd.up.isDown,
+      down: this.cursors.down.isDown || this.wasd.down.isDown
+    };
+    
+    this.player.handleMovement(input);
 
     // Check for timer start
     if ((this.cursors.left.isDown || this.cursors.right.isDown || 
