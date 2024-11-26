@@ -306,6 +306,13 @@ const GameScene = {
         gameObject.destroy();
       }
     });
+
+    // Create debug text for world position
+    this.debugText = this.add.text(16, 600 - 40, '', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setScrollFactor(0);
   },
 
   update: function(time, delta) {
@@ -361,14 +368,11 @@ const GameScene = {
     }
 
     // Update debug text with world position
-    this.debugText = this.add.text(16, 600 - 40, '', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-    this.debugText.setText(
-      `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
-    );
+    if (this.debugText) {
+        this.debugText.setText(
+            `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
+        );
+    }
   }
 };
 
