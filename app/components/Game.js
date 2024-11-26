@@ -194,8 +194,16 @@ const GameScene = {
     // Initialize XP bar display
     this.updateXPBar();
 
-    // Create main UI row (below XP bar with more padding)
-    const uiRowY = xpBarY + xpBarHeight + 40;  // Increased from 20 to 40
+    // Timer position (moved up, 15px below XP bar)
+    const timerY = xpBarY + xpBarHeight + 15;
+    this.timerText = this.add.text(width/2, timerY, '00:00', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
+
+    // Create main UI row (adjusted padding below timer)
+    const uiRowY = timerY + 40;
 
     // 1. Weapon/Upgrade Grid (Left with more padding)
     const gridCellSize = 40;
@@ -221,17 +229,7 @@ const GameScene = {
       }
     }
 
-    // 2. Timer (Middle) - Adjust Y position to match new grid position
-    this.timerText = this.add.text(width/2, uiRowY + gridHeight/2, '0:00', {
-      fontFamily: 'VT323',
-      fontSize: '32px',
-      color: '#ffffff'
-    }).setOrigin(0.5, 0.5);
-
-    // Store timer event reference
-    this.timerEvent = null;
-
-    // 3. Stats (Right)
+    // 2. Stats (Right)
     const statsX = width - 20;  // 20px from right edge
     this.goldText = this.add.text(statsX, uiRowY + 10, 'Gold: 0', {
       fontFamily: 'VT323',
