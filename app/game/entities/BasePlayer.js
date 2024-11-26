@@ -33,23 +33,11 @@ class BasePlayer {
         // Initialize base stats
         this.stats = {
             moveSpeed: config.moveSpeed || 3,
-            health: config.maxHealth || 100,
             maxHealth: config.maxHealth || 100,
-            damage: config.attackDamage || 10
+            currentHealth: config.maxHealth || 100,
+            damage: config.attackDamage || 10,
+            defense: config.defense || 0
         };
-    }
-
-    init(x, y, spriteKey) {
-        // Create sprite
-        this.sprite = this.scene.add.sprite(x, y, spriteKey);
-        this.sprite.setScale(this.animConfig.scale);
-        
-        // Add physics
-        this.scene.physics.add.existing(this.sprite);
-        this.sprite.body.setCollideWorldBounds(true);
-
-        // Create trail container
-        this.trailContainer = this.scene.add.container(0, 0);
     }
 
     // Add getter for physics body
@@ -117,18 +105,6 @@ class BasePlayer {
         this.updateTrailEffects();
     }
 
-    update(cursors) {
-        // Convert cursors to input object for handleMovement
-        const input = {
-            left: cursors.left?.isDown || cursors.A?.isDown,
-            right: cursors.right?.isDown || cursors.D?.isDown,
-            up: cursors.up?.isDown || cursors.W?.isDown,
-            down: cursors.down?.isDown || cursors.S?.isDown
-        };
-        
-        this.handleMovement(input);
-    }
-
     createTrailEffect() {
         // Remove oldest trail if we're at max
         if (this.trailEffects.length >= this.animConfig.maxTrailEffects) {
@@ -194,18 +170,6 @@ class BasePlayer {
         // Base death behavior - to be overridden by subclasses
         this.sprite.destroy();
         this.trailContainer.destroy();
-    }
-
-    getPosition() {
-        return {
-            x: this.sprite.x,
-            y: this.sprite.y
-        };
-    }
-
-    setPosition(x, y) {
-        this.sprite.x = x;
-        this.sprite.y = y;
     }
 }
 

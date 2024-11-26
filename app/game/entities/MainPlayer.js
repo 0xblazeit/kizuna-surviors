@@ -26,14 +26,6 @@ class MainPlayer extends BasePlayer {
             gold: 0,
             items: []
         };
-
-        // Initialize any main player specific features
-        this.initMainPlayer();
-    }
-
-    initMainPlayer() {
-        // Add any main player specific initialization
-        // This could include special abilities, starting items, etc.
     }
 
     // XP related getters
@@ -93,11 +85,6 @@ class MainPlayer extends BasePlayer {
         });
 
         super.onDeath();
-    }
-
-    // Add any main player specific methods here
-    useAbility() {
-        // Implement special abilities
     }
 
     getStats() {
