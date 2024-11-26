@@ -80,6 +80,28 @@ const GameScene = {
       kills: 0,
       isMoving: false
     };
+
+    // Bind methods to this scene
+    this.gainXP = (amount) => {
+      this.gameState.xp += amount;
+      if (this.gameState.xp >= this.gameState.xpToNextLevel) {
+        this.gameState.level++;
+        this.gameState.xp = 0;
+        this.gameState.xpToNextLevel = Math.floor(this.gameState.xpToNextLevel * 1.5);
+      }
+      this.updateXPBar();
+    };
+
+    this.updateXPBar = () => {
+      const progress = this.gameState.xp / this.gameState.xpToNextLevel;
+      const xpBarWidth = this.scale.width - 40; // Same as defined in create()
+      const fillWidth = (xpBarWidth - 4); // Account for 2px padding on each side
+      
+      this.xpBarFill.clear();
+      this.xpBarFill.fillStyle(0x4444ff, 0.8); // Darker blue with slight transparency
+      this.xpBarFill.fillRect(22, 22, progress * fillWidth, 16);
+      this.xpText.setText(`Level ${this.gameState.level} (${this.gameState.xp}/${this.gameState.xpToNextLevel} XP)`);
+    };
   },
 
   create: function() {
@@ -159,16 +181,18 @@ const GameScene = {
     xpBarBg.setOrigin(0, 0);
     xpBarBg.setStrokeStyle(2, 0x666666);
     
-    // XP Bar fill
-    this.xpBarFill = this.add.rectangle(22, xpBarY + 2, 0, xpBarHeight - 4, 0x4444ff);
-    this.xpBarFill.setOrigin(0, 0);
+    // XP Bar fill using graphics
+    this.xpBarFill = this.add.graphics();
 
     // XP Text
-    this.xpText = this.add.text(width/2, xpBarY + xpBarHeight/2, 'Level 1 - 0/100 XP', {
+    this.xpText = this.add.text(width/2, xpBarY + xpBarHeight/2, '', {
       fontFamily: 'VT323',
       fontSize: '18px',
       color: '#ffffff'
     }).setOrigin(0.5, 0.5);
+
+    // Initialize XP bar display
+    this.updateXPBar();
 
     // Create main UI row (below XP bar with more padding)
     const uiRowY = xpBarY + xpBarHeight + 40;  // Increased from 20 to 40
@@ -253,6 +277,11 @@ const GameScene = {
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
     this.player.moveSpeed = 5;
+
+    // Add spacebar XP debug handler
+    this.input.keyboard.addKey('SPACE').on('down', function() {
+      this.gainXP(50);
+    }, this);
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -373,24 +402,6 @@ const GameScene = {
     this.debugText.setText(
       `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
     );
-  },
-
-  gainXP: function(amount) {
-    if (!this.gameState) return; // Safety check
-    this.gameState.xp += amount;
-    if (this.gameState.xp >= this.gameState.xpToNextLevel) {
-      this.gameState.level++;
-      this.gameState.xp -= this.gameState.xpToNextLevel;
-      // Update XP bar
-      this.updateXPBar();
-    }
-  },
-
-  updateXPBar: function() {
-    if (!this.gameState) return; // Safety check
-    const fillWidth = (this.gameState.xp / this.gameState.xpToNextLevel) * (this.scale.width - 44);
-    this.xpBarFill.width = fillWidth;
-    this.xpText.setText(`Level ${this.gameState.level} - ${Math.floor(this.gameState.xp)}/${Math.floor(this.gameState.xpToNextLevel)} XP`);
   }
 };
 
