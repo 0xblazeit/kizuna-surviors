@@ -23,7 +23,7 @@ const MenuScene = {
     }).setOrigin(0.5);
 
     // Add start text
-    const startText = this.add.text(width / 2, height * 0.6, 'Click to Start', {
+    const startText = this.add.text(width / 2, height * 0.6, 'Click or Press Movement Keys to Start', {
       fontFamily: 'VT323',
       fontSize: '32px',
       color: '#ffffff'
@@ -44,6 +44,19 @@ const MenuScene = {
     this.input.on('pointerdown', () => {
       this.scene.start('GameScene');
     });
+
+    // Handle keyboard input
+    const startGame = () => this.scene.start('GameScene');
+    
+    // Add key listeners
+    this.input.keyboard.addKey('W').on('down', startGame);
+    this.input.keyboard.addKey('A').on('down', startGame);
+    this.input.keyboard.addKey('S').on('down', startGame);
+    this.input.keyboard.addKey('D').on('down', startGame);
+    this.input.keyboard.addKey('UP').on('down', startGame);
+    this.input.keyboard.addKey('LEFT').on('down', startGame);
+    this.input.keyboard.addKey('DOWN').on('down', startGame);
+    this.input.keyboard.addKey('RIGHT').on('down', startGame);
   }
 };
 
