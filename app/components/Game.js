@@ -33,10 +33,11 @@ const MenuScene = {
     this.tweens.add({
       targets: startText,
       alpha: 0,
-      duration: 500,
-      ease: 'Power2',
+      duration: 1200,
+      ease: 'Sine.easeInOut',
       yoyo: true,
-      repeat: -1
+      repeat: -1,
+      hold: 400
     });
 
     // Handle click
