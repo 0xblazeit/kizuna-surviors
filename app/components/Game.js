@@ -52,34 +52,102 @@ const GameScene = {
   create: function() {
     const { width, height } = this.scale;
 
-    // Create background
-    const background = this.add.graphics();
-    background.fillGradientStyle(0x000033, 0x000033, 0x000066, 0x000066, 1);
-    background.fillRect(0, 0, width, height);
+    // Set world bounds (2x2 screens)
+    const worldWidth = width * 2;
+    const worldHeight = height * 2;
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
 
-    // Create player
-    this.player = this.add.circle(width / 2, height / 2, 20, 0x00ff00);
+    // Create darker background first
+    const backgroundFill = this.add.graphics();
+    backgroundFill.fillStyle(0x001133, 1);
+    backgroundFill.fillRect(0, 0, worldWidth, worldHeight);
+
+    // Create grid background with brighter lines
+    const gridGraphics = this.add.graphics();
+    gridGraphics.lineStyle(1, 0x4444ff, 0.3); // Brighter blue color with some transparency
+
+    // Draw vertical lines
+    const gridSize = 32;
+    for (let x = 0; x <= worldWidth; x += gridSize) {
+      gridGraphics.beginPath();
+      gridGraphics.moveTo(x, 0);
+      gridGraphics.lineTo(x, worldHeight);
+      gridGraphics.strokePath();
+    }
+
+    // Draw horizontal lines
+    for (let y = 0; y <= worldHeight; y += gridSize) {
+      gridGraphics.beginPath();
+      gridGraphics.moveTo(0, y);
+      gridGraphics.lineTo(worldWidth, y);
+      gridGraphics.strokePath();
+    }
+
+    // Add world bounds visualization with dark gray color
+    const bounds = this.add.graphics();
+    bounds.lineStyle(6, 0x333333, 1);  // Thicker, dark gray lines
     
-    // Add back to menu text
-    this.add.text(16, 16, 'ESC - Back to Menu', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    });
+    // Draw each boundary line separately to ensure visibility
+    // Top
+    bounds.beginPath();
+    bounds.moveTo(0, 0);
+    bounds.lineTo(worldWidth, 0);
+    bounds.strokePath();
+    
+    // Bottom
+    bounds.beginPath();
+    bounds.moveTo(0, worldHeight);
+    bounds.lineTo(worldWidth, worldHeight);
+    bounds.strokePath();
+    
+    // Left
+    bounds.beginPath();
+    bounds.moveTo(0, 0);
+    bounds.lineTo(0, worldHeight);
+    bounds.strokePath();
+    
+    // Right
+    bounds.beginPath();
+    bounds.moveTo(worldWidth, 0);
+    bounds.lineTo(worldWidth, worldHeight);
+    bounds.strokePath();
 
-    // Add controls text
-    this.add.text(16, 48, 'Controls: Arrow Keys / WASD', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    });
+    // Create player with physics
+    this.player = this.add.circle(width / 2, height / 2, 20, 0x00ff00);
+    this.physics.add.existing(this.player);
+    this.player.body.setCollideWorldBounds(true);
+    
+    // Setup camera to follow player
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
+    this.cameras.main.setZoom(1);
 
-    // Add position debug text
+    // Add position debug text (make it fixed to camera)
     this.debugText = this.add.text(16, height - 40, '', {
       fontFamily: 'VT323',
       fontSize: '24px',
       color: '#ffffff'
-    });
+    }).setScrollFactor(0);
+
+    // Add controls text (fixed to camera)
+    this.add.text(16, 16, 'ESC - Back to Menu', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setScrollFactor(0);
+
+    this.add.text(16, 48, 'Controls: Arrow Keys / WASD', {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setScrollFactor(0);
+
+    // Add world bounds text (fixed to camera)
+    this.add.text(16, 80, `World Size: ${worldWidth}x${worldHeight}`, {
+      fontFamily: 'VT323',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setScrollFactor(0);
 
     // Setup keyboard input
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -112,20 +180,7 @@ const GameScene = {
       this.player.y += this.player.moveSpeed;
     }
 
-    // Keep player in bounds
-    const bounds = 20;
-    this.player.x = Phaser.Math.Clamp(
-      this.player.x, 
-      bounds, 
-      this.scale.width - bounds
-    );
-    this.player.y = Phaser.Math.Clamp(
-      this.player.y, 
-      bounds, 
-      this.scale.height - bounds
-    );
-
-    // Update debug text
+    // Update debug text with world position
     this.debugText.setText(
       `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
     );
@@ -143,6 +198,12 @@ export default function Game() {
         width: 800,
         height: 600,
         backgroundColor: '#000000',
+        physics: {
+          default: 'arcade',
+          arcade: {
+            debug: false
+          }
+        },
         scene: [MenuScene, GameScene]
       };
 
