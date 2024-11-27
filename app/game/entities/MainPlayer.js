@@ -4,83 +4,90 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
         super(scene, x, y, 'player');
         
-        // Add to scene and enable physics
+        this.scene = scene;
         scene.add.existing(this);
         scene.physics.add.existing(this);
-        
-        // Configure physics body
-        this.body.setCollideWorldBounds(true);
-        this.moveSpeed = 200;
-        
-        this.lastMoveDirection = 0; // angle in radians
-        this.lastNonZeroDirection = 0; // Keep track of last non-zero direction
-        
-        // Initialize stats
-        this.experience = {
-            current: 0,
-            level: 1,
-            toNext: 100
-        };
 
+        // Set up movement properties
+        this.moveSpeed = 200;
+        this.lastNonZeroDirection = Math.PI * -0.5; // Default upward
+
+        // Set up player stats
         this.stats = {
-            health: 100,
             maxHealth: 100,
+            health: 100,
             defense: 10,
             speed: this.moveSpeed
+        };
+
+        // Set up experience system
+        this.experience = {
+            level: 1,
+            current: 0,
+            toNext: 100
         };
 
         this.inventory = {
             gold: 0,
             items: []
         };
+
+        // Create cursor keys
+        this.cursors = scene.input.keyboard.createCursorKeys();
+        this.wasd = scene.input.keyboard.addKeys({
+            up: Phaser.Input.Keyboard.KeyCodes.W,
+            down: Phaser.Input.Keyboard.KeyCodes.S,
+            left: Phaser.Input.Keyboard.KeyCodes.A,
+            right: Phaser.Input.Keyboard.KeyCodes.D
+        });
     }
 
-    handleMovement(input) {
+    update(time) {
+        // Update movement
+        this.handleMovement();
+        
+        // Update weapon if it exists
+        if (this.weapon) {
+            this.weapon.update(time);
+        }
+    }
+
+    handleMovement() {
         const speed = this.moveSpeed;
         let dx = 0;
         let dy = 0;
 
-        if (input.left) dx -= speed;
-        if (input.right) dx += speed;
-        if (input.up) dy -= speed;
-        if (input.down) dy += speed;
+        // Check arrow keys
+        if (this.cursors.left.isDown || this.wasd.left.isDown) {
+            dx = -1;
+        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+            dx = 1;
+        }
+
+        if (this.cursors.up.isDown || this.wasd.up.isDown) {
+            dy = -1;
+        } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
+            dy = 1;
+        }
 
         // Normalize diagonal movement
         if (dx !== 0 && dy !== 0) {
-            const factor = 1 / Math.sqrt(2);
-            dx *= factor;
-            dy *= factor;
+            dx *= Math.SQRT1_2;
+            dy *= Math.SQRT1_2;
         }
 
-        // Update velocity
-        this.setVelocity(dx, dy);
-
-        // Update direction only if moving
+        // Store last non-zero direction for weapon firing
         if (dx !== 0 || dy !== 0) {
-            const currentDirection = Math.atan2(dy, dx);
-            this.lastMoveDirection = currentDirection;
-            this.lastNonZeroDirection = currentDirection; // Save non-zero direction
+            this.lastNonZeroDirection = Math.atan2(dy, dx);
         }
 
-        // Use last non-zero direction for weapon firing
-        if (this.weapon) {
+        // Move player
+        this.setVelocity(dx * speed, dy * speed);
+
+        // Update weapon direction
+        if (this.weapon && this.lastNonZeroDirection !== undefined) {
             this.weapon.updateDirection(this.lastNonZeroDirection);
         }
-    }
-
-    // XP related methods
-    gainXP(amount) {
-        this.experience.current += amount;
-        while (this.experience.current >= this.experience.toNext) {
-            this.levelUp();
-        }
-        
-        // Emit XP gain event
-        this.scene.events.emit('playerXPGained', {
-            current: this.experience.current,
-            level: this.experience.level,
-            toNext: this.experience.toNext
-        });
     }
 
     levelUp() {
@@ -92,11 +99,27 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         this.stats.maxHealth += 10;
         this.stats.health = this.stats.maxHealth;
         this.stats.defense += 2;
+
+        // Update weapon level
+        if (this.weapon) {
+            const weaponLevel = Math.min(this.experience.level - 1, 8); // Max level 8
+            this.weapon.setWeapon('hotdog', weaponLevel);
+        }
     }
 
     collectGold(amount) {
         this.inventory.gold += amount;
         this.scene.events.emit('goldCollected', this.inventory.gold);
+    }
+
+    gainExperience(amount) {
+        this.experience.current += amount;
+        
+        while (this.experience.current >= this.experience.toNext) {
+            this.levelUp();
+        }
+        
+        this.scene.events.emit('playerXPGained', this.experience);
     }
 
     onDeath() {

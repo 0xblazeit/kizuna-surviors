@@ -1,5 +1,7 @@
 'use client';
 
+import Phaser from 'phaser';
+
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import Enemy from '../game/entities/Enemy';
@@ -102,7 +104,7 @@ const GameScene = {
     // Bind methods to this scene
     this.gainXP = (amount) => {
       if (this.player) {
-        this.player.gainXP(amount);
+        this.player.gainExperience(amount);
       }
     };
 
@@ -161,7 +163,7 @@ const GameScene = {
 
     // Set up camera
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-    this.cameras.main.setZoom(1);
+    this.cameras.main.setZoom(0.9);
     
     // Create player
     this.player = new MainPlayer(this, width / 2, height / 2);
@@ -420,7 +422,7 @@ const GameScene = {
     if (this.player && this.statsText) {
       const stats = this.player.stats;
       const exp = this.player.experience;
-      const weaponLevel = Math.min(exp.level - 1, 5); // Max level 5
+      const weaponLevel = Math.min(exp.level - 1, 8); // Max level 8
       const weaponStats = weapons.hotdog.levels[weaponLevel];
 
       const statsString = [

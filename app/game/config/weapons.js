@@ -20,62 +20,98 @@ export const weapons = {
       1: {
         damage: 12,
         duration: 2000,
+        fireSpeed: 1450,
+        projectileSpeed: 210,
+        projectileSize: 1.0,
+        area: 1,
+        range: 310,
+        count: 2,
+        pierce: 0,
+        special: null
+      },
+      2: {
+        damage: 14,
+        duration: 2000,
         fireSpeed: 1400,
         projectileSpeed: 220,
         projectileSize: 1.1,
         area: 1.1,
         range: 320,
-        count: 1,
+        count: 2,
         pierce: 0,
         special: null
       },
-      2: {
-        damage: 15,
+      3: {
+        damage: 16,
+        duration: 2000,
+        fireSpeed: 1350,
+        projectileSpeed: 230,
+        projectileSize: 1.1,
+        area: 1.1,
+        range: 330,
+        count: 2,
+        pierce: 0,
+        special: null
+      },
+      4: {
+        damage: 18,
         duration: 2000,
         fireSpeed: 1300,
         projectileSpeed: 240,
-        projectileSize: 1.2,
+        projectileSize: 1.4,
         area: 1.2,
         range: 340,
-        count: 2,
+        count: 3,
         pierce: 1,
         special: null
       },
-      3: {
-        damage: 18,
+      5: {
+        damage: 20,
+        duration: 2000,
+        fireSpeed: 1250,
+        projectileSpeed: 250,
+        projectileSize: 1.4,
+        area: 1.2,
+        range: 350,
+        count: 3,
+        pierce: 1,
+        special: null
+      },
+      6: {
+        damage: 22,
         duration: 2000,
         fireSpeed: 1200,
         projectileSpeed: 260,
-        projectileSize: 1.3,
+        projectileSize: 1.5,
         area: 1.3,
         range: 360,
-        count: 2,
-        pierce: 1,
-        special: 'explosive'
-      },
-      4: {
-        damage: 22,
-        duration: 2000,
-        fireSpeed: 1100,
-        projectileSpeed: 280,
-        projectileSize: 1.4,
-        area: 1.4,
-        range: 380,
         count: 3,
-        pierce: 2,
-        special: 'explosive'
+        pierce: 1,
+        special: null
       },
-      5: {
-        damage: 27,
+      7: {
+        damage: 24,
+        duration: 2000,
+        fireSpeed: 1150,
+        projectileSpeed: 270,
+        projectileSize: 1.5,
+        area: 1.3,
+        range: 370,
+        count: 4,
+        pierce: 2,
+        special: null
+      },
+      8: {
+        damage: 30,
         duration: 2000,
         fireSpeed: 1000,
         projectileSpeed: 300,
-        projectileSize: 1.5,
+        projectileSize: 1.8,
         area: 1.5,
         range: 400,
-        count: 3,
+        count: 5,
         pierce: 2,
-        special: 'explosive_large'
+        special: 'EXTRA MUSTARDDDDD'
       }
     }
   }
