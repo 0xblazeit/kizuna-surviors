@@ -6,10 +6,9 @@ export default class Weapon {
         this.scene = scene;
         this.owner = owner;
         this.projectiles = scene.add.group();
-        this.direction = Math.PI * -0.5; // Default upward direction
+        this.direction = Math.PI * -0.5;
         this.lastFired = 0;
         
-        // Set initial weapon
         this.setWeapon('hotdog', 0);
     }
 
@@ -24,13 +23,18 @@ export default class Weapon {
     }
 
     update(time) {
-        // Auto-fire based on fire speed
+        this.tryAutoFire(time);
+        this.cleanupProjectiles();
+    }
+
+    tryAutoFire(time) {
         if (time > this.lastFired + this.stats.fireSpeed) {
             this.fire();
             this.lastFired = time;
         }
+    }
 
-        // Clean up inactive projectiles
+    cleanupProjectiles() {
         this.projectiles.children.each(projectile => {
             if (!projectile.active) {
                 this.projectiles.remove(projectile, true, true);
@@ -38,38 +42,45 @@ export default class Weapon {
         });
     }
 
-    fire() {
-        const spreadAngle = Math.PI / 6; // 30 degrees spread
-        
-        // Calculate angles for multiple projectiles
+    calculateProjectileAngles() {
+        const spreadAngle = Math.PI / 6;
         const angles = [];
+
         if (this.stats.count === 1) {
             angles.push(this.direction);
-        } else {
-            const totalSpread = spreadAngle * (this.stats.count - 1);
-            const startAngle = this.direction - totalSpread / 2;
-            for (let i = 0; i < this.stats.count; i++) {
-                angles.push(startAngle + spreadAngle * i);
-            }
+            return angles;
         }
 
-        // Create projectiles
-        angles.forEach(projAngle => {
-            const projectile = new Projectile(
-                this.scene,
-                this.owner.x,
-                this.owner.y,
-                'hotdog',
-                this.stats
-            );
-            
-            this.projectiles.add(projectile);
-            projectile.fire(
-                this.owner.x,
-                this.owner.y,
-                projAngle,
-                this.stats.projectileSpeed
-            );
-        });
+        const totalSpread = spreadAngle * (this.stats.count - 1);
+        const startAngle = this.direction - totalSpread / 2;
+        
+        for (let i = 0; i < this.stats.count; i++) {
+            angles.push(startAngle + spreadAngle * i);
+        }
+
+        return angles;
+    }
+
+    createProjectile(angle) {
+        const projectile = new Projectile(
+            this.scene,
+            this.owner.x,
+            this.owner.y,
+            'hotdog',
+            this.stats
+        );
+        
+        this.projectiles.add(projectile);
+        projectile.fire(
+            this.owner.x,
+            this.owner.y,
+            angle,
+            this.stats.projectileSpeed
+        );
+    }
+
+    fire() {
+        const angles = this.calculateProjectileAngles();
+        angles.forEach(angle => this.createProjectile(angle));
     }
 }

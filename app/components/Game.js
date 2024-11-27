@@ -426,7 +426,7 @@ const GameScene = {
       const weaponStats = weapons.hotdog.levels[weaponLevel];
 
       const statsString = [
-        `Weapon: Hot Dog Launcher (Lvl ${weaponLevel})`,
+        `Weapon: Glizzly Blaster 4200 (Lvl ${weaponLevel})`,
         `├ Damage: ${weaponStats.damage}`,
         `├ Fire Rate: ${(1000/weaponStats.fireSpeed).toFixed(1)}/s`,
         `├ Projectiles: ${weaponStats.count}`,

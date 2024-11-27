@@ -1,6 +1,6 @@
 export const weapons = {
   hotdog: {
-    name: 'Hot Dog Launcher',
+    name: 'Glizzly Blaster 4200',
     description: 'Launches explosive hot dogs at enemies',
     icon: '/assets/game/weapons/weapon-hotdog-projectile.svg',
     projectileSprite: '/assets/game/weapons/weapon-hotdog-projectile.svg',
