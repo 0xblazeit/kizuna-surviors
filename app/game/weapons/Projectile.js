@@ -8,6 +8,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene;
         this.stats = weaponStats;
         this.pierceCount = 0;
+        this.explosionTimeouts = []; // Array to store explosion timeouts
 
         // Trail effect properties
         this.trailPoints = [];
@@ -62,12 +63,16 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     createMustardExplosion(x, y) {
-        // Store scene reference
         const scene = this.scene;
         
         // Create multiple bursts for a more dramatic effect
         for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
+                // Check if scene is still valid
+                if (!scene || !scene.add) {
+                    return;
+                }
+                
                 // Create explosion graphics
                 const explosion = scene.add.graphics();
                 
@@ -85,51 +90,30 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
                 explosion.beginPath();
                 for (let j = 0; j < 8; j++) {
                     const angle = (j / 8) * Math.PI * 2;
-                    const length = size + Math.random() * 10;
-                    if (j === 0) {
-                        explosion.moveTo(
-                            Math.cos(angle) * length,
-                            Math.sin(angle) * length
-                        );
-                    } else {
-                        explosion.lineTo(
-                            Math.cos(angle) * length,
-                            Math.sin(angle) * length
-                        );
-                    }
+                    const startX = Math.cos(angle) * (size / 2);
+                    const startY = Math.sin(angle) * (size / 2);
+                    const endX = Math.cos(angle) * size;
+                    const endY = Math.sin(angle) * size;
+                    
+                    explosion.moveTo(startX, startY);
+                    explosion.lineTo(endX, endY);
                 }
+                explosion.strokePath();
                 explosion.closePath();
-                explosion.stroke();
-                explosion.fill();
 
                 // Animate and destroy
                 scene.tweens.add({
                     targets: explosion,
-                    scaleX: 2,
-                    scaleY: 2,
                     alpha: 0,
-                    duration: 300,
-                    ease: 'Power2',
-                    onComplete: () => explosion.destroy()
+                    scale: 1.5,
+                    duration: 200,
+                    onComplete: () => {
+                        explosion.destroy();
+                    }
                 });
-
-                // Add splatter particles
-                const splatterEmitter = scene.add.particles(x, y, 'mustardParticle', {
-                    speed: { min: 100, max: 200 },
-                    angle: { min: 0, max: 360 },
-                    scale: { start: 1.5, end: 0.5 },
-                    alpha: { start: 0.6, end: 0 },
-                    lifespan: 600,
-                    quantity: 20,
-                    blendMode: 'ADD'
-                });
-
-                // Stop emitting after burst
-                setTimeout(() => {
-                    splatterEmitter.destroy();
-                }, 100);
-
             }, i * 100);
+            
+            this.explosionTimeouts.push(timeout);
         }
     }
 
@@ -240,6 +224,11 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     destroy(fromScene) {
+        // Clear any pending explosion timeouts
+        if (this.explosionTimeouts) {
+            this.explosionTimeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        
         if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.createMustardExplosion(this.x, this.y);
             if (this.emitter) this.emitter.destroy();
