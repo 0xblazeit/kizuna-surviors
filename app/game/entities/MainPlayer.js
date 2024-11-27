@@ -31,7 +31,8 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
 
         this.inventory = {
             gold: 0,
-            items: []
+            items: [],
+            weapons: ['hotdog', 'wand']  // Initial weapons
         };
     }
 
@@ -49,6 +50,9 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         this.handleMovement();
         if (this.weapon) {
             this.weapon.update(time);
+        }
+        if (this.weapon2) {
+            this.weapon2.update(time);
         }
     }
 
@@ -94,8 +98,13 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
     }
 
     updateWeaponDirection() {
-        if (this.weapon && this.lastNonZeroDirection !== undefined) {
-            this.weapon.updateDirection(this.lastNonZeroDirection);
+        if (this.lastNonZeroDirection !== undefined) {
+            if (this.weapon) {
+                this.weapon.updateDirection(this.lastNonZeroDirection);
+            }
+            if (this.weapon2) {
+                this.weapon2.updateDirection(this.lastNonZeroDirection);
+            }
         }
     }
 
@@ -118,9 +127,13 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
     }
 
     updateWeaponLevel() {
+        const weaponLevel = Math.min(this.experience.level - 1, 8);
+        
         if (this.weapon) {
-            const weaponLevel = Math.min(this.experience.level - 1, 8);
             this.weapon.setWeapon('hotdog', weaponLevel);
+        }
+        if (this.weapon2) {
+            this.weapon2.setWeapon('wand', weaponLevel);
         }
     }
 

@@ -23,8 +23,10 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.setupPhysics();
 
         if (this.stats.special) {
-            this.createMustardTrail();
-            this.createMustardEmitter();
+            if (this.stats.special === 'EXTRA MUSTARDDDDD') {
+                this.createMustardTrail();
+                this.createMustardEmitter();
+            }
         }
     }
 
@@ -134,7 +136,80 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     update() {
         super.update();
 
-        if (this.stats.special) {
+        if (this.stats.special === 'HOMING') {
+            // Find nearest enemy
+            let nearestEnemy = null;
+            let nearestDistance = Infinity;
+            
+            this.scene.enemies?.getChildren().forEach(enemy => {
+                const distance = Phaser.Math.Distance.Between(
+                    this.x, this.y,
+                    enemy.x, enemy.y
+                );
+                
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestEnemy = enemy;
+                }
+            });
+
+            // Initialize random movement if not set
+            if (!this.randomAngle) {
+                this.randomAngle = Math.random() * Math.PI * 2;
+                this.nextRandomTime = 0;
+            }
+
+            if (nearestEnemy) {
+                // Home in on nearest enemy
+                const angle = Phaser.Math.Angle.Between(
+                    this.x, this.y,
+                    nearestEnemy.x, nearestEnemy.y
+                );
+                
+                const currentVelocity = new Phaser.Math.Vector2(this.body.velocity.x, this.body.velocity.y);
+                const targetVelocity = new Phaser.Math.Vector2(
+                    Math.cos(angle) * this.stats.projectileSpeed,
+                    Math.sin(angle) * this.stats.projectileSpeed
+                );
+                
+                // Smoothly interpolate between current and target velocity
+                const lerpFactor = 0.1;
+                this.setVelocity(
+                    Phaser.Math.Linear(currentVelocity.x, targetVelocity.x, lerpFactor),
+                    Phaser.Math.Linear(currentVelocity.y, targetVelocity.y, lerpFactor)
+                );
+                
+                // Update rotation to match movement direction
+                this.setRotation(angle);
+            } else {
+                // No enemies - move in random patterns
+                const now = Date.now();
+                if (now >= this.nextRandomTime) {
+                    // Change direction every 500ms
+                    this.randomAngle += (Math.random() - 0.5) * Math.PI * 0.5; // Change by up to 90 degrees
+                    this.nextRandomTime = now + 500;
+                }
+
+                // Apply the random movement
+                const currentVelocity = new Phaser.Math.Vector2(this.body.velocity.x, this.body.velocity.y);
+                const targetVelocity = new Phaser.Math.Vector2(
+                    Math.cos(this.randomAngle) * this.stats.projectileSpeed,
+                    Math.sin(this.randomAngle) * this.stats.projectileSpeed
+                );
+                
+                // Smoothly interpolate between current and target velocity
+                const lerpFactor = 0.05; // Slower turning for more graceful movement
+                this.setVelocity(
+                    Phaser.Math.Linear(currentVelocity.x, targetVelocity.x, lerpFactor),
+                    Phaser.Math.Linear(currentVelocity.y, targetVelocity.y, lerpFactor)
+                );
+                
+                // Update rotation to match movement direction
+                this.setRotation(this.randomAngle);
+            }
+        }
+
+        if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             // Update mustard trail
             const now = Date.now();
             if (now - this.lastDropTime > this.dropInterval) {
@@ -165,7 +240,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     destroy(fromScene) {
-        if (this.stats.special) {
+        if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.createMustardExplosion(this.x, this.y);
             if (this.emitter) this.emitter.destroy();
             this.mustardDrops.forEach(drop => drop.graphic.destroy());
@@ -179,7 +254,31 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     applyVisualEffects() {
         this.setScale(this.stats.projectileSize);
         
-        if (this.stats.special) {
+        if (this.stats.special === 'HOMING') {
+            // Basic crystal projectile without glow
+            this.setTint(0x00ffff);  // Light cyan tint
+            
+            // Add smooth rotation
+            this.scene.tweens.add({
+                targets: this,
+                angle: '+=360',
+                duration: 2000,
+                repeat: -1,
+                ease: 'Linear'
+            });
+        } else if (this.stats.special === 'HOMING_GLOW') {
+            // Advanced crystal projectile with glow
+            this.preFX.addGlow(0x00ffff, 4, 0, false, 0.1, 16);
+            
+            // Add smooth rotation
+            this.scene.tweens.add({
+                targets: this,
+                angle: '+=360',
+                duration: 2000,
+                repeat: -1,
+                ease: 'Linear'
+            });
+        } else if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.setTint(0xffff00);
             // Add pulsing scale effect for special projectiles
             this.scene.tweens.add({
@@ -197,8 +296,15 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     setupPhysics() {
-        this.body.setSize(32, 32);
-        this.body.setOffset(16, 16);
+        if (this.texture.key === 'wand') {
+            // Crystal projectiles are smaller
+            this.body.setSize(24, 24);
+            this.body.setOffset(12, 12);
+        } else {
+            // Default size for other projectiles
+            this.body.setSize(32, 32);
+            this.body.setOffset(16, 16);
+        }
     }
 
     fire(x, y, angle, speed) {
@@ -211,7 +317,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.setRotation(angle);
 
         // Reset trail points
-        if (this.stats.special) {
+        if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.trailPoints = [{ x, y }];
             this.lastTrailPoint = { x, y };
         }
@@ -230,7 +336,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         super.preUpdate(time, delta);
 
         // Update trail effect
-        if (this.stats.special) {
+        if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.updateTrail();
         }
 

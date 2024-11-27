@@ -78,13 +78,19 @@ const GameScene = {
     // Load enemy sprite
     this.load.svg('enemy', '/assets/game/enemy.svg');
 
-    // Load weapon sprite
-    this.load.svg('hotdog', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
+    // Load weapon icons sprites
+    this.load.svg('hotdog-icon', '/assets/game/weapons/weapon-hotdog-icon.svg', {
+      scale: 0.1
+    });
+    this.load.svg('wand-icon', '/assets/game/weapons/weapon-wand-icon.svg', {
       scale: 0.1
     });
 
-    // Load weapon icons
-    this.load.svg('hotdog-icon', '/assets/game/weapons/weapon-hotdog-icon.svg', {
+    // Load weapon projectile sprites
+    this.load.svg('hotdog', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
+      scale: 0.1
+    });    
+    this.load.svg('wand', '/assets/game/weapons/weapon-wand-projectile.svg', {
       scale: 0.1
     });
   },
@@ -172,8 +178,10 @@ const GameScene = {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(100, 100);
 
-    // Create weapon for player
-    this.player.weapon = new Weapon(this, this.player);
+    // Create weapons for player
+    this.player.weapon = new Weapon(this, this.player, 'hotdog');
+    this.player.weapon2 = new Weapon(this, this.player, 'wand');
+    this.player.updateWeaponLevel(); // Initialize both weapons with correct levels
 
     // Listen for XP events
     this.events.on('playerXPGained', (data) => {
@@ -255,6 +263,16 @@ const GameScene = {
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'hotdog-icon'
+          );
+          icon.setDisplaySize(gridCellSize - 8, gridCellSize - 8);
+          icon.setScrollFactor(0);  // Fix icon to screen
+        }
+        // Add wand icon to second slot
+        if (row === 0 && col === 1) {
+          const icon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'wand-icon'
           );
           icon.setDisplaySize(gridCellSize - 8, gridCellSize - 8);
           icon.setScrollFactor(0);  // Fix icon to screen
@@ -380,9 +398,12 @@ const GameScene = {
     if (this.player) {
       this.player.handleMovement(input);
       
-      // Update weapon firing
+      // Update both weapons
       if (this.player.weapon) {
         this.player.weapon.update(time);
+      }
+      if (this.player.weapon2) {
+        this.player.weapon2.update(time);
       }
     }
 
@@ -423,16 +444,25 @@ const GameScene = {
       const stats = this.player.stats;
       const exp = this.player.experience;
       const weaponLevel = Math.min(exp.level - 1, 8); // Max level 8
-      const weaponStats = weapons.hotdog.levels[weaponLevel];
+      const hotdogStats = weapons.hotdog.levels[weaponLevel];
+      const wandStats = weapons.wand.levels[weaponLevel];
 
       const statsString = [
-        `Weapon: Glizzly Blaster 4200 (Lvl ${weaponLevel})`,
-        `├ Damage: ${weaponStats.damage}`,
-        `├ Fire Rate: ${(1000/weaponStats.fireSpeed).toFixed(1)}/s`,
-        `├ Projectiles: ${weaponStats.count}`,
-        `├ Size: ${weaponStats.projectileSize.toFixed(1)}x`,
-        `├ Pierce: ${weaponStats.pierce}`,
-        `└ Special: ${weaponStats.special || 'None'}`,
+        `Weapon 1: Glizzly Blaster 4200 (Lvl ${weaponLevel})`,
+        `├ Damage: ${hotdogStats.damage}`,
+        `├ Fire Rate: ${(1000/hotdogStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${hotdogStats.count}`,
+        `├ Size: ${hotdogStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${hotdogStats.pierce}`,
+        `└ Special: ${hotdogStats.special || 'None'}`,
+        ``,
+        `Weapon 2: Crystal Wand (Lvl ${weaponLevel})`,
+        `├ Damage: ${wandStats.damage}`,
+        `├ Fire Rate: ${(1000/wandStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${wandStats.count}`,
+        `├ Size: ${wandStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${wandStats.pierce}`,
+        `└ Special: ${wandStats.special}`,
         ``,
         `Level: ${exp.level} (${exp.current}/${exp.toNext} XP)`,
         `HP: ${stats.health}/${stats.maxHealth}`,

@@ -2,14 +2,14 @@ import { weapons } from '../config/weapons';
 import Projectile from './Projectile';
 
 export default class Weapon {
-    constructor(scene, owner) {
+    constructor(scene, owner, initialType = 'hotdog') {
         this.scene = scene;
         this.owner = owner;
         this.projectiles = scene.add.group();
         this.direction = Math.PI * -0.5;
         this.lastFired = 0;
         
-        this.setWeapon('hotdog', 0);
+        this.setWeapon(initialType, 0);
     }
 
     setWeapon(type, level) {
@@ -43,19 +43,34 @@ export default class Weapon {
     }
 
     calculateProjectileAngles() {
-        const spreadAngle = Math.PI / 6;
+        const spreadAngle = Math.PI / 6; // 30 degrees
         const angles = [];
 
-        if (this.stats.count === 1) {
-            angles.push(this.direction);
-            return angles;
-        }
+        if (this.type === 'wand') {
+            // Machine gun style - vertical spread with slight randomness
+            const verticalSpread = Math.PI / 24; // 7.5 degrees
+            if (this.stats.count === 1) {
+                angles.push(this.direction);
+            } else {
+                for (let i = 0; i < this.stats.count; i++) {
+                    // Add slight random deviation to make it feel more natural
+                    const randomDeviation = (Math.random() - 0.5) * (Math.PI / 32); // ±2.8 degrees
+                    angles.push(this.direction + randomDeviation);
+                }
+            }
+        } else {
+            // Original spread pattern for hotdog
+            if (this.stats.count === 1) {
+                angles.push(this.direction);
+                return angles;
+            }
 
-        const totalSpread = spreadAngle * (this.stats.count - 1);
-        const startAngle = this.direction - totalSpread / 2;
-        
-        for (let i = 0; i < this.stats.count; i++) {
-            angles.push(startAngle + spreadAngle * i);
+            const totalSpread = spreadAngle * (this.stats.count - 1);
+            const startAngle = this.direction - totalSpread / 2;
+            
+            for (let i = 0; i < this.stats.count; i++) {
+                angles.push(startAngle + spreadAngle * i);
+            }
         }
 
         return angles;
@@ -66,7 +81,7 @@ export default class Weapon {
             this.scene,
             this.owner.x,
             this.owner.y,
-            'hotdog',
+            this.type === 'wand' ? 'wand' : 'hotdog',  
             this.stats
         );
         
