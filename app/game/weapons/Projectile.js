@@ -2,11 +2,9 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, weaponStats) {
         super(scene, x, y, texture);
         
-        // Add sprite to scene and enable physics
         scene.add.existing(this);
         scene.physics.add.existing(this);
         
-        // Store stats
         this.scene = scene;
         this.stats = weaponStats;
         this.pierceCount = 0;
@@ -16,98 +14,236 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.maxTrailPoints = 15;
         this.trailSpacing = 2;
         this.lastTrailPoint = { x, y };
-        this.hueRotation = 0;
+
+        // Create trail graphics
+        this.trail = this.scene.add.graphics();
 
         // Apply visual effects
         this.applyVisualEffects();
-
-        // Set up physics body
         this.setupPhysics();
 
-        // Create special effects if special weapon
         if (this.stats.special) {
-            this.createTrailEffect();
-            this.createParticleEmitter();
-            this.createSpaceDistortion();
+            this.createMustardTrail();
+            this.createMustardEmitter();
         }
     }
 
-    createParticleEmitter() {
-        // Create spark particles using the hotdog special sprite
-        this.particles = this.scene.add.particles(0, 0, 'weapon-hotdog-special', {
-            speed: { min: 50, max: 150 },
-            angle: { min: 0, max: 360 },
-            scale: { start: 0.2, end: 0 },
-            blendMode: 'ADD',
-            lifespan: 300,
-            gravityY: 0,
-            quantity: 2,
-            follow: this
-        });
+    createMustardTrail() {
+        this.mustardDrops = [];
+        this.lastDropTime = 0;
+        this.dropInterval = 50; // ms between drops
+    }
 
-        // Create energy particles
-        this.energyParticles = this.scene.add.particles(0, 0, 'weapon-hotdog-special', {
-            speed: { min: 20, max: 50 },
+    createMustardEmitter() {
+        // Create mustard particle graphics
+        const particles = this.scene.add.graphics();
+        particles.lineStyle(2, 0xFFD700);
+        particles.fillStyle(0xFFD700, 0.6);
+        particles.beginPath();
+        particles.arc(0, 0, 4, 0, Math.PI * 2);
+        particles.closePath();
+        particles.fill();
+        particles.generateTexture('mustardParticle', 8, 8);
+        particles.destroy();
+
+        // Create particle emitter
+        this.emitter = this.scene.add.particles(0, 0, 'mustardParticle', {
+            speed: { min: 30, max: 80 },
             angle: { min: 0, max: 360 },
-            scale: { start: 0.3, end: 0 },
+            scale: { start: 1, end: 0.5 },
             alpha: { start: 0.6, end: 0 },
-            blendMode: 'ADD',
-            lifespan: 500,
+            lifespan: 400,
             quantity: 1,
+            blendMode: 'ADD',
             follow: this
         });
     }
 
-    createSpaceDistortion() {
-        // Create distortion using the hotdog special sprite
-        this.distortion = this.scene.add.sprite(this.x, this.y, 'weapon-hotdog-special');
-        this.distortion.setBlendMode('SCREEN');
-        this.distortion.setAlpha(0.2);
-        this.distortion.setScale(1);
-
-        // Add pulsing effect
-        this.scene.tweens.add({
-            targets: this.distortion,
-            scaleX: 1.5,
-            scaleY: 1.5,
-            alpha: 0.1,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-    }
-
-    createShockwave(x, y) {
-        const shockwave = this.scene.add.sprite(x, y, 'weapon-hotdog-special');
-        shockwave.setBlendMode('ADD');
-        shockwave.setAlpha(0.5);
-        shockwave.setScale(0.2);
-
-        this.scene.tweens.add({
-            targets: shockwave,
-            scaleX: 1.5,
-            scaleY: 1.5,
-            alpha: 0,
-            duration: 300,
-            ease: 'Quad.easeOut',
-            onComplete: () => shockwave.destroy()
-        });
-    }
-
-    createTrailEffect() {
-        this.trail = this.scene.add.graphics();
-        this.glowIntensity = 1;
+    createMustardExplosion(x, y) {
+        // Store scene reference
+        const scene = this.scene;
         
-        // Add periodic glow effect
-        this.scene.tweens.add({
-            targets: this,
-            glowIntensity: 0.3,
-            duration: 500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Create multiple bursts for a more dramatic effect
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                // Create explosion graphics
+                const explosion = scene.add.graphics();
+                
+                // Mustard yellow colors
+                const colors = [0xFFD700, 0xFFA500, 0xFFFF00];
+                const size = 20 + (i * 15);
+                
+                // Initial state
+                explosion.setPosition(x, y);
+                explosion.setAlpha(0.8);
+                explosion.lineStyle(3, colors[i]);
+                explosion.fillStyle(colors[i], 0.4);
+
+                // Draw burst
+                explosion.beginPath();
+                for (let j = 0; j < 8; j++) {
+                    const angle = (j / 8) * Math.PI * 2;
+                    const length = size + Math.random() * 10;
+                    if (j === 0) {
+                        explosion.moveTo(
+                            Math.cos(angle) * length,
+                            Math.sin(angle) * length
+                        );
+                    } else {
+                        explosion.lineTo(
+                            Math.cos(angle) * length,
+                            Math.sin(angle) * length
+                        );
+                    }
+                }
+                explosion.closePath();
+                explosion.stroke();
+                explosion.fill();
+
+                // Animate and destroy
+                scene.tweens.add({
+                    targets: explosion,
+                    scaleX: 2,
+                    scaleY: 2,
+                    alpha: 0,
+                    duration: 300,
+                    ease: 'Power2',
+                    onComplete: () => explosion.destroy()
+                });
+
+                // Add splatter particles
+                const splatterEmitter = scene.add.particles(x, y, 'mustardParticle', {
+                    speed: { min: 100, max: 200 },
+                    angle: { min: 0, max: 360 },
+                    scale: { start: 1.5, end: 0.5 },
+                    alpha: { start: 0.6, end: 0 },
+                    lifespan: 600,
+                    quantity: 20,
+                    blendMode: 'ADD'
+                });
+
+                // Stop emitting after burst
+                setTimeout(() => {
+                    splatterEmitter.destroy();
+                }, 100);
+
+            }, i * 100);
+        }
+    }
+
+    update() {
+        super.update();
+
+        if (this.stats.special) {
+            // Update mustard trail
+            const now = Date.now();
+            if (now - this.lastDropTime > this.dropInterval) {
+                this.lastDropTime = now;
+                
+                // Create mustard drop
+                const drop = this.scene.add.graphics();
+                drop.fillStyle(0xFFD700, 0.4);
+                drop.fillCircle(this.x, this.y, 5);
+                
+                this.mustardDrops.push({
+                    graphic: drop,
+                    created: now
+                });
+
+                // Fade out and remove old drops
+                this.mustardDrops = this.mustardDrops.filter(drop => {
+                    const age = now - drop.created;
+                    if (age > 500) {
+                        drop.graphic.destroy();
+                        return false;
+                    }
+                    drop.graphic.setAlpha(1 - (age / 500));
+                    return true;
+                });
+            }
+        }
+    }
+
+    destroy(fromScene) {
+        if (this.stats.special) {
+            this.createMustardExplosion(this.x, this.y);
+            if (this.emitter) this.emitter.destroy();
+            this.mustardDrops.forEach(drop => drop.graphic.destroy());
+        }
+        if (this.trail) {
+            this.trail.destroy();
+        }
+        super.destroy(fromScene);
+    }
+
+    applyVisualEffects() {
+        this.setScale(this.stats.projectileSize);
+        
+        if (this.stats.special) {
+            this.setTint(0xffff00);
+            // Add pulsing scale effect for special projectiles
+            this.scene.tweens.add({
+                targets: this,
+                scaleX: this.stats.projectileSize * 1.2,
+                scaleY: this.stats.projectileSize * 1.2,
+                duration: 300,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        } else if (this.stats.pierce > 0) {
+            this.setTint(0xff6b6b);
+        }
+    }
+
+    setupPhysics() {
+        this.body.setSize(32, 32);
+        this.body.setOffset(16, 16);
+    }
+
+    fire(x, y, angle, speed) {
+        this.setActive(true).setVisible(true);
+        this.setPosition(x, y);
+        this.setVelocity(
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed
+        );
+        this.setRotation(angle);
+
+        // Reset trail points
+        if (this.stats.special) {
+            this.trailPoints = [{ x, y }];
+            this.lastTrailPoint = { x, y };
+        }
+    }
+
+    handleHit() {
+        if (this.stats.pierce > 0 && this.pierceCount < this.stats.pierce) {
+            this.pierceCount++;
+            return false;
+        }
+        this.destroy();
+        return true;
+    }
+
+    preUpdate(time, delta) {
+        super.preUpdate(time, delta);
+
+        // Update trail effect
+        if (this.stats.special) {
+            this.updateTrail();
+        }
+
+        const distance = Phaser.Math.Distance.Between(
+            this.scene.player.x,
+            this.scene.player.y,
+            this.x,
+            this.y
+        );
+
+        if (distance > this.stats.range) {
+            this.destroy();
+        }
     }
 
     updateTrail() {
@@ -175,89 +311,5 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.trail.strokePath();
-    }
-
-    applyVisualEffects() {
-        this.setScale(this.stats.projectileSize);
-        
-        if (this.stats.special) {
-            this.setTint(0xffff00);
-            // Add pulsing scale effect for special projectiles
-            this.scene.tweens.add({
-                targets: this,
-                scaleX: this.stats.projectileSize * 1.2,
-                scaleY: this.stats.projectileSize * 1.2,
-                duration: 300,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        } else if (this.stats.pierce > 0) {
-            this.setTint(0xff6b6b);
-        }
-    }
-
-    setupPhysics() {
-        this.body.setSize(32, 32);
-        this.body.setOffset(16, 16);
-    }
-
-    fire(x, y, angle, speed) {
-        this.setActive(true).setVisible(true);
-        this.setPosition(x, y);
-        this.setVelocity(
-            Math.cos(angle) * speed,
-            Math.sin(angle) * speed
-        );
-        this.setRotation(angle);
-
-        // Reset trail points
-        if (this.stats.special) {
-            this.trailPoints = [{ x, y }];
-            this.lastTrailPoint = { x, y };
-        }
-    }
-
-    handleHit() {
-        if (this.stats.pierce > 0 && this.pierceCount < this.stats.pierce) {
-            this.pierceCount++;
-            return false;
-        }
-        this.destroy();
-        return true;
-    }
-
-    destroy(fromScene) {
-        // Create final shockwave effect
-        if (this.stats.special) {
-            this.createShockwave(this.x, this.y);
-            if (this.particles) this.particles.destroy();
-            if (this.energyParticles) this.energyParticles.destroy();
-            if (this.distortion) this.distortion.destroy();
-        }
-        if (this.trail) {
-            this.trail.destroy();
-        }
-        super.destroy(fromScene);
-    }
-
-    preUpdate(time, delta) {
-        super.preUpdate(time, delta);
-
-        // Update trail effect
-        if (this.stats.special) {
-            this.updateTrail();
-        }
-
-        const distance = Phaser.Math.Distance.Between(
-            this.scene.player.x,
-            this.scene.player.y,
-            this.x,
-            this.y
-        );
-
-        if (distance > this.stats.range) {
-            this.destroy();
-        }
     }
 }
