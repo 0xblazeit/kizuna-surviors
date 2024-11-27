@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import Enemy from '../game/entities/Enemy';
+import { weapons } from '../game/config/weapons';
 import Weapon from '../game/weapons/Weapon';
 
 const MenuScene = {
@@ -259,6 +260,53 @@ const GameScene = {
       }
     }
 
+    // Add debug stats menu closer to grid
+    const debugMenuY = uiRowY + gridHeight + 5; // Close to grid
+    
+    // Add semi-transparent background for stats
+    const statsBackground = this.add.rectangle(
+      gridX + 100, // Center x (adjusted for text width)
+      debugMenuY + 110, // Center y (adjusted for text height)
+      210, // Width to cover text
+      210, // Height to cover text
+      0x000000, // Black background
+      0.6 // 60% opacity
+    ).setScrollFactor(0);
+    
+    this.statsText = this.add.text(gridX, debugMenuY, '', {
+      fontFamily: 'VT323',
+      fontSize: '14px',
+      color: '#ffffff',
+      padding: { x: 5, y: 5 }
+    }).setScrollFactor(0);
+
+    // Update stats text initially
+    if (this.player) {
+      const stats = this.player.stats;
+      const exp = this.player.experience;
+      const currentWeapon = 'Hotdog'; // TODO: Update this when weapon system is implemented
+
+      const statsString = [
+        `Weapon: ${currentWeapon}`,
+        `Level: ${exp.level} (${exp.current}/${exp.toNext} XP)`,
+        `HP: ${stats.health}/${stats.maxHealth}`,
+        `Defense: ${stats.defense}`,
+        `Speed: ${stats.speed}`
+      ].join('\n');
+
+      this.statsText.setText(statsString);
+    }
+
+    // Add control instructions with more padding below the stats text
+    const controlsY = debugMenuY + 220; // Increased padding to accommodate larger stats menu
+    const controlsText = this.add.text(gridX, controlsY, 
+      'ESC - Controls\n' +
+      'WASD/Arrow Keys - Move', {
+      fontFamily: 'VT323',
+      fontSize: '16px',
+      color: '#888888'
+    }).setScrollFactor(0);
+
     // 2. Stats (Right)
     const statsX = width - 20;  // 20px from right edge
     this.goldText = this.add.text(statsX, uiRowY + 10, 'Gold: 0', {
@@ -277,27 +325,11 @@ const GameScene = {
     uiContainer.add([
       xpBarBg, this.xpBarFill, this.xpText,
       ...gridCells,
-      this.timerText, this.goldText, this.killsText
+      this.timerText, this.goldText, this.killsText,
+      statsBackground, // Add background before text so it appears behind
+      this.statsText,
+      controlsText
     ]);
-
-    // Add control instructions below the grid
-    const bottomUIY = uiRowY + gridHeight + 30; // 30px padding below grid
-
-    // Controls text (left side) with smaller font
-    const controlsText = this.add.text(40, bottomUIY, 'ESC - Back to Menu', {
-      fontFamily: 'VT323',
-      fontSize: '18px',
-      color: '#ffffff'
-    }).setOrigin(0, 0);
-
-    const controlsText2 = this.add.text(40, bottomUIY + 24, 'Controls: Arrow Keys / WASD', {
-      fontFamily: 'VT323',
-      fontSize: '18px',
-      color: '#ffffff'
-    }).setOrigin(0, 0);
-
-    // Add bottom UI elements to container
-    uiContainer.add([controlsText, controlsText2]);
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -382,6 +414,31 @@ const GameScene = {
         callbackScope: this,
         loop: true
       });
+    }
+
+    // Update debug stats
+    if (this.player && this.statsText) {
+      const stats = this.player.stats;
+      const exp = this.player.experience;
+      const weaponLevel = Math.min(exp.level - 1, 5); // Max level 5
+      const weaponStats = weapons.hotdog.levels[weaponLevel];
+
+      const statsString = [
+        `Weapon: Hot Dog Launcher (Lvl ${weaponLevel})`,
+        `├ Damage: ${weaponStats.damage}`,
+        `├ Fire Rate: ${(1000/weaponStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${weaponStats.count}`,
+        `├ Size: ${weaponStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${weaponStats.pierce}`,
+        `└ Special: ${weaponStats.special || 'None'}`,
+        ``,
+        `Level: ${exp.level} (${exp.current}/${exp.toNext} XP)`,
+        `HP: ${stats.health}/${stats.maxHealth}`,
+        `Defense: ${stats.defense}`,
+        `Speed: ${stats.speed}`
+      ].join('\n');
+
+      this.statsText.setText(statsString);
     }
 
     // Update debug text with world position
