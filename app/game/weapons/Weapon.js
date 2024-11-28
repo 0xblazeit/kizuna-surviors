@@ -16,6 +16,7 @@ export default class Weapon {
         this.type = type;
         this.level = level;
         this.stats = weapons[type].levels[level];
+        this.projectileTexture = type === 'wand' ? 'wand' : 'hotdog';
     }
 
     updateDirection(direction) {
@@ -43,59 +44,85 @@ export default class Weapon {
     }
 
     calculateProjectileAngles() {
-        const spreadAngle = Math.PI / 6; // 30 degrees
+        const count = this.stats.count || 1;
         const angles = [];
-
+        
         if (this.type === 'wand') {
-            // Machine gun style - vertical spread with slight randomness
-            const verticalSpread = Math.PI / 24; // 7.5 degrees
-            if (this.stats.count === 1) {
-                angles.push(this.direction);
-            } else {
-                for (let i = 0; i < this.stats.count; i++) {
-                    // Add slight random deviation to make it feel more natural
-                    const randomDeviation = (Math.random() - 0.5) * (Math.PI / 32); // ±2.8 degrees
-                    angles.push(this.direction + randomDeviation);
-                }
+            // For wand, create a spread pattern
+            const spreadAngle = Math.PI / 6; // 30 degrees total spread
+            const startAngle = this.direction - (spreadAngle / 2);
+            const angleStep = spreadAngle / (count > 1 ? count - 1 : 1);
+            
+            for (let i = 0; i < count; i++) {
+                angles.push(startAngle + (angleStep * i));
             }
         } else {
             // Original spread pattern for hotdog
-            if (this.stats.count === 1) {
+            const spreadAngle = Math.PI / 6; // 30 degrees
+            
+            if (count === 1) {
                 angles.push(this.direction);
                 return angles;
             }
 
-            const totalSpread = spreadAngle * (this.stats.count - 1);
+            const totalSpread = spreadAngle * (count - 1);
             const startAngle = this.direction - totalSpread / 2;
             
-            for (let i = 0; i < this.stats.count; i++) {
+            for (let i = 0; i < count; i++) {
                 angles.push(startAngle + spreadAngle * i);
             }
         }
-
+        
         return angles;
     }
 
-    createProjectile(angle) {
+    createProjectile(angle, index = 0) {
+        const count = this.stats.count || 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        
+        if (this.type === 'wand' && count > 1) {
+            // Create an arc formation for multiple wand projectiles
+            const radius = 20; // Distance from the player
+            const spreadAngle = Math.PI / 3; // 60 degrees arc
+            const startAngle = this.direction - (spreadAngle / 2);
+            const angleStep = spreadAngle / (count - 1);
+            const positionAngle = startAngle + (angleStep * index);
+            
+            offsetX = Math.cos(positionAngle) * radius;
+            offsetY = Math.sin(positionAngle) * radius;
+        }
+        
         const projectile = new Projectile(
             this.scene,
-            this.owner.x,
-            this.owner.y,
-            this.type === 'wand' ? 'wand' : 'hotdog',  
+            this.owner.x + offsetX,
+            this.owner.y + offsetY,
+            this.projectileTexture,
             this.stats
         );
         
-        this.projectiles.add(projectile);
+        // Add to scene's projectile group
+        this.scene.projectiles.add(projectile);
+        
+        // Enable physics body
+        projectile.body.setCollideWorldBounds(true);
+        projectile.body.onWorldBounds = true;
+        
+        // Fire the projectile
         projectile.fire(
-            this.owner.x,
-            this.owner.y,
+            this.owner.x + offsetX,
+            this.owner.y + offsetY,
             angle,
             this.stats.projectileSpeed
         );
     }
 
     fire() {
+        const now = Date.now();
+        if (now - this.lastFired < this.stats.fireRate) return;
+        this.lastFired = now;
+
         const angles = this.calculateProjectileAngles();
-        angles.forEach(angle => this.createProjectile(angle));
+        angles.forEach((angle, index) => this.createProjectile(angle, index));
     }
 }

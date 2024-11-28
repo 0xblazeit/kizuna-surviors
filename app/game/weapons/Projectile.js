@@ -8,6 +8,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene;
         this.stats = weaponStats;
         this.pierceCount = 0;
+        this.hitEnemies = new Set(); // Track which enemies we've hit
         this.explosionTimeouts = []; // Array to store explosion timeouts
 
         // Trail effect properties
@@ -297,13 +298,17 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     fire(x, y, angle, speed) {
-        this.setActive(true).setVisible(true);
+        // Set velocity based on angle and speed
+        const velocityX = Math.cos(angle) * speed;
+        const velocityY = Math.sin(angle) * speed;
+        
         this.setPosition(x, y);
-        this.setVelocity(
-            Math.cos(angle) * speed,
-            Math.sin(angle) * speed
-        );
         this.setRotation(angle);
+        this.body.reset(x, y);
+        this.body.setVelocity(velocityX, velocityY);
+        
+        // Enable the physics body
+        this.body.enable = true;
 
         // Reset trail points
         if (this.stats.special === 'EXTRA MUSTARDDDDD') {
@@ -313,18 +318,38 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleHit() {
-        if (this.stats.pierce > 0 && this.pierceCount < this.stats.pierce) {
-            this.pierceCount++;
-            return false;
+        // For hotdog projectiles, destroy immediately
+        if (this.texture.key === 'hotdog') {
+            this.destroy();
+            return;
         }
-        this.destroy();
-        return true;
+        
+        // For other projectiles, handle pierce logic
+        this.pierceCount++;
+        console.log('Projectile hit, pierce count:', this.pierceCount, 'max pierce:', this.stats.pierce);
+        
+        if (this.pierceCount >= (this.stats.pierce || 1)) {
+            this.destroy();
+        }
+    }
+    
+    canHitEnemy(enemy) {
+        return !this.hitEnemies.has(enemy.id);
+    }
+    
+    recordEnemyHit(enemy) {
+        this.hitEnemies.add(enemy.id);
     }
 
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
-
-        // Update trail effect
+        
+        // Handle homing behavior for wand projectiles
+        if (this.stats.special === 'HOMING' || this.stats.special === 'HOMING_GLOW') {
+            this.updateHomingBehavior(delta);
+        }
+        
+        // Update trail effects
         if (this.stats.special === 'EXTRA MUSTARDDDDD') {
             this.updateTrail();
         }
@@ -338,6 +363,57 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
         if (distance > this.stats.range) {
             this.destroy();
+        }
+    }
+
+    updateHomingBehavior(delta) {
+        // Find closest enemy
+        const enemies = this.scene.enemies.getChildren();
+        if (enemies.length === 0) return;
+        
+        let closestEnemy = null;
+        let closestDistance = Infinity;
+        
+        for (const enemy of enemies) {
+            if (!enemy.active) continue;
+            
+            const distance = Phaser.Math.Distance.Between(
+                this.x, this.y,
+                enemy.x, enemy.y
+            );
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestEnemy = enemy;
+            }
+        }
+        
+        if (closestEnemy) {
+            // Calculate angle to enemy
+            const targetAngle = Phaser.Math.Angle.Between(
+                this.x, this.y,
+                closestEnemy.x, closestEnemy.y
+            );
+            
+            // Current angle of movement
+            const currentAngle = Math.atan2(this.body.velocity.y, this.body.velocity.x);
+            
+            // Smoothly rotate towards target
+            let newAngle = Phaser.Math.Angle.RotateTo(
+                currentAngle,
+                targetAngle,
+                0.1  // Adjust this value to control turn speed
+            );
+            
+            // Update velocity
+            const speed = this.stats.projectileSpeed;
+            this.body.setVelocity(
+                Math.cos(newAngle) * speed,
+                Math.sin(newAngle) * speed
+            );
+            
+            // Update rotation to match movement
+            this.setRotation(newAngle);
         }
     }
 

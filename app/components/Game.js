@@ -4,9 +4,10 @@ import Phaser from 'phaser';
 
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
-import Enemy from '../game/entities/Enemy';
+import Enemy from '../game/enemies/Enemy';
 import { weapons } from '../game/config/weapons';
 import Weapon from '../game/weapons/Weapon';
+import Projectile from '../game/weapons/Projectile';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -78,6 +79,11 @@ const GameScene = {
     // Load enemy sprite
     this.load.svg('enemy', '/assets/game/enemy.svg');
 
+    // Load enemy-boomer sprite
+    this.load.svg('enemy-boomer', '/assets/game/characters/enemy-boomer.svg', {
+      scale: 0.5
+    });
+
     // Load weapon icons sprites
     this.load.svg('hotdog-icon', '/assets/game/weapons/weapon-hotdog-icon.svg', {
       scale: 0.1
@@ -99,12 +105,11 @@ const GameScene = {
     // Initialize game state
     this.gameState = {
       timerStarted: false,
-      gameTimer: 0,
-      level: 1,
-      xp: 0,
-      xpToNextLevel: 100,
+      elapsedTime: 0,
       gold: 0,
-      kills: 0
+      kills: 0,
+      xp: 0,
+      level: 1
     };
 
     // Bind methods to this scene
@@ -177,6 +182,19 @@ const GameScene = {
     // Make camera follow player with deadzone
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(100, 100);
+
+    // Create projectiles group with physics
+    this.projectiles = this.physics.add.group({
+      classType: Projectile,
+      maxSize: 200,
+      runChildUpdate: true
+    });
+
+    // Create enemy group with physics
+    this.enemies = this.physics.add.group({
+      classType: Enemy,
+      runChildUpdate: true
+    });
 
     // Create weapons for player
     this.player.weapon = new Weapon(this, this.player, 'hotdog');
@@ -354,6 +372,15 @@ const GameScene = {
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
 
+    // Spawn test enemies in a line
+    const startX = this.game.config.width / 2;
+    const startY = this.game.config.height / 3;
+    
+    for (let i = 0; i < 5; i++) {
+      const enemy = new Enemy(this, startX, startY + (i * 60), 'enemy-boomer');
+      this.enemies.add(enemy);
+    }
+
     // Setup keyboard input
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
@@ -368,20 +395,47 @@ const GameScene = {
       this.scene.start('MenuScene');
     });
 
-    // Enable collisions between projectiles and world bounds
+    // Add collision between player and enemies
+    this.physics.add.collider(
+      this.player,
+      this.enemies,
+      (player, enemy) => {
+        if (!player.isInvulnerable) {
+          enemy.attackPlayer();
+        }
+      },
+      null,
+      this
+    );
+
+    // Add collision between projectiles and enemies
+    this.physics.add.collider(
+      this.projectiles,
+      this.enemies,
+      (projectile, enemy) => {
+        if (!projectile.active || !enemy.active) return;
+        
+        // Only hit each enemy once per projectile
+        if (projectile.canHitEnemy(enemy)) {
+          // Apply damage and effects
+          enemy.takeDamage(projectile.stats.damage);
+          projectile.recordEnemyHit(enemy);
+          projectile.handleHit();
+          
+          console.log('Hit enemy:', enemy.id, 'Pierce count:', projectile.pierceCount);
+        }
+      },
+      null,
+      this
+    );
+
+    // Destroy projectiles that go off screen
     this.physics.world.on('worldbounds', (body) => {
       const gameObject = body.gameObject;
       if (gameObject instanceof Projectile) {
         gameObject.destroy();
       }
     });
-
-    // Create debug text for world position
-    this.debugText = this.add.text(16, 600 - 40, '', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
   },
 
   update: function(time, delta) {
@@ -425,14 +479,14 @@ const GameScene = {
       this.timerEvent = this.time.addEvent({
         delay: 1000,
         callback: () => {
-          if (!this.gameState.timerStarted || this.gameState.gameTimer >= 1800) return;  // 30 minutes = 1800 seconds
+          if (!this.gameState.timerStarted || this.gameState.elapsedTime >= 1800) return;  // 30 minutes = 1800 seconds
   
-          this.gameState.gameTimer++;
-          const minutes = Math.floor(this.gameState.gameTimer / 60);
-          const seconds = this.gameState.gameTimer % 60;
+          this.gameState.elapsedTime++;
+          const minutes = Math.floor(this.gameState.elapsedTime / 60);
+          const seconds = this.gameState.elapsedTime % 60;
           this.timerText.setText(`${minutes}:${seconds.toString().padStart(2, '0')}`);
           
-          console.log('Timer updated:', this.gameState.gameTimer); // Debug log
+          console.log('Timer updated:', this.gameState.elapsedTime); // Debug log
         },
         callbackScope: this,
         loop: true

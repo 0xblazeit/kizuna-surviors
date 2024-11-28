@@ -34,6 +34,11 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
             items: [],
             weapons: ['hotdog', 'wand']  // Initial weapons
         };
+
+        // Damage handling properties
+        this.isInvulnerable = false;
+        this.invulnerabilityDuration = 1000; // 1 second of invulnerability after hit
+        this.flashDuration = 100;
     }
 
     setupControls() {
@@ -158,6 +163,78 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
             experience: this.experience,
             gold: this.inventory.gold
         };
+    }
+
+    takeDamage(amount) {
+        if (this.isInvulnerable) return;
+
+        // Apply defense reduction
+        const damage = Math.max(1, amount - this.stats.defense);
+        this.stats.health = Math.max(0, this.stats.health - damage);
+
+        // Visual feedback
+        this.flash();
+        
+        // Show damage number
+        this.showDamageNumber(damage);
+
+        // Make player invulnerable briefly
+        this.setInvulnerable();
+
+        // Check for death
+        if (this.stats.health <= 0) {
+            this.die();
+        }
+    }
+
+    flash() {
+        this.setTint(0xff0000);
+        this.scene.time.delayedCall(this.flashDuration, () => {
+            this.clearTint();
+        });
+    }
+
+    setInvulnerable() {
+        this.isInvulnerable = true;
+        
+        // Flash effect during invulnerability
+        const flashInterval = this.scene.time.addEvent({
+            delay: 100,
+            callback: () => {
+                this.alpha = this.alpha === 1 ? 0.5 : 1;
+            },
+            repeat: this.invulnerabilityDuration / 100 - 1
+        });
+
+        // Remove invulnerability after duration
+        this.scene.time.delayedCall(this.invulnerabilityDuration, () => {
+            this.isInvulnerable = false;
+            this.alpha = 1;
+            flashInterval.remove();
+        });
+    }
+
+    showDamageNumber(amount) {
+        const text = this.scene.add.text(this.x, this.y - 20, `-${amount}`, {
+            fontSize: '16px',
+            fill: '#ff0000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: text,
+            y: text.y - 30,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power1',
+            onComplete: () => text.destroy()
+        });
+    }
+
+    die() {
+        // Handle player death
+        console.log('Player died!');
+        // You can add game over logic here
     }
 
     onDeath() {
