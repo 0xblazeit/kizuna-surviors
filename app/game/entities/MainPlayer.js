@@ -39,6 +39,15 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         this.isInvulnerable = false;
         this.invulnerabilityDuration = 1000; // 1 second of invulnerability after hit
         this.flashDuration = 100;
+
+        // Health bar properties
+        this.healthBarWidth = 50;
+        this.healthBarHeight = 6;
+        this.healthBarOffsetY = 30;
+        
+        // Create health bar graphics
+        this.healthBar = this.scene.add.graphics();
+        this.updateHealthBar();
     }
 
     setupControls() {
@@ -59,6 +68,8 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         if (this.weapon2) {
             this.weapon2.update(time);
         }
+        // Update health bar position
+        this.updateHealthBar();
     }
 
     handleMovement() {
@@ -172,6 +183,9 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         const damage = Math.max(1, amount - this.stats.defense);
         this.stats.health = Math.max(0, this.stats.health - damage);
 
+        // Update health bar
+        this.updateHealthBar();
+
         // Visual feedback
         this.flash();
         
@@ -185,6 +199,29 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         if (this.stats.health <= 0) {
             this.die();
         }
+    }
+
+    updateHealthBar() {
+        this.healthBar.clear();
+        
+        // Draw background (black)
+        this.healthBar.fillStyle(0x000000);
+        this.healthBar.fillRect(
+            this.x - this.healthBarWidth / 2,
+            this.y + this.healthBarOffsetY,
+            this.healthBarWidth,
+            this.healthBarHeight
+        );
+
+        // Draw health (green)
+        const healthPercentage = this.stats.health / this.stats.maxHealth;
+        this.healthBar.fillStyle(0x00ff00);
+        this.healthBar.fillRect(
+            this.x - this.healthBarWidth / 2,
+            this.y + this.healthBarOffsetY,
+            this.healthBarWidth * healthPercentage,
+            this.healthBarHeight
+        );
     }
 
     flash() {

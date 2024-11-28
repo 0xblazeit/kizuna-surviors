@@ -1,4 +1,5 @@
 import Enemy from '../enemies/Enemy';
+import MainPlayer from '../entities/MainPlayer';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -19,6 +20,8 @@ export default class GameScene extends Phaser.Scene {
 
   preload() {
     console.log('GameScene preload called');
+    // Load player sprite
+    this.load.svg('player', '/assets/game/characters/player.svg');
     // Load enemy sprite
     this.load.svg('enemy-boomer', '/assets/game/characters/enemy-boomer.svg');
   }
@@ -36,8 +39,8 @@ export default class GameScene extends Phaser.Scene {
     
     console.log('Enemy group initialized:', this.enemies);
 
-    // Add a simple blue rectangle as the player
-    this.player = this.add.rectangle(width / 2, height / 2, 50, 50, 0x0000ff);
+    // Create player at center of screen
+    this.player = new MainPlayer(this, 400, 300);
     
     // Add text
     this.add.text(16, 16, 'Game Scene (ESC to return)', {
@@ -60,6 +63,15 @@ export default class GameScene extends Phaser.Scene {
       console.log('ESC pressed, returning to menu');
       this.scene.start('MenuScene');
     });
+
+    // Set up collisions between enemies and player
+    this.physics.add.overlap(
+      this.player,
+      this.enemies,
+      (player, enemy) => {
+        player.takeDamage(10); // Take 10 damage when touching enemy
+      }
+    );
   }
 
   spawnEnemies() {
@@ -81,6 +93,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
+    // Update player
+    if (this.player) {
+      this.player.update();
+    }
+
     // Update enemies
     this.enemies.getChildren().forEach(enemy => enemy.update());
   }
