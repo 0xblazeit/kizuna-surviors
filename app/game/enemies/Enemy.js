@@ -9,7 +9,7 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
         scene.physics.add.existing(this);
         
         // Set up sprite properties
-        this.setScale(0.5);  // Adjust scale as needed
+        this.setScale(0.5);  
         this.setOrigin(0.5);
         
         // Initialize state
@@ -41,14 +41,14 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
     }
 
     takeDamage(amount) {
+        if (this.isDying) return;  // Don't process damage if already dying
+
         // For testing, we'll still show damage numbers but won't reduce health
         this.showDamageNumber(amount);
         
-        // Visual feedback
-        if (!this.isFlashing) {
-            this.flash();
-            this.knockback();
-        }
+        // Always trigger flash and knockback for better feedback
+        this.flash();
+        this.knockback();
 
         // Emit event for tracking
         this.emit('damaged', amount);
@@ -58,6 +58,46 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
             console.log('Enemy triggering death animation');
             this.playDeathAnimation();
         }
+    }
+
+    showDamageNumber(amount) {
+        const damageText = this.scene.add.text(this.x, this.y - 20, `-${amount}`, {
+            color: '#ff0000',
+            fontSize: '20px'
+        });
+
+        this.scene.tweens.add({
+            targets: damageText,
+            y: damageText.y - 50,
+            alpha: 0,
+            duration: 800,
+            ease: 'Cubic.easeOut',
+            onComplete: () => damageText.destroy()
+        });
+    }
+
+    flash() {
+        if (this.isFlashing) return;  // Prevent multiple flashes at once
+        
+        this.isFlashing = true;
+        
+        // Set to pure white with high intensity
+        this.setTintFill(0xffffff);
+        
+        this.scene.time.delayedCall(this.flashDuration, () => {
+            this.clearTint();
+            this.isFlashing = false;
+        });
+    }
+
+    knockback() {
+        this.scene.tweens.add({
+            targets: this,
+            x: this.x + (Math.random() - 0.5) * 20,
+            y: this.y + (Math.random() - 0.5) * 20,
+            duration: 100,
+            ease: 'Cubic.easeOut'
+        });
     }
 
     playDeathAnimation() {
@@ -153,37 +193,6 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
         });
     }
     
-    flash() {
-        this.isFlashing = true;
-        this.setTint(0xff0000);
-        
-        this.scene.time.delayedCall(this.flashDuration, () => {
-            this.clearTint();
-            this.isFlashing = false;
-        });
-    }
-    
-    knockback() {
-        if (this.isStaggered) return;
-        
-        // Very minimal stagger
-        this.isStaggered = true;
-        const offsetX = (Math.random() - 0.5) * 0.5;
-        const offsetY = (Math.random() - 0.5) * 0.5;
-        
-        this.scene.tweens.add({
-            targets: this,
-            x: this.x + offsetX,
-            y: this.y + offsetY,
-            duration: 20,
-            ease: 'Sine.easeOut',
-            yoyo: true,
-            onComplete: () => {
-                this.isStaggered = false;
-            }
-        });
-    }
-    
     moveTowardsPlayer() {
         const player = this.scene.player;
         if (!player || !player.active) return;
@@ -229,22 +238,5 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
         if (player && player.active && !player.isInvulnerable) {
             player.takeDamage(this.damage);
         }
-    }
-    
-    showDamageNumber(amount) {
-        const text = this.scene.add.text(this.x, this.y - 20, `-${amount}`, {
-            fontSize: '16px',
-            fill: '#ff0000',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        
-        this.scene.tweens.add({
-            targets: text,
-            y: text.y - 30,
-            alpha: 0,
-            duration: 800,
-            ease: 'Power1',
-            onComplete: () => text.destroy()
-        });
     }
 }
