@@ -351,7 +351,7 @@ const GameScene = {
     ];
 
     // Spawn 20 random enemies at random positions
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       // Get random position within world bounds
       const randomX = Phaser.Math.Between(100, worldWidth - 100);
       const randomY = Phaser.Math.Between(100, worldHeight - 100);
