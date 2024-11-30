@@ -290,9 +290,9 @@ const GameScene = {
       
       const stats = this.player.stats;
       this.statsTexts.health.setText(`HP: ${stats.currentHealth}/${stats.maxHealth}`);
-      this.statsTexts.attack.setText(`ATK: ${stats.damage}`);
-      this.statsTexts.defense.setText(`DEF: ${stats.defense}`);
-      this.statsTexts.speed.setText(`SPD: ${Math.round(stats.moveSpeed)}`);
+      this.statsTexts.attack.setText(`ATK: ${stats.damage.toFixed(1)}`);
+      this.statsTexts.defense.setText(`DEF: ${stats.defense.toFixed(1)}`);
+      this.statsTexts.speed.setText(`SPD: ${stats.moveSpeed.toFixed(1)}`);
     };
 
     // Add all UI elements to the container
