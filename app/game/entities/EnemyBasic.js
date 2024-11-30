@@ -153,6 +153,31 @@ class EnemyBasic extends BasePlayer {
         // Update health bar
         this.updateHealthBar();
 
+        // Create hit marker text
+        const hitMarker = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 20,
+            `-${damageDealt}`,
+            {
+                fontSize: '16px',
+                fill: '#ff0000',
+                fontStyle: 'bold'
+            }
+        );
+        hitMarker.setDepth(100);
+
+        // Animate the hit marker
+        this.scene.tweens.add({
+            targets: hitMarker,
+            y: hitMarker.y - 30,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power2',
+            onComplete: () => {
+                hitMarker.destroy();
+            }
+        });
+
         // Play hit effects if not already staggered
         if (!this.isStaggered) {
             this.playHitEffects();
