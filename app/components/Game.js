@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
-import EnemyPlayer from '../game/entities/EnemyPlayer';
+import EnemyBasic from '../game/entities/EnemyBasic';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -360,7 +360,7 @@ const GameScene = {
       const randomSprite = enemySprites[Phaser.Math.Between(0, enemySprites.length - 1)];
       
       // Create enemy
-      const enemy = new EnemyPlayer(this, randomX, randomY, randomSprite, {
+      const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
         type: 'basic',
         scale: 0.3
       });

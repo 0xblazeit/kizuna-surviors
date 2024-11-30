@@ -15,6 +15,25 @@ class GameScene {
 
   preload() {
     console.log('GameScene preload called');
+    
+    // Create a canvas for the particle texture
+    const particleCanvas = document.createElement('canvas');
+    particleCanvas.width = 16;
+    particleCanvas.height = 16;
+    const ctx = particleCanvas.getContext('2d');
+
+    // Draw a white circle
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(8, 8, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Create a base64 texture from the canvas
+    const base64Texture = particleCanvas.toDataURL();
+    
+    // Load the texture into Phaser
+    this.load.image('particle', base64Texture);
+    console.log('Particle texture created and loaded');
   }
 
   create() {

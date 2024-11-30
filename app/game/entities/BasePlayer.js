@@ -117,6 +117,27 @@ class BasePlayer {
         }
     }
 
+    updateHealthBar() {
+        if (!this.healthBar) return;
+
+        const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
+        const width = this.healthBar.width * healthPercent;
+        
+        // Update the health bar width
+        this.healthBar.bar.width = width;
+        
+        // Update color based on health percentage
+        let color;
+        if (healthPercent > 0.6) {
+            color = 0x00ff00; // Green
+        } else if (healthPercent > 0.3) {
+            color = 0xffff00; // Yellow
+        } else {
+            color = 0xff4444; // Red
+        }
+        this.healthBar.bar.setFillStyle(color);
+    }
+
     createTrailEffect() {
         // Create a copy of the sprite as a trail
         const trail = this.scene.add.sprite(

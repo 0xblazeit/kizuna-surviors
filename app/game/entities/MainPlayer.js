@@ -159,24 +159,7 @@ class MainPlayer extends BasePlayer {
     }
 
     updateHealthBar() {
-        const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
-        const newWidth = this.healthBar.width * healthPercent;
-        
-        // Update the bar width
-        this.healthBar.bar.width = newWidth;
-        
-        // Center the bar (local position within container)
-        const barOffset = (this.healthBar.width - newWidth) / 2;
-        this.healthBar.bar.x = barOffset;
-        
-        // Update color based on health percentage
-        if (healthPercent > 0.6) {
-            this.healthBar.bar.setFillStyle(0x00ff00); // Green
-        } else if (healthPercent > 0.3) {
-            this.healthBar.bar.setFillStyle(0xffff00); // Yellow
-        } else {
-            this.healthBar.bar.setFillStyle(0xff0000); // Red
-        }
+        super.updateHealthBar();
     }
 
     handleMovement(input) {
