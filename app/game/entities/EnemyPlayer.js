@@ -10,6 +10,7 @@ class EnemyPlayer extends BasePlayer {
             attackSpeed: 1,
             attackDamage: 8,
             scale: 0.8,
+            clickDamage: 25,  // Add configurable click damage
             ...config
         };
 
@@ -19,6 +20,7 @@ class EnemyPlayer extends BasePlayer {
         this.type = config.type || 'basic';
         this.isStaggered = false;
         this.hitFlashDuration = 100; // Duration of white flash in ms
+        this.clickDamage = enemyConfig.clickDamage;  // Store click damage
         
         // Create health bar with proper spacing
         const spriteHeight = this.sprite.height * enemyConfig.scale;
@@ -56,8 +58,35 @@ class EnemyPlayer extends BasePlayer {
         
         // Add click handler
         this.sprite.on('pointerdown', () => {
-            // Take 1 damage when clicked
-            this.takeDamage(1);
+            // Take configured click damage when clicked
+            const damageDealt = this.takeDamage(this.clickDamage);
+            
+            // Show the actual damage number
+            if (damageDealt > 0) {
+                const damageText = this.scene.add.text(
+                    this.sprite.x,
+                    this.sprite.y - 20,
+                    damageDealt.toString(),
+                    {
+                        fontSize: '20px',
+                        fill: '#ffffff',
+                        stroke: '#000000',
+                        strokeThickness: 4
+                    }
+                );
+                
+                // Animate the damage number floating up and fading away
+                this.scene.tweens.add({
+                    targets: damageText,
+                    y: damageText.y - 50,
+                    alpha: 0,
+                    duration: 1000,
+                    ease: 'Cubic.Out',
+                    onComplete: () => {
+                        damageText.destroy();
+                    }
+                });
+            }
         });
     }
 
@@ -152,12 +181,45 @@ class EnemyPlayer extends BasePlayer {
         }
     }
 
+    playDeathAnimation() {
+        return new Promise((resolve) => {
+            const duration = 800; // Duration in ms
+            
+            // First tween: Scale up slightly and start fading
+            this.scene.tweens.add({
+                targets: this.sprite,
+                scaleX: this.sprite.scaleX * 1.2,
+                scaleY: this.sprite.scaleY * 1.2,
+                alpha: 0.8,
+                duration: duration * 0.3,
+                ease: 'Quad.Out',
+                onComplete: () => {
+                    // Second tween: Break apart and fade away
+                    this.scene.tweens.add({
+                        targets: this.sprite,
+                        scaleX: this.sprite.scaleX * 0.1,
+                        scaleY: this.sprite.scaleY * 0.1,
+                        alpha: 0,
+                        angle: Math.random() < 0.5 ? 45 : -45,
+                        duration: duration * 0.7,
+                        ease: 'Quad.In',
+                        onComplete: resolve
+                    });
+                }
+            });
+        });
+    }
+
     onDeath() {
-        // Clean up health bar before death
+        // Clean up health bar
         if (this.healthBar) {
             this.healthBar.container.destroy();
         }
-        super.onDeath();
+
+        // Play death animation before destroying
+        this.playDeathAnimation().then(() => {
+            super.onDeath();
+        });
     }
 }
 

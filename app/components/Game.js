@@ -365,11 +365,6 @@ const GameScene = {
         scale: 0.3
       });
 
-      // Listen for enemy damage
-      enemy.sprite.on('pointerdown', () => {
-        this.showDamageNumber(enemy.sprite.x, enemy.sprite.y - 20, 1);
-      });
-
       // Listen for enemy death
       enemy.sprite.once('destroy', () => {
         const index = this.enemies.indexOf(enemy);
@@ -492,10 +487,12 @@ export default function Game() {
         width: 800,
         height: 600,
         backgroundColor: '#000000',
+        pixelArt: true,
         physics: {
           default: 'arcade',
           arcade: {
-            debug: true
+            gravity: { y: 0 },
+            debug: false
           }
         },
         scene: [MenuScene, GameScene]
