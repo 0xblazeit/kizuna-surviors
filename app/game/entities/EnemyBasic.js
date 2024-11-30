@@ -1,6 +1,6 @@
 import BasePlayer from './BasePlayer';
 
-class EnemyPlayer extends BasePlayer {
+class EnemyBasic extends BasePlayer {
     constructor(scene, x, y, texture, config = {}) {
         // Set enemy specific defaults
         const enemyConfig = {
@@ -18,7 +18,7 @@ class EnemyPlayer extends BasePlayer {
         super(scene, x, y, texture, enemyConfig);
 
         // Enemy specific properties
-        this.type = config.type || 'basic';
+        this.type = 'basic';
         this.isStaggered = false;
         this.hitFlashDuration = 100;
         this.clickDamage = enemyConfig.clickDamage;
@@ -62,40 +62,24 @@ class EnemyPlayer extends BasePlayer {
     initEnemy() {
         // Add any enemy specific initialization
         this.sprite.setTint(0xff9999); // Give enemies a slight red tint
-        
-        // Make sprite interactive
+
+        // Make the enemy interactive
         this.sprite.setInteractive();
-        
-        // Add click handler
-        this.sprite.on('pointerdown', () => {
-            // Take configured click damage when clicked
-            const damageDealt = this.takeDamage(this.clickDamage);
-            
-            // Show the actual damage number
-            if (damageDealt > 0) {
-                const damageText = this.scene.add.text(
-                    this.sprite.x,
-                    this.sprite.y - 20,
-                    damageDealt.toString(),
-                    {
-                        fontSize: '20px',
-                        fill: '#ffffff',
-                        stroke: '#000000',
-                        strokeThickness: 4
-                    }
-                );
-                
-                // Animate the damage number floating up and fading away
-                this.scene.tweens.add({
-                    targets: damageText,
-                    y: damageText.y - 50,
-                    alpha: 0,
-                    duration: 1000,
-                    ease: 'Cubic.Out',
-                    onComplete: () => {
-                        damageText.destroy();
-                    }
-                });
+
+        // Handle click/tap events
+        this.sprite.on('pointerdown', (pointer) => {
+            // Only process click if the enemy is alive
+            if (this.stats.currentHealth > 0) {
+                // Get the player instance
+                const player = this.scene.player;
+                if (player) {
+                    // Calculate damage from player's click
+                    const damage = player.clickDamage;
+                    this.takeDamage(damage);
+
+                    // Create click effect
+                    this.createClickEffect(pointer.x, pointer.y);
+                }
             }
         });
 
@@ -182,63 +166,54 @@ class EnemyPlayer extends BasePlayer {
         this.isStaggered = true;
         this.movementEnabled = false; // Stop movement during stagger
 
-        // Store original tint
+        // Flash effect
         const originalTint = this.sprite.tintTopLeft;
-
-        // Flash white
         this.sprite.setTint(0xffffff);
 
-        // Create a slight knockback/stagger effect
-        const staggerDistance = 10;
-        const staggerDuration = 100;
-        
-        // Random direction for stagger
-        const angle = Math.random() * Math.PI * 2;
-        const staggerX = Math.cos(angle) * staggerDistance;
-        const staggerY = Math.sin(angle) * staggerDistance;
-
-        // Create stagger animation
-        this.scene.tweens.add({
-            targets: [this.sprite, this.healthBar.container], // Move both sprite and health bar container
-            x: '+='+staggerX,
-            y: '+='+staggerY,
-            duration: staggerDuration / 2,
-            ease: 'Quad.Out',
-            yoyo: true,
-            onComplete: () => {
-                // Reset position exactly to avoid drift
-                this.sprite.x -= staggerX;
-                this.sprite.y -= staggerY;
-                this.healthBar.container.setPosition(
-                    this.sprite.x,
-                    this.sprite.y + this.healthBar.spacing
-                );
-                this.movementEnabled = true; // Re-enable movement after stagger
-            }
-        });
-
-        // Reset tint after flash duration
+        // Reset after flash duration
         this.scene.time.delayedCall(this.hitFlashDuration, () => {
             this.sprite.setTint(originalTint);
             this.isStaggered = false;
+            this.movementEnabled = true;
+        });
+    }
+
+    createClickEffect(x, y) {
+        // Create a circle at the click position
+        const clickEffect = this.scene.add.circle(x, y, 5, 0xffffff);
+        
+        // Add a white glow effect
+        clickEffect.setStrokeStyle(2, 0xffffff);
+        clickEffect.setAlpha(0.8);
+
+        // Animate the click effect
+        this.scene.tweens.add({
+            targets: clickEffect,
+            scale: 2,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                clickEffect.destroy();
+            }
         });
     }
 
     updateHealthBar() {
         if (!this.healthBar) return;
 
-        // Calculate health percentage
-        const healthPercent = Math.max(0, this.stats.currentHealth) / this.stats.maxHealth;
+        const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
+        const width = this.healthBar.width * healthPercent;
         
-        // Update health bar width
-        this.healthBar.bar.width = this.healthBar.width * healthPercent;
+        // Update the health bar width
+        this.healthBar.bar.width = width;
         
         // Update color based on health percentage
         let color;
         if (healthPercent > 0.6) {
-            color = 0x44ff44; // Green
+            color = 0x00ff00; // Green
         } else if (healthPercent > 0.3) {
-            color = 0xffff44; // Yellow
+            color = 0xffff00; // Yellow
         } else {
             color = 0xff4444; // Red
         }
@@ -264,27 +239,34 @@ class EnemyPlayer extends BasePlayer {
 
     playDeathAnimation() {
         return new Promise((resolve) => {
-            const duration = 800; // Duration in ms
+            // Create a flash effect
+            this.sprite.setTint(0xffffff);
             
-            // First tween: Scale up slightly and start fading
+            // Create a fade out and scale down effect
             this.scene.tweens.add({
-                targets: this.sprite,
-                scaleX: this.sprite.scaleX * 1.2,
-                scaleY: this.sprite.scaleY * 1.2,
-                alpha: 0.8,
-                duration: duration * 0.3,
-                ease: 'Quad.Out',
+                targets: [this.sprite],
+                alpha: 0,
+                scale: 0.1,
+                duration: 500,
+                ease: 'Power2',
                 onComplete: () => {
-                    // Second tween: Break apart and fade away
-                    this.scene.tweens.add({
-                        targets: this.sprite,
-                        scaleX: this.sprite.scaleX * 0.1,
-                        scaleY: this.sprite.scaleY * 0.1,
-                        alpha: 0,
-                        angle: Math.random() < 0.5 ? 45 : -45,
-                        duration: duration * 0.7,
-                        ease: 'Quad.In',
-                        onComplete: resolve
+                    // Create particle explosion effect
+                    const particles = this.scene.add.particles(this.sprite.x, this.sprite.y, 'particle', {
+                        speed: { min: 50, max: 100 },
+                        scale: { start: 0.5, end: 0 },
+                        alpha: { start: 1, end: 0 },
+                        lifespan: 300,
+                        quantity: 20,
+                        emitting: false
+                    });
+                    
+                    // Emit particles once
+                    particles.explode(20, this.sprite.x, this.sprite.y);
+                    
+                    // Clean up particles after animation
+                    this.scene.time.delayedCall(300, () => {
+                        particles.destroy();
+                        resolve();
                     });
                 }
             });
@@ -304,4 +286,4 @@ class EnemyPlayer extends BasePlayer {
     }
 }
 
-export default EnemyPlayer;
+export default EnemyBasic;
