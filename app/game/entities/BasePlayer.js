@@ -161,15 +161,20 @@ class BasePlayer {
     }
 
     takeDamage(amount) {
+        // Ensure amount is a valid number and at least 1
+        const damage = Math.max(1, Number(amount) || 0);
+        
         // Apply defense reduction
-        const damageAfterDefense = Math.max(0, amount - this.stats.defense);
+        const damageAfterDefense = Math.max(1, damage - (this.stats.defense || 0));
+        
+        // Update current health
         this.stats.currentHealth = Math.max(0, this.stats.currentHealth - damageAfterDefense);
         
         // Handle death
         if (this.stats.currentHealth <= 0) {
             this.onDeath();
         }
-
+        
         return damageAfterDefense;
     }
 

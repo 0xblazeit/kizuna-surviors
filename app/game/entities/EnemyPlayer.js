@@ -11,6 +11,7 @@ class EnemyPlayer extends BasePlayer {
             attackDamage: 8,
             scale: 0.8,
             trailTint: 0x3498db,  // Light blue trail
+            clickDamage: 25,      // Add default click damage
             ...config
         };
 
@@ -158,20 +159,22 @@ class EnemyPlayer extends BasePlayer {
     }
 
     takeDamage(amount) {
-        // Ensure at least 1 damage gets through
-        const minDamage = Math.max(1, amount);
-        const damageDealt = super.takeDamage(minDamage);
+        // Ensure amount is a valid number
+        const damage = Number(amount) || 0;
+        console.log(`Enemy taking ${damage} damage`);
+
+        // Apply base damage calculation
+        const damageDealt = super.takeDamage(damage);
         
-        // Debug log
-        console.log(`Enemy took ${damageDealt} damage. Health: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
-        
+        // Update health bar
         this.updateHealthBar();
-        
-        // Only trigger hit effects if not already staggered
+
+        // Play hit effects if not already staggered
         if (!this.isStaggered) {
             this.playHitEffects();
         }
         
+        console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
         return damageDealt;
     }
 
@@ -221,21 +224,30 @@ class EnemyPlayer extends BasePlayer {
         });
     }
 
+    updateHealthBar() {
+        if (!this.healthBar) return;
+
+        // Calculate health percentage
+        const healthPercent = Math.max(0, this.stats.currentHealth) / this.stats.maxHealth;
+        
+        // Update health bar width
+        this.healthBar.bar.width = this.healthBar.width * healthPercent;
+        
+        // Update color based on health percentage
+        let color;
+        if (healthPercent > 0.6) {
+            color = 0x44ff44; // Green
+        } else if (healthPercent > 0.3) {
+            color = 0xffff44; // Yellow
+        } else {
+            color = 0xff4444; // Red
+        }
+        this.healthBar.bar.setFillStyle(color);
+    }
+
     heal(amount) {
         super.heal(amount);
         this.updateHealthBar();
-    }
-
-    updateHealthBar() {
-        const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
-        const newWidth = this.healthBar.width * healthPercent;
-        
-        // Update the bar width
-        this.healthBar.bar.width = newWidth;
-        
-        // Center the bar (local position within container)
-        const barOffset = (this.healthBar.width - newWidth) / 2;
-        this.healthBar.bar.x = barOffset;
     }
 
     handleMovement(input) {
