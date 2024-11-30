@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
+import EnemyPlayer from '../game/entities/EnemyPlayer';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -70,8 +71,13 @@ const GameScene = {
       scale: 0.1
     });
 
-    // Load enemy sprite
-    this.load.svg('enemy', '/assets/game/enemy.svg');
+    // Load enemy sprites
+    this.load.svg('enemy-basic-one', '/assets/game/characters/enemies-basic/basic-one.svg');
+    this.load.svg('enemy-basic-two', '/assets/game/characters/enemies-basic/basic-two.svg');
+    this.load.svg('enemy-basic-three', '/assets/game/characters/enemies-basic/basic-three.svg');
+    this.load.svg('enemy-basic-four', '/assets/game/characters/enemies-basic/basic-four.svg');
+    this.load.svg('enemy-basic-five', '/assets/game/characters/enemies-basic/basic-five.svg');
+    this.load.svg('enemy-basic-six', '/assets/game/characters/enemies-basic/basic-six.svg');
   },
 
   init: function() {
@@ -307,6 +313,37 @@ const GameScene = {
       scale: 1,
       spriteKey: 'player'
     });
+
+    // Create array to store enemies
+    this.enemies = [];
+    
+    // Enemy sprite keys
+    const enemySprites = [
+      'enemy-basic-one',
+      'enemy-basic-two',
+      'enemy-basic-three',
+      'enemy-basic-four',
+      'enemy-basic-five',
+      'enemy-basic-six'
+    ];
+
+    // Spawn 20 random enemies at random positions
+    for (let i = 0; i < 20; i++) {
+      // Get random position within world bounds
+      const randomX = Phaser.Math.Between(100, worldWidth - 100);
+      const randomY = Phaser.Math.Between(100, worldHeight - 100);
+      
+      // Get random enemy sprite
+      const randomSprite = enemySprites[Phaser.Math.Between(0, enemySprites.length - 1)];
+      
+      // Create enemy
+      const enemy = new EnemyPlayer(this, randomX, randomY, randomSprite, {
+        type: 'basic',
+        scale: 0.3
+      });
+      
+      this.enemies.push(enemy);
+    }
 
     // Listen for XP events
     this.events.on('playerXPGained', (data) => {
