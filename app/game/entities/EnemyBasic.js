@@ -407,6 +407,10 @@ class EnemyBasic extends BasePlayer {
             this.healthBar.container.destroy();
         }
 
+        // Increment kill counter
+        this.scene.gameState.kills++;
+        this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
         // Play death animation
         console.log('Starting death animation');
         this.playDeathAnimation().then(() => {
