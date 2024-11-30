@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
-import Enemy from '../game/entities/Enemy';
 
 const MenuScene = {
   key: 'MenuScene',
