@@ -64,45 +64,38 @@ class BasePlayer {
     }
 
     handleMovement(input) {
-        if (!this.sprite) return;
+        if (!input) return;
 
-        // Reset movement state
-        let isMoving = false;
-        const currentTime = Date.now();
+        // Calculate movement based on input
+        let dx = 0;
+        let dy = 0;
 
-        // Handle movement
-        if (input.left) {
-            this.sprite.x -= this.stats.moveSpeed;
+        if (input.left) dx -= 1;
+        if (input.right) dx += 1;
+        if (input.up) dy -= 1;
+        if (input.down) dy += 1;
+
+        // Normalize diagonal movement
+        if (dx !== 0 && dy !== 0) {
+            dx *= Math.SQRT1_2;
+            dy *= Math.SQRT1_2;
+        }
+
+        // Apply movement speed
+        this.sprite.x += dx * this.stats.moveSpeed;
+        this.sprite.y += dy * this.stats.moveSpeed;
+
+        // Update sprite flip based on movement direction
+        if (dx < 0) {
             this.sprite.setFlipX(true);
-            this.movementState.direction = 'left';
-            isMoving = true;
-        }
-        if (input.right) {
-            this.sprite.x += this.stats.moveSpeed;
+        } else if (dx > 0) {
             this.sprite.setFlipX(false);
-            this.movementState.direction = 'right';
-            isMoving = true;
         }
-        if (input.up) {
-            this.sprite.y -= this.stats.moveSpeed;
-            isMoving = true;
-        }
-        if (input.down) {
-            this.sprite.y += this.stats.moveSpeed;
-            isMoving = true;
-        }
+    }
 
-        // Update movement state
-        this.movementState.isMoving = isMoving;
-
-        // Handle trail effect
-        if (isMoving && currentTime - this.lastTrailTime >= this.animConfig.trailSpawnInterval) {
-            this.createTrailEffect();
-            this.lastTrailTime = currentTime;
-        }
-
-        // Update existing trail effects
-        this.updateTrailEffects();
+    update() {
+        // Base update logic
+        // Can be extended by child classes
     }
 
     createTrailEffect() {

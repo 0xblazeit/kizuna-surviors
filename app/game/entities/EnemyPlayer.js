@@ -5,12 +5,12 @@ class EnemyPlayer extends BasePlayer {
         // Set enemy specific defaults
         const enemyConfig = {
             maxHealth: 100,
-            moveSpeed: 3,
+            moveSpeed: Phaser.Math.FloatBetween(0.5, 2.5),
             defense: 0,
             attackSpeed: 1,
             attackDamage: 8,
             scale: 0.8,
-            clickDamage: 25,  // Add configurable click damage
+            clickDamage: 25,
             ...config
         };
 
@@ -19,8 +19,31 @@ class EnemyPlayer extends BasePlayer {
         // Enemy specific properties
         this.type = config.type || 'basic';
         this.isStaggered = false;
-        this.hitFlashDuration = 100; // Duration of white flash in ms
-        this.clickDamage = enemyConfig.clickDamage;  // Store click damage
+        this.hitFlashDuration = 100;
+        this.clickDamage = enemyConfig.clickDamage;
+        
+        // Movement properties
+        this.targetPlayer = null;
+        this.moveSpeed = enemyConfig.moveSpeed;
+        this.movementEnabled = true;
+        this.movementRange = Phaser.Math.Between(100, 300);
+
+        // Debug: Log initial sprite depth
+        console.log(`Enemy sprite initial depth: ${this.sprite.depth}`);
+        // Set sprite to a known depth
+        this.sprite.setDepth(10);
+
+        // Trail effect properties
+        this.lastTrailTime = 0;
+        this.trailConfig = {
+            spawnInterval: 150,    // Slower spawn for testing
+            fadeSpeed: 1000,       // Much slower fade for testing
+            alpha: 1,              // Full opacity for testing
+            tint: 0x00ff00         // Bright green for testing
+        };
+
+        // Debug counter
+        this.trailCount = 0;
         
         // Create health bar with proper spacing
         const spriteHeight = this.sprite.height * enemyConfig.scale;
@@ -88,6 +111,115 @@ class EnemyPlayer extends BasePlayer {
                 });
             }
         });
+
+        // Find the player in the scene
+        this.targetPlayer = this.scene.player;
+    }
+
+    update() {
+        super.update();
+        
+        if (this.movementEnabled && !this.isStaggered && this.targetPlayer) {
+            // Calculate distance to player
+            const dx = this.targetPlayer.sprite.x - this.sprite.x;
+            const dy = this.targetPlayer.sprite.y - this.sprite.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Only move if within movement range
+            if (distance <= this.movementRange && distance > 50) {
+                // Store previous position
+                const prevX = this.sprite.x;
+                const prevY = this.sprite.y;
+                
+                // Normalize direction
+                const normalizedDx = dx / distance;
+                const normalizedDy = dy / distance;
+                
+                // Move towards player
+                this.sprite.x += normalizedDx * this.moveSpeed;
+                this.sprite.y += normalizedDy * this.moveSpeed;
+
+                // Debug: Log actual movement
+                const actualDx = this.sprite.x - prevX;
+                const actualDy = this.sprite.y - prevY;
+                if (Math.abs(actualDx) > 0.01 || Math.abs(actualDy) > 0.01) {
+                    console.log(`Enemy actually moved: dx=${actualDx}, dy=${actualDy}`);
+                }
+                
+                // Update health bar position
+                if (this.healthBar) {
+                    this.healthBar.container.setPosition(
+                        this.sprite.x,
+                        this.sprite.y + this.healthBar.spacing
+                    );
+                }
+
+                // Flip sprite based on movement direction
+                if (dx < 0) {
+                    this.sprite.setFlipX(true);
+                } else {
+                    this.sprite.setFlipX(false);
+                }
+
+                // Add trail effect if moving
+                const currentTime = Date.now();
+                if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
+                    this.createTrailEffect();
+                    this.lastTrailTime = currentTime;
+                }
+            }
+        }
+    }
+
+    createTrailEffect() {
+        // Debug: Verify sprite exists and is visible
+        console.log(`Enemy sprite properties:
+            - Position: (${this.sprite.x}, ${this.sprite.y})
+            - Depth: ${this.sprite.depth}
+            - Visible: ${this.sprite.visible}
+            - Alpha: ${this.sprite.alpha}
+            - Active: ${this.sprite.active}
+        `);
+
+        this.trailCount++;
+        
+        // Create a rectangle instead of sprite copy
+        const width = this.sprite.width * this.sprite.scaleX;
+        const height = this.sprite.height * this.sprite.scaleY;
+        
+        const trail = this.scene.add.rectangle(
+            this.sprite.x,
+            this.sprite.y,
+            width,
+            height,
+            0xff0000,  // Bright red
+            1  // Full opacity
+        );
+        
+        // Set trail to appear above everything
+        trail.setDepth(1000);  // Very high depth to ensure it's on top
+        trail.setAlpha(1);
+        trail.setStrokeStyle(4, 0xffff00); // Thicker yellow border
+        
+        console.log(`Trail #${this.trailCount} created:
+            - Position: (${trail.x}, ${trail.y})
+            - Size: ${width}x${height}
+            - Depth: ${trail.depth}
+        `);
+        
+        // Make trail bigger and slower
+        this.scene.tweens.add({
+            targets: trail,
+            alpha: 0,
+            scaleX: 2,
+            scaleY: 2,
+            duration: 3000, // Even slower fade (3 seconds)
+            ease: 'Linear',
+            onComplete: () => {
+                console.log(`Trail #${this.trailCount} faded out and destroyed`);
+                trail.destroy();
+            }
+        });
     }
 
     takeDamage(amount) {
@@ -110,6 +242,7 @@ class EnemyPlayer extends BasePlayer {
 
     playHitEffects() {
         this.isStaggered = true;
+        this.movementEnabled = false; // Stop movement during stagger
 
         // Store original tint
         const originalTint = this.sprite.tintTopLeft;
@@ -132,7 +265,7 @@ class EnemyPlayer extends BasePlayer {
             x: '+='+staggerX,
             y: '+='+staggerY,
             duration: staggerDuration / 2,
-            ease: 'Quad.out',
+            ease: 'Quad.Out',
             yoyo: true,
             onComplete: () => {
                 // Reset position exactly to avoid drift
@@ -142,6 +275,7 @@ class EnemyPlayer extends BasePlayer {
                     this.sprite.x,
                     this.sprite.y + this.healthBar.spacing
                 );
+                this.movementEnabled = true; // Re-enable movement after stagger
             }
         });
 

@@ -181,6 +181,19 @@ class MainPlayer extends BasePlayer {
         }
     }
 
+    update() {
+        super.update();
+        
+        // Handle any continuous updates for the player
+        // Currently just ensures health bar stays aligned
+        if (this.healthBar) {
+            this.healthBar.container.setPosition(
+                this.sprite.x,
+                this.sprite.y + this.healthBar.spacing
+            );
+        }
+    }
+
     takeDamage(amount) {
         const damageDealt = super.takeDamage(amount);
         this.updateHealthBar();

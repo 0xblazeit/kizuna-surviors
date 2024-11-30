@@ -434,8 +434,21 @@ const GameScene = {
       up: this.cursors.up.isDown || this.wasd.up.isDown,
       down: this.cursors.down.isDown || this.wasd.down.isDown
     };
-    
-    this.player.handleMovement(input);
+
+    // Update player with movement input
+    if (this.player) {
+      this.player.handleMovement(input);
+      this.player.update();
+    }
+
+    // Update all enemies
+    if (this.enemies) {
+      this.enemies.forEach(enemy => {
+        if (enemy && enemy.update) {
+          enemy.update();
+        }
+      });
+    }
 
     // Check for timer start
     if ((this.cursors.left.isDown || this.cursors.right.isDown || 
