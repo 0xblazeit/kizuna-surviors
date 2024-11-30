@@ -20,7 +20,9 @@ class EnemyBasic extends BasePlayer {
         // Enemy specific properties
         this.type = 'basic';
         this.isStaggered = false;
-        this.hitFlashDuration = 100;
+        this.hitFlashDuration = 300;  // Increased from 100 to 300ms
+        this.staggerDuration = 500;   // Added separate stagger duration
+        this.knockbackForce = 30;     // Reduced from 150 to 30
         this.clickDamage = enemyConfig.clickDamage;
         
         // Movement properties
@@ -75,7 +77,7 @@ class EnemyBasic extends BasePlayer {
                 if (player) {
                     // Calculate damage from player's click
                     const damage = player.clickDamage;
-                    this.takeDamage(damage);
+                    this.takeDamage(damage, pointer.x, pointer.y);
 
                     // Create click effect
                     this.createClickEffect(pointer.x, pointer.y);
@@ -142,7 +144,7 @@ class EnemyBasic extends BasePlayer {
         }
     }
 
-    takeDamage(amount) {
+    takeDamage(amount, sourceX, sourceY) {
         // Ensure amount is a valid number
         const damage = Number(amount) || 0;
         console.log(`Enemy taking ${damage} damage`);
@@ -180,14 +182,16 @@ class EnemyBasic extends BasePlayer {
 
         // Play hit effects if not already staggered
         if (!this.isStaggered) {
-            this.playHitEffects();
+            this.playHitEffects(sourceX, sourceY);
         }
         
         console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
         return damageDealt;
     }
 
-    playHitEffects() {
+    playHitEffects(sourceX, sourceY) {
+        if (this.isStaggered) return;  // Prevent stagger interruption
+        
         this.isStaggered = true;
         this.movementEnabled = false; // Stop movement during stagger
 
@@ -195,11 +199,63 @@ class EnemyBasic extends BasePlayer {
         const originalTint = this.sprite.tintTopLeft;
         this.sprite.setTint(0xffffff);
 
-        // Reset after flash duration
+        // Create a slight knockback/stagger effect
+        const staggerDistance = 10;
+        const staggerDuration = 100;
+        
+        // Calculate stagger direction
+        let angle;
+        if (sourceX !== undefined && sourceY !== undefined) {
+            // If we have a source position, stagger away from it
+            const dx = this.sprite.x - sourceX;
+            const dy = this.sprite.y - sourceY;
+            angle = Math.atan2(dy, dx);
+        } else {
+            // Otherwise use random direction like the player
+            angle = Math.random() * Math.PI * 2;
+        }
+        
+        const staggerX = Math.cos(angle) * staggerDistance;
+        const staggerY = Math.sin(angle) * staggerDistance;
+
+        // Create stagger animation that includes both sprite and health bar
+        this.scene.tweens.add({
+            targets: [this.sprite, this.healthBar.container],
+            x: '+='+staggerX,
+            y: '+='+staggerY,
+            duration: staggerDuration / 2,
+            ease: 'Quad.Out',
+            yoyo: true,
+            onComplete: () => {
+                // Reset position exactly to avoid drift
+                this.sprite.x -= staggerX;
+                this.sprite.y -= staggerY;
+                this.healthBar.container.setPosition(
+                    this.sprite.x,
+                    this.sprite.y + this.healthBar.spacing
+                );
+            }
+        });
+
+        // Visual feedback during stagger
+        this.scene.tweens.add({
+            targets: this.sprite,
+            alpha: 0.6,
+            yoyo: true,
+            repeat: 2,
+            duration: 100,
+            ease: 'Linear'
+        });
+
+        // Reset after stagger duration
         this.scene.time.delayedCall(this.hitFlashDuration, () => {
             this.sprite.setTint(originalTint);
+        });
+
+        this.scene.time.delayedCall(this.staggerDuration, () => {
             this.isStaggered = false;
             this.movementEnabled = true;
+            this.sprite.alpha = 1;
         });
     }
 
