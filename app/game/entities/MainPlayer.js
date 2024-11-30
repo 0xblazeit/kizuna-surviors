@@ -10,7 +10,7 @@ class MainPlayer extends BasePlayer {
             attackSpeed: 1,
             attackDamage: 10,
             scale: 1,
-            trailTint: 0xe74c3c,  // Bright red trail
+            trailTint: 0xFF8C42,  
             clickDamage: 25,
             ...config
         };
