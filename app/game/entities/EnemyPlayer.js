@@ -10,7 +10,7 @@ class EnemyPlayer extends BasePlayer {
             attackSpeed: 1,
             attackDamage: 8,
             scale: 0.8,
-            clickDamage: 25,
+            trailTint: 0x3498db,  // Light blue trail
             ...config
         };
 
@@ -31,22 +31,6 @@ class EnemyPlayer extends BasePlayer {
         // Set sprite depth
         this.sprite.setDepth(10);
 
-        // Trail effect properties
-        this.lastTrailTime = 0;
-        this.trailConfig = {
-            spawnInterval: 100,     // Spawn every 100ms
-            fadeSpeed: 400,         // Fade out in 400ms
-            startAlpha: 0.7,        // Start at 70% opacity
-            tint: 0x3498db         // Light blue tint
-        };
-
-        // Create glow effect for trails
-        const glowSprite = scene.add.sprite(x, y, texture);
-        glowSprite.setScale(this.sprite.scaleX * 1.2);  // 20% larger than original
-        glowSprite.setAlpha(0);  // Start invisible
-        glowSprite.setTint(0x3498db);  // Light blue tint
-        this.glowSprite = glowSprite;
-        
         // Create health bar with proper spacing
         const spriteHeight = this.sprite.height * enemyConfig.scale;
         const healthBarWidth = spriteHeight * 0.8;
@@ -166,54 +150,11 @@ class EnemyPlayer extends BasePlayer {
                 // Add trail effect if moving
                 const currentTime = Date.now();
                 if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
-                    this.createTrailEffect();
+                    super.createTrailEffect();
                     this.lastTrailTime = currentTime;
                 }
             }
         }
-    }
-
-    createTrailEffect() {
-        // Create a copy of the sprite as a trail
-        const trail = this.scene.add.sprite(
-            this.sprite.x,
-            this.sprite.y,
-            this.sprite.texture.key,
-            this.sprite.frame.name
-        );
-        
-        // Match the sprite's current state
-        trail.setScale(this.sprite.scaleX);
-        trail.setFlipX(this.sprite.flipX);
-        trail.setOrigin(this.sprite.originX, this.sprite.originY);
-        trail.setDepth(this.sprite.depth - 1);  // Just behind the enemy
-        trail.setAlpha(this.trailConfig.startAlpha);
-        trail.setTint(this.trailConfig.tint);
-        
-        // Add a glow effect
-        const glow = this.scene.add.sprite(
-            trail.x,
-            trail.y,
-            trail.texture.key,
-            trail.frame.name
-        );
-        glow.setScale(trail.scaleX * 1.2);  // Slightly larger for glow effect
-        glow.setAlpha(this.trailConfig.startAlpha * 0.5);  // Half as visible as the trail
-        glow.setDepth(trail.depth - 1);  // Behind the trail
-        glow.setTint(this.trailConfig.tint);
-        glow.setBlendMode(Phaser.BlendModes.ADD);  // Additive blending for glow effect
-        
-        // Fade out effect for both trail and glow
-        this.scene.tweens.add({
-            targets: [trail, glow],
-            alpha: 0,
-            duration: this.trailConfig.fadeSpeed,
-            ease: 'Linear',
-            onComplete: () => {
-                trail.destroy();
-                glow.destroy();
-            }
-        });
     }
 
     takeDamage(amount) {
