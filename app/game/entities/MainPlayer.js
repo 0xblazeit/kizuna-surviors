@@ -87,6 +87,7 @@ class MainPlayer extends BasePlayer {
         this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
         this.stats.attackDamage += 2;
         this.stats.defense += 1;
+        this.stats.moveSpeed += 0.2; // Small increment to movement speed
 
         // Emit level up event that the scene can listen to
         this.scene.events.emit('playerLevelUp', this.experience.level);

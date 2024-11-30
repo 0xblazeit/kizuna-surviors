@@ -244,31 +244,59 @@ const GameScene = {
       color: '#ff4444'
     }).setOrigin(1, 0);
 
+    // Controls text (right side, below stats)
+    const controlsText = this.add.text(statsX, uiRowY + 80, 'ESC - Back to Menu', {
+      fontFamily: 'VT323',
+      fontSize: '18px',
+      color: '#aaaaaa'
+    }).setOrigin(1, 0);
+
+    const controlsText2 = this.add.text(statsX, uiRowY + 104, 'Move: Arrow Keys / WASD', {
+      fontFamily: 'VT323',
+      fontSize: '18px',
+      color: '#aaaaaa'
+    }).setOrigin(1, 0);
+
+    // Stats display (below controls)
+    const statsStyle = {
+      fontFamily: 'VT323',
+      fontSize: '20px',
+      color: '#4444ff'
+    };
+
+    // Add header for stats
+    const statsHeader = this.add.text(statsX, uiRowY + 144, '--- Player Stats ---', {
+      ...statsStyle,
+      color: '#ffffff'
+    }).setOrigin(1, 0);
+
+    // Create stats text objects
+    this.statsTexts = {
+      health: this.add.text(statsX, uiRowY + 170, '', statsStyle).setOrigin(1, 0),
+      attack: this.add.text(statsX, uiRowY + 192, '', statsStyle).setOrigin(1, 0),
+      defense: this.add.text(statsX, uiRowY + 214, '', statsStyle).setOrigin(1, 0),
+      speed: this.add.text(statsX, uiRowY + 236, '', statsStyle).setOrigin(1, 0)
+    };
+
+    // Function to update stats display
+    this.updateStatsDisplay = () => {
+      if (!this.player) return;
+      
+      const stats = this.player.stats;
+      this.statsTexts.health.setText(`HP: ${stats.currentHealth}/${stats.maxHealth}`);
+      this.statsTexts.attack.setText(`ATK: ${stats.damage}`);
+      this.statsTexts.defense.setText(`DEF: ${stats.defense}`);
+      this.statsTexts.speed.setText(`SPD: ${Math.round(stats.moveSpeed)}`);
+    };
+
     // Add all UI elements to the container
     uiContainer.add([
       xpBarBg, this.xpBarFill, this.xpText,
       ...gridCells,
-      this.timerText, this.goldText, this.killsText
+      this.timerText, this.goldText, this.killsText,
+      controlsText, controlsText2, statsHeader,
+      ...Object.values(this.statsTexts)
     ]);
-
-    // Add control instructions below the grid
-    const bottomUIY = uiRowY + gridHeight + 30; // 30px padding below grid
-
-    // Controls text (left side) with smaller font
-    const controlsText = this.add.text(40, bottomUIY, 'ESC - Back to Menu', {
-      fontFamily: 'VT323',
-      fontSize: '18px',
-      color: '#ffffff'
-    }).setOrigin(0, 0);
-
-    const controlsText2 = this.add.text(40, bottomUIY + 24, 'Controls: Arrow Keys / WASD', {
-      fontFamily: 'VT323',
-      fontSize: '18px',
-      color: '#ffffff'
-    }).setOrigin(0, 0);
-
-    // Add bottom UI elements to container
-    uiContainer.add([controlsText, controlsText2]);
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -288,6 +316,11 @@ const GameScene = {
       this.updateXPBar();
     });
 
+    // Listen for level up events to update stats
+    this.events.on('playerLevelUp', (level) => {
+      this.updateStatsDisplay();
+    });
+
     // Add spacebar XP debug handler
     this.input.keyboard.addKey('SPACE').on('down', () => {
       this.gainXP(50);
@@ -297,6 +330,9 @@ const GameScene = {
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
     this.cameras.main.setZoom(1);
+
+    // Initialize stats display
+    this.updateStatsDisplay();
 
     // Add position debug text (make it fixed to camera)
     this.debugText = this.add.text(16, height - 40, '', {
