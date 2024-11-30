@@ -162,12 +162,9 @@ class MainPlayer extends BasePlayer {
         const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
         const newWidth = this.healthBar.width * healthPercent;
         
-        // Update the bar width
+        // Update the bar width from right to left
         this.healthBar.bar.width = newWidth;
-        
-        // Center the bar (local position within container)
-        const barOffset = (this.healthBar.width - newWidth) / 2;
-        this.healthBar.bar.x = barOffset;
+        this.healthBar.bar.setOrigin(1, 0.5); // Set origin to right side
         
         // Update color based on health percentage
         if (healthPercent > 0.6) {
