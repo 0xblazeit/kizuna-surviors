@@ -5,16 +5,20 @@ class MainPlayer extends BasePlayer {
         // Set main player specific defaults
         const mainPlayerConfig = {
             maxHealth: 100,
-            moveSpeed: 5,
-            defense: 5,
-            attackSpeed: 1.2,
-            attackDamage: 15,
+            moveSpeed: 3,
+            defense: 0,
+            attackSpeed: 1,
+            attackDamage: 10,
             scale: 1,
+            trailTint: 0xFF8C42,  
             clickDamage: 25,
             ...config
         };
 
         super(scene, x, y, texture, mainPlayerConfig);
+
+        // Set sprite depth
+        this.sprite.setDepth(10);
 
         // Player specific properties
         this.isStaggered = false;
@@ -56,6 +60,12 @@ class MainPlayer extends BasePlayer {
         };
 
         this.clickDamage = mainPlayerConfig.clickDamage;
+
+        // Initialize movement variables
+        this.movementEnabled = true;
+        this.isMoving = false;
+        this.lastX = x;
+        this.lastY = y;
 
         // Initialize player
         this.initPlayer();
@@ -173,6 +183,36 @@ class MainPlayer extends BasePlayer {
         super.handleMovement(input);
         
         // Update health bar container position to follow player
+        if (this.healthBar) {
+            this.healthBar.container.setPosition(
+                this.sprite.x,
+                this.sprite.y + this.healthBar.spacing
+            );
+        }
+    }
+
+    update() {
+        super.update();
+
+        // Check if player has moved
+        const hasMoved = this.lastX !== this.sprite.x || this.lastY !== this.sprite.y;
+        
+        if (hasMoved) {
+            console.log(`Player moved from (${this.lastX}, ${this.lastY}) to (${this.sprite.x}, ${this.sprite.y})`);
+            
+            // Add trail effect if moving
+            const currentTime = Date.now();
+            if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
+                super.createTrailEffect();
+                this.lastTrailTime = currentTime;
+            }
+        }
+
+        // Update last position
+        this.lastX = this.sprite.x;
+        this.lastY = this.sprite.y;
+
+        // Update health bar position
         if (this.healthBar) {
             this.healthBar.container.setPosition(
                 this.sprite.x,

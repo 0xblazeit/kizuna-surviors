@@ -5,6 +5,7 @@ class BasePlayer {
         // Create the sprite
         this.sprite = scene.add.sprite(x, y, texture);
         this.sprite.setScale(config.scale || 1);
+        this.sprite.setDepth(10);
 
         // Setup physics body
         scene.physics.add.existing(this.sprite);
@@ -16,20 +17,6 @@ class BasePlayer {
             isMoving: false
         };
 
-        // Initialize animation config
-        this.animConfig = {
-            scale: config.scale || 1,
-            trailSpawnInterval: 100,
-            trailFadeSpeed: 0.05,
-            maxTrailEffects: 5
-        };
-
-        // Initialize trail effects
-        this.trailContainer = config.trailContainer || scene.add.container(0, 0);
-        this.trailEffects = [];
-        this.lastTrailTime = 0;
-        this.texture = texture;
-
         // Initialize base stats
         this.stats = {
             moveSpeed: config.moveSpeed || 3,
@@ -37,6 +24,17 @@ class BasePlayer {
             currentHealth: config.maxHealth || 100,
             damage: config.attackDamage || 10,
             defense: config.defense || 0
+        };
+
+        // Trail effect properties
+        this.lastTrailTime = 0;
+        this.lastX = x;
+        this.lastY = y;
+        this.trailConfig = {
+            spawnInterval: config.trailSpawnInterval || 100,    // Spawn every 100ms
+            fadeSpeed: config.trailFadeSpeed || 400,            // Fade out in 400ms
+            startAlpha: config.trailStartAlpha || 0.7,         // Start at 70% opacity
+            tint: config.trailTint || 0xffffff                 // Default white tint
         };
     }
 
@@ -64,98 +62,119 @@ class BasePlayer {
     }
 
     handleMovement(input) {
-        if (!this.sprite) return;
+        if (!input) return;
 
-        // Reset movement state
-        let isMoving = false;
-        const currentTime = Date.now();
+        // Calculate movement based on input
+        let dx = 0;
+        let dy = 0;
 
-        // Handle movement
-        if (input.left) {
-            this.sprite.x -= this.stats.moveSpeed;
+        if (input.left) dx -= 1;
+        if (input.right) dx += 1;
+        if (input.up) dy -= 1;
+        if (input.down) dy += 1;
+
+        // Normalize diagonal movement
+        if (dx !== 0 && dy !== 0) {
+            dx *= Math.SQRT1_2;
+            dy *= Math.SQRT1_2;
+        }
+
+        // Apply movement speed
+        this.sprite.x += dx * this.stats.moveSpeed;
+        this.sprite.y += dy * this.stats.moveSpeed;
+
+        // Update sprite flip based on movement direction
+        if (dx < 0) {
             this.sprite.setFlipX(true);
-            this.movementState.direction = 'left';
-            isMoving = true;
-        }
-        if (input.right) {
-            this.sprite.x += this.stats.moveSpeed;
+        } else if (dx > 0) {
             this.sprite.setFlipX(false);
-            this.movementState.direction = 'right';
-            isMoving = true;
         }
-        if (input.up) {
-            this.sprite.y -= this.stats.moveSpeed;
-            isMoving = true;
-        }
-        if (input.down) {
-            this.sprite.y += this.stats.moveSpeed;
-            isMoving = true;
+    }
+
+    update() {
+        // Check if entity has moved
+        const hasMoved = this.lastX !== this.sprite.x || this.lastY !== this.sprite.y;
+        
+        if (hasMoved) {
+            // Add trail effect if moving
+            const currentTime = Date.now();
+            if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
+                this.createTrailEffect();
+                this.lastTrailTime = currentTime;
+            }
         }
 
-        // Update movement state
-        this.movementState.isMoving = isMoving;
+        // Update last position
+        this.lastX = this.sprite.x;
+        this.lastY = this.sprite.y;
 
-        // Handle trail effect
-        if (isMoving && currentTime - this.lastTrailTime >= this.animConfig.trailSpawnInterval) {
-            this.createTrailEffect();
-            this.lastTrailTime = currentTime;
+        // Update health bar position if it exists
+        if (this.healthBar) {
+            this.healthBar.container.setPosition(
+                this.sprite.x,
+                this.sprite.y + this.healthBar.spacing
+            );
         }
-
-        // Update existing trail effects
-        this.updateTrailEffects();
     }
 
     createTrailEffect() {
-        // Remove oldest trail if we're at max
-        if (this.trailEffects.length >= this.animConfig.maxTrailEffects) {
-            const oldestTrail = this.trailEffects.shift();
-            if (oldestTrail && oldestTrail.destroy) {
-                this.trailContainer.remove(oldestTrail);
-                oldestTrail.destroy();
-            }
-        }
-
-        // Create new trail effect
+        // Create a copy of the sprite as a trail
         const trail = this.scene.add.sprite(
-            this.sprite.x, 
-            this.sprite.y, 
-            this.texture
+            this.sprite.x,
+            this.sprite.y,
+            this.sprite.texture.key,
+            this.sprite.frame.name
         );
         
-        trail.setScale(this.animConfig.scale);
-        trail.setAlpha(0.5);
-        trail.setTint(0x4444ff);
+        // Match the sprite's current state
+        trail.setScale(this.sprite.scaleX);
         trail.setFlipX(this.sprite.flipX);
+        trail.setOrigin(this.sprite.originX, this.sprite.originY);
+        trail.setDepth(this.sprite.depth - 1);  // Just behind the sprite
+        trail.setAlpha(this.trailConfig.startAlpha);
+        trail.setTint(this.trailConfig.tint);
         
-        this.trailEffects.push(trail);
-        this.trailContainer.add(trail);
-    }
-
-    updateTrailEffects() {
-        for (let i = this.trailEffects.length - 1; i >= 0; i--) {
-            const trail = this.trailEffects[i];
-            if (trail && trail.alpha !== undefined) {
-                trail.alpha -= this.animConfig.trailFadeSpeed;
-
-                if (trail.alpha <= 0) {
-                    this.trailContainer.remove(trail);
-                    trail.destroy();
-                    this.trailEffects.splice(i, 1);
-                }
+        // Add a glow effect
+        const glow = this.scene.add.sprite(
+            trail.x,
+            trail.y,
+            trail.texture.key,
+            trail.frame.name
+        );
+        glow.setScale(trail.scaleX * 1.2);  // Slightly larger for glow effect
+        glow.setAlpha(this.trailConfig.startAlpha * 0.5);  // Half as visible as the trail
+        glow.setDepth(trail.depth - 1);  // Behind the trail
+        glow.setTint(this.trailConfig.tint);
+        glow.setBlendMode(Phaser.BlendModes.ADD);  // Additive blending for glow effect
+        
+        // Fade out effect for both trail and glow
+        this.scene.tweens.add({
+            targets: [trail, glow],
+            alpha: 0,
+            duration: this.trailConfig.fadeSpeed,
+            ease: 'Linear',
+            onComplete: () => {
+                trail.destroy();
+                glow.destroy();
             }
-        }
+        });
     }
 
     takeDamage(amount) {
+        // Ensure amount is a valid number and at least 1
+        const damage = Math.max(1, Number(amount) || 0);
+        
         // Apply defense reduction
-        const damageAfterDefense = Math.max(0, amount - this.stats.defense);
+        const damageAfterDefense = Math.max(1, damage - (this.stats.defense || 0));
+        
+        // Update current health
         this.stats.currentHealth = Math.max(0, this.stats.currentHealth - damageAfterDefense);
         
         // Handle death
         if (this.stats.currentHealth <= 0) {
             this.onDeath();
         }
-
+        
         return damageAfterDefense;
     }
 
@@ -169,7 +188,6 @@ class BasePlayer {
     onDeath() {
         // Base death behavior - to be overridden by subclasses
         this.sprite.destroy();
-        this.trailContainer.destroy();
     }
 }
 

@@ -5,12 +5,13 @@ class EnemyPlayer extends BasePlayer {
         // Set enemy specific defaults
         const enemyConfig = {
             maxHealth: 100,
-            moveSpeed: 3,
+            moveSpeed: Phaser.Math.FloatBetween(0.5, 2.5),
             defense: 0,
             attackSpeed: 1,
             attackDamage: 8,
             scale: 0.8,
-            clickDamage: 25,  // Add configurable click damage
+            trailTint: 0x3498db,  // Light blue trail
+            clickDamage: 25,      // Add default click damage
             ...config
         };
 
@@ -19,9 +20,18 @@ class EnemyPlayer extends BasePlayer {
         // Enemy specific properties
         this.type = config.type || 'basic';
         this.isStaggered = false;
-        this.hitFlashDuration = 100; // Duration of white flash in ms
-        this.clickDamage = enemyConfig.clickDamage;  // Store click damage
+        this.hitFlashDuration = 100;
+        this.clickDamage = enemyConfig.clickDamage;
         
+        // Movement properties
+        this.targetPlayer = null;
+        this.moveSpeed = enemyConfig.moveSpeed;
+        this.movementEnabled = true;
+        this.movementRange = Phaser.Math.Between(100, 300);
+
+        // Set sprite depth
+        this.sprite.setDepth(10);
+
         // Create health bar with proper spacing
         const spriteHeight = this.sprite.height * enemyConfig.scale;
         const healthBarWidth = spriteHeight * 0.8;
@@ -88,28 +98,89 @@ class EnemyPlayer extends BasePlayer {
                 });
             }
         });
+
+        // Find the player in the scene
+        this.targetPlayer = this.scene.player;
+    }
+
+    update() {
+        super.update();
+        
+        if (this.movementEnabled && !this.isStaggered && this.targetPlayer) {
+            // Calculate distance to player
+            const dx = this.targetPlayer.sprite.x - this.sprite.x;
+            const dy = this.targetPlayer.sprite.y - this.sprite.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Only move if within movement range
+            if (distance <= this.movementRange && distance > 50) {
+                // Store previous position
+                const prevX = this.sprite.x;
+                const prevY = this.sprite.y;
+                
+                // Normalize direction
+                const normalizedDx = dx / distance;
+                const normalizedDy = dy / distance;
+                
+                // Move towards player
+                this.sprite.x += normalizedDx * this.moveSpeed;
+                this.sprite.y += normalizedDy * this.moveSpeed;
+
+                // Debug: Log actual movement
+                const actualDx = this.sprite.x - prevX;
+                const actualDy = this.sprite.y - prevY;
+                if (Math.abs(actualDx) > 0.01 || Math.abs(actualDy) > 0.01) {
+                    console.log(`Enemy actually moved: dx=${actualDx}, dy=${actualDy}`);
+                }
+                
+                // Update health bar position
+                if (this.healthBar) {
+                    this.healthBar.container.setPosition(
+                        this.sprite.x,
+                        this.sprite.y + this.healthBar.spacing
+                    );
+                }
+
+                // Flip sprite based on movement direction
+                if (dx < 0) {
+                    this.sprite.setFlipX(true);
+                } else {
+                    this.sprite.setFlipX(false);
+                }
+
+                // Add trail effect if moving
+                const currentTime = Date.now();
+                if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
+                    super.createTrailEffect();
+                    this.lastTrailTime = currentTime;
+                }
+            }
+        }
     }
 
     takeDamage(amount) {
-        // Ensure at least 1 damage gets through
-        const minDamage = Math.max(1, amount);
-        const damageDealt = super.takeDamage(minDamage);
+        // Ensure amount is a valid number
+        const damage = Number(amount) || 0;
+        console.log(`Enemy taking ${damage} damage`);
+
+        // Apply base damage calculation
+        const damageDealt = super.takeDamage(damage);
         
-        // Debug log
-        console.log(`Enemy took ${damageDealt} damage. Health: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
-        
+        // Update health bar
         this.updateHealthBar();
-        
-        // Only trigger hit effects if not already staggered
+
+        // Play hit effects if not already staggered
         if (!this.isStaggered) {
             this.playHitEffects();
         }
         
+        console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
         return damageDealt;
     }
 
     playHitEffects() {
         this.isStaggered = true;
+        this.movementEnabled = false; // Stop movement during stagger
 
         // Store original tint
         const originalTint = this.sprite.tintTopLeft;
@@ -132,7 +203,7 @@ class EnemyPlayer extends BasePlayer {
             x: '+='+staggerX,
             y: '+='+staggerY,
             duration: staggerDuration / 2,
-            ease: 'Quad.out',
+            ease: 'Quad.Out',
             yoyo: true,
             onComplete: () => {
                 // Reset position exactly to avoid drift
@@ -142,6 +213,7 @@ class EnemyPlayer extends BasePlayer {
                     this.sprite.x,
                     this.sprite.y + this.healthBar.spacing
                 );
+                this.movementEnabled = true; // Re-enable movement after stagger
             }
         });
 
@@ -152,21 +224,30 @@ class EnemyPlayer extends BasePlayer {
         });
     }
 
+    updateHealthBar() {
+        if (!this.healthBar) return;
+
+        // Calculate health percentage
+        const healthPercent = Math.max(0, this.stats.currentHealth) / this.stats.maxHealth;
+        
+        // Update health bar width
+        this.healthBar.bar.width = this.healthBar.width * healthPercent;
+        
+        // Update color based on health percentage
+        let color;
+        if (healthPercent > 0.6) {
+            color = 0x44ff44; // Green
+        } else if (healthPercent > 0.3) {
+            color = 0xffff44; // Yellow
+        } else {
+            color = 0xff4444; // Red
+        }
+        this.healthBar.bar.setFillStyle(color);
+    }
+
     heal(amount) {
         super.heal(amount);
         this.updateHealthBar();
-    }
-
-    updateHealthBar() {
-        const healthPercent = this.stats.currentHealth / this.stats.maxHealth;
-        const newWidth = this.healthBar.width * healthPercent;
-        
-        // Update the bar width
-        this.healthBar.bar.width = newWidth;
-        
-        // Center the bar (local position within container)
-        const barOffset = (this.healthBar.width - newWidth) / 2;
-        this.healthBar.bar.x = barOffset;
     }
 
     handleMovement(input) {
