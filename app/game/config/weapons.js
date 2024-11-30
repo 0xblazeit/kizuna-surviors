@@ -230,6 +230,122 @@ export const weapons = {
         special: 'HOMING'
       }
     ]
+  },
+  homing: {
+    name: 'Seeker Staff',
+    description: 'Launches homing projectiles that track enemies',
+    icon: '/assets/game/weapons/weapon-wand-icon.svg',
+    projectileSprite: '/assets/game/weapons/weapon-wand-projectile.svg',
+    levels: [
+      {
+        damage: 12,
+        duration: 3000,
+        fireSpeed: 1000,
+        projectileSpeed: 300,
+        projectileSize: 0.8,
+        area: 1,
+        range: 400,
+        count: 1,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 14,
+        duration: 3000,
+        fireSpeed: 950,
+        projectileSpeed: 320,
+        projectileSize: 0.9,
+        area: 1,
+        range: 420,
+        count: 2,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 16,
+        duration: 3000,
+        fireSpeed: 900,
+        projectileSpeed: 340,
+        projectileSize: 1.0,
+        area: 1,
+        range: 440,
+        count: 2,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 18,
+        duration: 3000,
+        fireSpeed: 850,
+        projectileSpeed: 360,
+        projectileSize: 1.1,
+        area: 1,
+        range: 460,
+        count: 2,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 20,
+        duration: 3000,
+        fireSpeed: 800,
+        projectileSpeed: 380,
+        projectileSize: 1.2,
+        area: 1,
+        range: 480,
+        count: 3,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 22,
+        duration: 3000,
+        fireSpeed: 750,
+        projectileSpeed: 400,
+        projectileSize: 1.3,
+        area: 1,
+        range: 500,
+        count: 3,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 24,
+        duration: 3000,
+        fireSpeed: 700,
+        projectileSpeed: 420,
+        projectileSize: 1.4,
+        area: 1,
+        range: 520,
+        count: 3,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 26,
+        duration: 3000,
+        fireSpeed: 650,
+        projectileSpeed: 440,
+        projectileSize: 1.5,
+        area: 1,
+        range: 540,
+        count: 4,
+        pierce: 1,
+        special: 'HOMING'
+      },
+      {
+        damage: 28,
+        duration: 3000,
+        fireSpeed: 600,
+        projectileSpeed: 460,
+        projectileSize: 1.6,
+        area: 1,
+        range: 560,
+        count: 4,
+        pierce: 1,
+        special: 'HOMING'
+      }
+    ]
   }
   // Add more weapons here as needed
 };

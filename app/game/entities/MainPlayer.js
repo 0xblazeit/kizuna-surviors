@@ -61,13 +61,41 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
     }
 
     update(time) {
+        super.update(time);
+        
+        if (!this.active) return;
+        
         this.handleMovement();
-        if (this.weapon) {
-            this.weapon.update(time);
+        this.updateWeaponDirection();
+        
+        // Update homing weapon target
+        if (this.weapon2 && this.weapon2.type === 'homing') {
+            let closestEnemy = null;
+            let closestDistance = Infinity;
+            
+            this.scene.enemies.children.each(enemy => {
+                if (enemy.active) {
+                    const distance = Phaser.Math.Distance.Between(
+                        this.x, this.y,
+                        enemy.x, enemy.y
+                    );
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestEnemy = enemy;
+                    }
+                }
+            });
+            
+            if (closestEnemy) {
+                this.weapon2.setTarget(closestEnemy);
+            }
         }
-        if (this.weapon2) {
-            this.weapon2.update(time);
-        }
+        
+        // Update weapons
+        if (this.weapon) this.weapon.update(time);
+        if (this.weapon2) this.weapon2.update(time);
+        
         // Update health bar position
         this.updateHealthBar();
     }
@@ -76,7 +104,6 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
         const { dx, dy } = this.getMovementInput();
         this.updateDirection(dx, dy);
         this.updateVelocity(dx, dy);
-        this.updateWeaponDirection();
     }
 
     getMovementInput() {
@@ -149,7 +176,7 @@ export default class MainPlayer extends Phaser.Physics.Arcade.Sprite {
             this.weapon.setWeapon('hotdog', weaponLevel);
         }
         if (this.weapon2) {
-            this.weapon2.setWeapon('wand', weaponLevel);
+            this.weapon2.setWeapon('homing', weaponLevel);
         }
     }
 

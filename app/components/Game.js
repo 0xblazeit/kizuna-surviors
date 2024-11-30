@@ -197,8 +197,8 @@ const GameScene = {
     });
 
     // Create weapons for player
-    this.player.weapon = new Weapon(this, this.player, 'hotdog');
-    this.player.weapon2 = new Weapon(this, this.player, 'wand');
+    this.player.weapon = Weapon.create(this, this.player, 'hotdog');
+    this.player.weapon2 = Weapon.create(this, this.player, 'homing');
     this.player.updateWeaponLevel(); // Initialize both weapons with correct levels
 
     // Listen for XP events
@@ -322,10 +322,27 @@ const GameScene = {
     if (this.player) {
       const stats = this.player.stats;
       const exp = this.player.experience;
-      const currentWeapon = 'Hotdog'; // TODO: Update this when weapon system is implemented
+      const weaponLevel = Math.min(exp.level - 1, 8); // Max level 8
+      const hotdogStats = weapons.hotdog.levels[weaponLevel];
+      const homingStats = weapons.homing.levels[weaponLevel];
 
       const statsString = [
-        `Weapon: ${currentWeapon}`,
+        `Weapon 1: Glizzly Blaster 4200 (Lvl ${weaponLevel})`,
+        `├ Damage: ${hotdogStats.damage}`,
+        `├ Fire Rate: ${(1000/hotdogStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${hotdogStats.count}`,
+        `├ Size: ${hotdogStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${hotdogStats.pierce}`,
+        `└ Special: ${hotdogStats.special || 'None'}`,
+        ``,
+        `Weapon 2: Homing Missile (Lvl ${weaponLevel})`,
+        `├ Damage: ${homingStats.damage}`,
+        `├ Fire Rate: ${(1000/homingStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${homingStats.count}`,
+        `├ Size: ${homingStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${homingStats.pierce}`,
+        `└ Special: ${homingStats.special}`,
+        ``,
         `Level: ${exp.level} (${exp.current}/${exp.toNext} XP)`,
         `HP: ${stats.health}/${stats.maxHealth}`,
         `Defense: ${stats.defense}`,
@@ -499,7 +516,7 @@ const GameScene = {
       const exp = this.player.experience;
       const weaponLevel = Math.min(exp.level - 1, 8); // Max level 8
       const hotdogStats = weapons.hotdog.levels[weaponLevel];
-      const wandStats = weapons.wand.levels[weaponLevel];
+      const homingStats = weapons.homing.levels[weaponLevel];
 
       const statsString = [
         `Weapon 1: Glizzly Blaster 4200 (Lvl ${weaponLevel})`,
@@ -510,13 +527,13 @@ const GameScene = {
         `├ Pierce: ${hotdogStats.pierce}`,
         `└ Special: ${hotdogStats.special || 'None'}`,
         ``,
-        `Weapon 2: Crystal Wand (Lvl ${weaponLevel})`,
-        `├ Damage: ${wandStats.damage}`,
-        `├ Fire Rate: ${(1000/wandStats.fireSpeed).toFixed(1)}/s`,
-        `├ Projectiles: ${wandStats.count}`,
-        `├ Size: ${wandStats.projectileSize.toFixed(1)}x`,
-        `├ Pierce: ${wandStats.pierce}`,
-        `└ Special: ${wandStats.special}`,
+        `Weapon 2: Homing Missile (Lvl ${weaponLevel})`,
+        `├ Damage: ${homingStats.damage}`,
+        `├ Fire Rate: ${(1000/homingStats.fireSpeed).toFixed(1)}/s`,
+        `├ Projectiles: ${homingStats.count}`,
+        `├ Size: ${homingStats.projectileSize.toFixed(1)}x`,
+        `├ Pierce: ${homingStats.pierce}`,
+        `└ Special: ${homingStats.special}`,
         ``,
         `Level: ${exp.level} (${exp.current}/${exp.toNext} XP)`,
         `HP: ${stats.health}/${stats.maxHealth}`,
