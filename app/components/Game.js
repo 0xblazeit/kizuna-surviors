@@ -317,6 +317,29 @@ const GameScene = {
     // Create array to store enemies
     this.enemies = [];
     
+    // Function to show damage numbers
+    this.showDamageNumber = (x, y, amount) => {
+      const damageText = this.add.text(x, y, amount, {
+        fontFamily: 'VT323',
+        fontSize: '24px',
+        color: '#ff4444',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setOrigin(0.5, 0.5);
+
+      // Animate the damage number
+      this.tweens.add({
+        targets: damageText,
+        y: y - 50, // Float upward
+        alpha: 0,  // Fade out
+        duration: 1000,
+        ease: 'Cubic.out',
+        onComplete: () => {
+          damageText.destroy();
+        }
+      });
+    };
+
     // Enemy sprite keys
     const enemySprites = [
       'enemy-basic-one',
@@ -340,6 +363,19 @@ const GameScene = {
       const enemy = new EnemyPlayer(this, randomX, randomY, randomSprite, {
         type: 'basic',
         scale: 0.3
+      });
+
+      // Listen for enemy damage
+      enemy.sprite.on('pointerdown', () => {
+        this.showDamageNumber(enemy.sprite.x, enemy.sprite.y - 20, 1);
+      });
+
+      // Listen for enemy death
+      enemy.sprite.once('destroy', () => {
+        const index = this.enemies.indexOf(enemy);
+        if (index > -1) {
+          this.enemies.splice(index, 1);
+        }
       });
       
       this.enemies.push(enemy);
