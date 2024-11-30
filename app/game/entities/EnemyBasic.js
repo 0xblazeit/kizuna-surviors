@@ -317,31 +317,73 @@ class EnemyBasic extends BasePlayer {
                 onComplete: () => {
                     console.log('Tween complete, creating particles');
                     try {
-                        // Create particles at the enemy's position
-                        for (let i = 0; i < 20; i++) {
-                            const angle = (Math.PI * 2 / 20) * i;
+                        // Create custom particle effects
+                        const numParticles = 12;
+                        const colors = [0xff0000, 0xff4444, 0xff8888]; // Different shades of red
+                        
+                        for (let i = 0; i < numParticles; i++) {
+                            const angle = (Math.PI * 2 / numParticles) * i;
                             const speed = Phaser.Math.Between(100, 200);
-                            const particle = this.scene.add.sprite(this.sprite.x, this.sprite.y, 'particle');
-                            particle.setScale(0.8);
                             
-                            // Set velocity based on angle
+                            // Create a custom shape for the particle
+                            const graphics = this.scene.add.graphics();
+                            const color = Phaser.Utils.Array.GetRandom(colors);
+                            
+                            // Randomly choose between circle and diamond shapes
+                            if (Math.random() > 0.5) {
+                                // Draw a small circle
+                                graphics.lineStyle(2, color, 1);
+                                graphics.strokeCircle(0, 0, 4);
+                            } else {
+                                // Draw a diamond shape
+                                graphics.lineStyle(2, color, 1);
+                                graphics.beginPath();
+                                graphics.moveTo(0, -4);
+                                graphics.lineTo(4, 0);
+                                graphics.lineTo(0, 4);
+                                graphics.lineTo(-4, 0);
+                                graphics.closePath();
+                                graphics.strokePath();
+                            }
+                            
+                            // Position at enemy's location
+                            graphics.setPosition(this.sprite.x, this.sprite.y);
+                            
+                            // Calculate velocity
                             const vx = Math.cos(angle) * speed;
                             const vy = Math.sin(angle) * speed;
                             
-                            // Animate each particle
+                            // Create particle animation
                             this.scene.tweens.add({
-                                targets: particle,
-                                x: particle.x + (vx * 0.5), // Move in direction for 0.5 seconds
-                                y: particle.y + (vy * 0.5),
+                                targets: graphics,
+                                x: graphics.x + (vx * 0.5),
+                                y: graphics.y + (vy * 0.5),
                                 alpha: 0,
-                                scale: 0,
+                                scale: { from: 1, to: 0.5 },
+                                angle: Phaser.Math.Between(-180, 180),
                                 duration: 500,
                                 ease: 'Power2',
                                 onComplete: () => {
-                                    particle.destroy();
+                                    graphics.destroy();
                                 }
                             });
                         }
+                        
+                        // Create a burst effect at the center
+                        const burstGraphics = this.scene.add.graphics();
+                        burstGraphics.lineStyle(2, 0xffffff, 1);
+                        burstGraphics.strokeCircle(this.sprite.x, this.sprite.y, 2);
+                        
+                        this.scene.tweens.add({
+                            targets: burstGraphics,
+                            alpha: 0,
+                            scale: { from: 1, to: 3 },
+                            duration: 200,
+                            ease: 'Power2',
+                            onComplete: () => {
+                                burstGraphics.destroy();
+                            }
+                        });
                         
                         // Resolve after particles are done
                         this.scene.time.delayedCall(500, () => {
@@ -349,7 +391,7 @@ class EnemyBasic extends BasePlayer {
                             resolve();
                         });
                     } catch (error) {
-                        console.error('Error in particle effect:', error);
+                        console.error('Error in death effect:', error);
                         resolve();
                     }
                 }
