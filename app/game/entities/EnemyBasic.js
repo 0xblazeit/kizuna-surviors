@@ -247,49 +247,78 @@ class EnemyBasic extends BasePlayer {
 
     playDeathAnimation() {
         return new Promise((resolve) => {
+            console.log('Setting up death animation');
             // Create a flash effect
-            this.sprite.setTint(0xffffff);
+            this.sprite.setTint(0xff0000);  // Red flash
             
             // Create a fade out and scale down effect
             this.scene.tweens.add({
                 targets: [this.sprite],
                 alpha: 0,
                 scale: 0.1,
-                duration: 500,
+                duration: 300,
                 ease: 'Power2',
                 onComplete: () => {
-                    // Create particle explosion effect
-                    const particles = this.scene.add.particles(this.sprite.x, this.sprite.y, 'particle', {
-                        speed: { min: 50, max: 100 },
-                        scale: { start: 0.5, end: 0 },
-                        alpha: { start: 1, end: 0 },
-                        lifespan: 300,
-                        quantity: 20,
-                        emitting: false
-                    });
-                    
-                    // Emit particles once
-                    particles.explode(20, this.sprite.x, this.sprite.y);
-                    
-                    // Clean up particles after animation
-                    this.scene.time.delayedCall(300, () => {
-                        particles.destroy();
+                    console.log('Tween complete, creating particles');
+                    try {
+                        // Create particles at the enemy's position
+                        for (let i = 0; i < 20; i++) {
+                            const angle = (Math.PI * 2 / 20) * i;
+                            const speed = Phaser.Math.Between(100, 200);
+                            const particle = this.scene.add.sprite(this.sprite.x, this.sprite.y, 'particle');
+                            particle.setScale(0.8);
+                            
+                            // Set velocity based on angle
+                            const vx = Math.cos(angle) * speed;
+                            const vy = Math.sin(angle) * speed;
+                            
+                            // Animate each particle
+                            this.scene.tweens.add({
+                                targets: particle,
+                                x: particle.x + (vx * 0.5), // Move in direction for 0.5 seconds
+                                y: particle.y + (vy * 0.5),
+                                alpha: 0,
+                                scale: 0,
+                                duration: 500,
+                                ease: 'Power2',
+                                onComplete: () => {
+                                    particle.destroy();
+                                }
+                            });
+                        }
+                        
+                        // Resolve after particles are done
+                        this.scene.time.delayedCall(500, () => {
+                            console.log('Animation complete');
+                            resolve();
+                        });
+                    } catch (error) {
+                        console.error('Error in particle effect:', error);
                         resolve();
-                    });
+                    }
                 }
             });
         });
     }
 
     onDeath() {
+        console.log('Enemy death triggered');
         // Clean up health bar
         if (this.healthBar) {
+            console.log('Cleaning up health bar');
             this.healthBar.container.destroy();
         }
 
-        // Play death animation before destroying
+        // Play death animation
+        console.log('Starting death animation');
         this.playDeathAnimation().then(() => {
-            super.onDeath();
+            console.log('Death animation completed');
+            if (this.sprite) {
+                console.log('Destroying sprite');
+                this.sprite.destroy();
+            }
+            // Emit any necessary events or handle additional cleanup
+            this.scene.events.emit('enemyDefeated', this);
         });
     }
 }
