@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
-import Enemy from '../game/enemies/Enemy';
+import Enemy from '../game/enemies/Enemy-Boomer';
 import { weapons } from '../game/config/weapons';
 import Weapon from '../game/weapons/Weapon';
 import Projectile from '../game/weapons/Projectile';
