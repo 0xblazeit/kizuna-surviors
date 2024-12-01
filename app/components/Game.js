@@ -262,6 +262,7 @@ const GameScene = {
     let weaponIcon = null;  // Store icon reference
     let wandIcon = null;    // Store wand icon reference
     let glizzyIcon = null;  // Store glizzy icon reference
+    let axeIcon = null;     // Store axe icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -285,7 +286,7 @@ const GameScene = {
         // Make cell interactive
         cell.on('pointerdown', () => {
           // Only process clicks for cells with weapons
-          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2) {
+          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2 || cellIndex === 3) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
             
@@ -348,6 +349,22 @@ const GameScene = {
           glizzyIcon.setScale(scale);
           gridCells[2].icon = glizzyIcon;
           gridContainer.add(glizzyIcon);
+        }
+
+        // Add Flying Axe icon to fourth cell
+        if (row === 0 && col === 3) {
+          axeIcon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'weapon-axe-projectile'
+          );
+          // Use same scaling logic as other weapons
+          const padding = 8;
+          const maxDimension = gridCellSize - padding;
+          const scale = maxDimension / Math.max(axeIcon.width, axeIcon.height);
+          axeIcon.setScale(scale);
+          gridCells[3].icon = axeIcon;
+          gridContainer.add(axeIcon);
         }
       }
     }
