@@ -111,30 +111,13 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     spawnDogs() {
-        console.log('Spawning dogs...');
-        
-        // Check if texture exists
-        if (!this.scene.textures.exists('weapon-dog-projectile')) {
-            console.error('Dog sprite texture not found! Creating fallback sprite...');
-            // Create a fallback sprite using graphics
-            const graphics = this.scene.add.graphics();
-            graphics.lineStyle(2, 0xff0000);
-            graphics.fillStyle(0xff0000, 0.5);
-            graphics.beginPath();
-            graphics.arc(0, 0, 15, 0, Math.PI * 2);
-            graphics.closePath();
-            graphics.strokePath();
-            graphics.fillPath();
-            
-            // Convert graphics to texture
-            graphics.generateTexture('weapon-dog-projectile', 32, 32);
-            graphics.destroy();
-        }
-
-        // Clear existing projectiles
+        // Clear existing dogs
         this.activeProjectiles.forEach(dog => {
             if (dog.sprite) {
                 dog.sprite.destroy();
+                if (dog.sprite.particles) {
+                    dog.sprite.particles.destroy();
+                }
             }
         });
         this.activeProjectiles = [];
@@ -144,10 +127,16 @@ export class RotatingDogWeapon extends BaseWeapon {
         
         for (let i = 0; i < count; i++) {
             const angle = i * angleStep;
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-dog-projectile');
+            
+            // Calculate initial position based on player's position
+            const x = this.player.x + Math.cos(angle) * this.stats.guardDistance;
+            const y = this.player.y + Math.sin(angle) * this.stats.guardDistance;
+            
+            const sprite = this.scene.add.sprite(x, y, 'weapon-dog-projectile');
+            sprite.setDepth(5); // Set depth to appear above ground but below some entities
             
             // Set the sprite's appearance
-            sprite.setScale(0.4);
+            sprite.setScale(0.5);
             
             // Apply special effects for max level
             if (this.currentLevel === this.maxLevel) {
@@ -160,7 +149,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 glowFX.innerStrength = 2;
                 
                 // Add special particle trail
-                const particles = this.scene.add.particles(0, 0, 'weapon-dog-projectile', {
+                const particles = this.scene.add.particles(x, y, 'weapon-dog-projectile', {
                     scale: { start: 0.2, end: 0 },
                     alpha: { start: 0.6, end: 0 },
                     tint: [this.effectColors.maxLevel.primary, this.effectColors.maxLevel.secondary],
@@ -177,18 +166,16 @@ export class RotatingDogWeapon extends BaseWeapon {
 
             const dog = {
                 sprite,
+                angle,
+                distance: this.stats.guardDistance,
+                originalScale: 0.5,
+                hitTargets: new Set(),
                 state: 'guarding',
                 targetEnemy: null,
                 lastAttackTime: 0,
-                guardAngle: angle,
-                lerpFactor: 0.1,
-                currentSpeed: 0,
-                maxSpeed: this.stats.speed,
-                acceleration: 1500,
-                deceleration: 2000,
-                attackStartTime: 0,
-                originalScale: 0.4,
+                returnProgress: 0
             };
+
             this.activeProjectiles.push(dog);
         }
     }
@@ -206,82 +193,70 @@ export class RotatingDogWeapon extends BaseWeapon {
         const dy = targetY - dog.sprite.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Adjust speed based on distance
-        const targetSpeed = distance > 50 ? dog.maxSpeed : dog.maxSpeed * (distance / 50);
-        
-        // Accelerate or decelerate
-        if (targetSpeed > dog.currentSpeed) {
-            dog.currentSpeed = Math.min(dog.currentSpeed + dog.acceleration * (delta / 1000), targetSpeed);
-        } else {
-            dog.currentSpeed = Math.max(dog.currentSpeed - dog.deceleration * (delta / 1000), targetSpeed);
-        }
-
-        if (distance > 1) {
-            const angle = Math.atan2(dy, dx);
-            const speed = dog.currentSpeed * (delta / 1000);
-            const moveX = Math.cos(angle) * speed;
-            const moveY = Math.sin(angle) * speed;
+        if (distance > 0) {
+            const speed = this.stats.speed * (delta / 1000);
+            const moveX = (dx / distance) * speed;
+            const moveY = (dy / distance) * speed;
             
             dog.sprite.x += moveX;
             dog.sprite.y += moveY;
             
-            // Smooth rotation
-            const targetAngle = angle;
-            const currentAngle = dog.sprite.rotation;
-            dog.sprite.rotation = this.lerp(currentAngle, targetAngle, 0.15);
+            // Update particle effect position if it exists
+            if (dog.sprite.particles) {
+                dog.sprite.particles.setPosition(dog.sprite.x, dog.sprite.y);
+            }
         }
     }
 
-    createAttackEffect(dog, targetX, targetY) {
-        const sprite = dog.sprite;
-        if (!sprite || !sprite.active) return;
-
-        // Create energy burst effect
-        const burst = this.scene.add.sprite(sprite.x, sprite.y, 'weapon-dog-projectile');
-        burst.setScale(0.2);
-        burst.setAlpha(0.7);
-        burst.setTint(this.effectColors.energy);
+    createAttackEffect(targetX, targetY) {
+        // Create a small energy burst
+        const energyBurst = this.scene.add.sprite(targetX, targetY, 'weapon-dog-projectile');
+        energyBurst.setScale(0.1);
+        energyBurst.setAlpha(0.4);
+        energyBurst.setTint(this.effectColors.energy);
         
         // Burst animation
         this.scene.tweens.add({
-            targets: burst,
-            scaleX: 1.5,
-            scaleY: 1.5,
+            targets: energyBurst,
+            scaleX: 0.8,
+            scaleY: 0.8,
             alpha: 0,
-            duration: 200,
+            duration: 150,
             ease: 'Quad.easeOut',
-            onComplete: () => burst.destroy()
+            onComplete: () => energyBurst.destroy()
         });
 
-        // Dog attack animation
-        this.scene.tweens.add({
-            targets: sprite,
-            scaleX: dog.originalScale * 1.3,
-            scaleY: dog.originalScale * 1.3,
-            duration: 100,
-            yoyo: true,
-            ease: 'Quad.easeOut',
-            onComplete: () => {
-                if (sprite.active) {
-                    sprite.setScale(dog.originalScale);
-                }
-            }
-        });
-
-        // Add a subtle glow pulse
-        const glowSprite = this.scene.add.sprite(sprite.x, sprite.y, 'weapon-dog-projectile');
-        glowSprite.setScale(dog.originalScale * 1.5);
-        glowSprite.setAlpha(0.3);
-        glowSprite.setTint(this.effectColors.energy);
+        // Add a subtle ring effect
+        const ring = this.scene.add.sprite(targetX, targetY, 'weapon-dog-projectile');
+        ring.setScale(0.2);
+        ring.setAlpha(0.3);
+        ring.setTint(this.effectColors.secondary);
         
         this.scene.tweens.add({
-            targets: glowSprite,
+            targets: ring,
+            scale: 1,
             alpha: 0,
-            scale: dog.originalScale * 2.5,
             duration: 200,
-            ease: 'Quad.easeOut',
-            onComplete: () => glowSprite.destroy()
+            ease: 'Sine.easeOut',
+            onComplete: () => ring.destroy()
         });
+
+        if (this.currentLevel === this.maxLevel) {
+            // Add extra effects for max level
+            const maxRing = this.scene.add.sprite(targetX, targetY, 'weapon-dog-projectile');
+            maxRing.setScale(0.1);
+            maxRing.setAlpha(0.5);
+            maxRing.setTint(this.effectColors.maxLevel.energy);
+            
+            this.scene.tweens.add({
+                targets: maxRing,
+                scale: 1.2,
+                alpha: 0,
+                duration: 300,
+                ease: 'Sine.easeOut',
+                onComplete: () => maxRing.destroy()
+            });
+        }
     }
 
     handleHit(enemy, dog) {
@@ -295,34 +270,34 @@ export class RotatingDogWeapon extends BaseWeapon {
         
         // Special max level effects on hit
         if (this.currentLevel === this.maxLevel) {
-            // Create larger energy burst
-            const burst = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-dog-projectile');
-            burst.setScale(0.1);
-            burst.setAlpha(0.8);
-            burst.setTint(this.effectColors.maxLevel.energy);
+            // Create subtle energy pulse
+            const pulse = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-dog-projectile');
+            pulse.setScale(0.2);
+            pulse.setAlpha(0.3);
+            pulse.setTint(this.effectColors.maxLevel.energy);
             
             this.scene.tweens.add({
-                targets: burst,
-                scaleX: 3,
-                scaleY: 3,
+                targets: pulse,
+                scaleX: 1.5,
+                scaleY: 1.5,
                 alpha: 0,
-                duration: 400,
+                duration: 200,
                 ease: 'Quad.easeOut',
-                onComplete: () => burst.destroy()
+                onComplete: () => pulse.destroy()
             });
             
-            // Add circular shockwave
+            // Add a subtle shockwave
             const shockwave = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-dog-projectile');
             shockwave.setScale(0.1);
-            shockwave.setAlpha(0.4);
+            shockwave.setAlpha(0.2);
             shockwave.setTint(this.effectColors.maxLevel.secondary);
             
             this.scene.tweens.add({
                 targets: shockwave,
-                scaleX: 4,
-                scaleY: 4,
+                scaleX: 2,
+                scaleY: 2,
                 alpha: 0,
-                duration: 600,
+                duration: 300,
                 ease: 'Sine.easeOut',
                 onComplete: () => shockwave.destroy()
             });
@@ -336,18 +311,18 @@ export class RotatingDogWeapon extends BaseWeapon {
                 
                 // Show crit text
                 const critText = this.scene.add.text(enemy.sprite.x, enemy.sprite.y - 20, `CRIT! ${critDamage}`, {
-                    fontSize: '24px',
+                    fontSize: '20px',
                     fontFamily: 'VT323',
                     fill: '#FFD700',
                     stroke: '#000000',
-                    strokeThickness: 4
+                    strokeThickness: 3
                 }).setOrigin(0.5);
                 
                 this.scene.tweens.add({
                     targets: critText,
-                    y: critText.y - 40,
+                    y: critText.y - 30,
                     alpha: 0,
-                    duration: 1000,
+                    duration: 800,
                     ease: 'Cubic.Out',
                     onComplete: () => critText.destroy()
                 });
@@ -356,45 +331,26 @@ export class RotatingDogWeapon extends BaseWeapon {
             }
         }
         
-        // Apply damage using the enemy's takeDamage method
-        if (typeof enemy.takeDamage === 'function') {
-            enemy.takeDamage(this.stats.damage, sourceX, sourceY);
-            
-            // Visual feedback on enemy
-            enemy.sprite.setTint(0xff0000);
-            this.scene.time.delayedCall(100, () => {
-                if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
-                    enemy.sprite.clearTint();
-                }
-            });
+        // Apply normal damage
+        enemy.takeDamage(this.stats.damage);
+        
+        // Visual feedback on enemy
+        enemy.sprite.setTint(0xff0000);
+        this.scene.time.delayedCall(100, () => {
+            if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
+                enemy.sprite.clearTint();
+            }
+        });
 
-            // Scale effect
-            this.scene.tweens.add({
-                targets: enemy.sprite,
-                scaleX: '*=0.8',
-                scaleY: '*=0.8',
-                duration: 50,
-                yoyo: true,
-                ease: 'Quad.easeInOut'
-            });
-            
-            // Create hit effect
-            if (this.scene.textures.exists('hit_effect')) {
-                const hitEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'hit_effect');
-                hitEffect.setScale(0.5);
-                hitEffect.play('hit_animation');
-                hitEffect.once('animationcomplete', () => {
-                    hitEffect.destroy();
-                });
-            }
-            
-            // Emit damage numbers if available
-            if (this.scene.emitDamageNumber) {
-                this.scene.emitDamageNumber(this.stats.damage, enemy.sprite.x, enemy.sprite.y);
-            }
-        } else {
-            console.error('Enemy does not have takeDamage method:', enemy);
-        }
+        // Subtle scale effect on enemy
+        this.scene.tweens.add({
+            targets: enemy.sprite,
+            scaleX: '*=0.9',
+            scaleY: '*=0.9',
+            duration: 50,
+            yoyo: true,
+            ease: 'Quad.easeInOut'
+        });
     }
 
     update(time, delta) {
@@ -407,11 +363,27 @@ export class RotatingDogWeapon extends BaseWeapon {
 
         if (enemies.length === 0) return;
 
-        this.activeProjectiles.forEach((dog, index) => {
+        // Update each dog's position and behavior
+        this.activeProjectiles.forEach(dog => {
             if (!dog.sprite || !dog.sprite.active) return;
 
-            const dogX = dog.sprite.x;
-            const dogY = dog.sprite.y;
+            if (dog.state === 'guarding') {
+                // Calculate new position around player
+                const newX = this.player.x + Math.cos(dog.angle) * dog.distance;
+                const newY = this.player.y + Math.sin(dog.angle) * dog.distance;
+                
+                // Update sprite position
+                dog.sprite.x = newX;
+                dog.sprite.y = newY;
+                
+                // Update particle position if it exists
+                if (dog.sprite.particles) {
+                    dog.sprite.particles.setPosition(newX, newY);
+                }
+                
+                // Rotate the angle for orbital movement
+                dog.angle += 0.02;
+            }
 
             // Check if current target is still valid
             if (dog.targetEnemy) {
@@ -422,7 +394,6 @@ export class RotatingDogWeapon extends BaseWeapon {
                 
                 if (!targetValid) {
                     dog.targetEnemy = null;
-                    dog.state = 'returning';
                 }
             }
 
@@ -432,7 +403,9 @@ export class RotatingDogWeapon extends BaseWeapon {
                 let nearestDistance = Infinity;
 
                 for (const enemy of enemies) {
-                    const distanceToEnemy = this.getDistance(dogX, dogY, enemy.sprite.x, enemy.sprite.y);
+                    if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) continue;
+                    
+                    const distanceToEnemy = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
                     if (distanceToEnemy < this.stats.detectionRange && distanceToEnemy < nearestDistance) {
                         nearestDistance = distanceToEnemy;
                         nearestEnemy = enemy;
@@ -442,7 +415,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 if (nearestEnemy && time - dog.lastAttackTime >= this.stats.cooldown) {
                     dog.targetEnemy = nearestEnemy;
                     dog.state = 'chasing';
-                    console.log(`Dog ${index} found target at distance ${nearestDistance}`);
+                    console.log(`Dog found target at distance ${nearestDistance}`);
                 }
             }
 
@@ -451,8 +424,8 @@ export class RotatingDogWeapon extends BaseWeapon {
                 case 'chasing':
                     if (dog.targetEnemy && dog.targetEnemy.sprite) {
                         const distanceToEnemy = this.getDistance(
-                            dogX, dogY, 
-                            dog.targetEnemy.sprite.x, 
+                            dog.sprite.x, dog.sprite.y,
+                            dog.targetEnemy.sprite.x,
                             dog.targetEnemy.sprite.y
                         );
 
@@ -461,14 +434,14 @@ export class RotatingDogWeapon extends BaseWeapon {
 
                         // Attack when close enough
                         if (distanceToEnemy < 40 && time - dog.lastAttackTime >= this.stats.cooldown) {
-                            console.log(`Dog ${index} attacking enemy`);
+                            console.log('Dog attacking enemy');
                             dog.state = 'attacking';
                             dog.attackStartTime = time;
                             this.handleHit(dog.targetEnemy, dog);
                             dog.lastAttackTime = time;
 
                             // Create attack effect
-                            this.createAttackEffect(dog, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y);
+                            this.createAttackEffect(dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y);
                         }
                     } else {
                         dog.state = 'returning';
@@ -476,21 +449,22 @@ export class RotatingDogWeapon extends BaseWeapon {
                     break;
 
                 case 'attacking':
-                    const attackProgress = (time - dog.attackStartTime) / this.stats.attackDuration;
-                    
+                    const attackDuration = 200; // ms
+                    const attackProgress = (time - dog.attackStartTime) / attackDuration;
+
                     // After attack duration, check if we should continue attacking or return
                     if (attackProgress >= 1) {
                         // If target is still valid and in range, go back to chasing
                         if (dog.targetEnemy && dog.targetEnemy.sprite && !dog.targetEnemy.isDead) {
                             const distanceToEnemy = this.getDistance(
-                                dogX, dogY,
+                                dog.sprite.x, dog.sprite.y,
                                 dog.targetEnemy.sprite.x,
                                 dog.targetEnemy.sprite.y
                             );
                             
                             if (distanceToEnemy < this.stats.detectionRange) {
-                                dog.state = 'chasing';  // Continue chasing the same target
-                                console.log(`Dog ${index} continuing chase`);
+                                dog.state = 'chasing';
+                                console.log('Dog continuing chase');
                             } else {
                                 dog.targetEnemy = null;
                                 dog.state = 'returning';
@@ -504,46 +478,27 @@ export class RotatingDogWeapon extends BaseWeapon {
 
                 case 'returning':
                     // Calculate guard position
-                    const guardDistance = this.stats.guardDistance + Math.sin(time * 0.002) * 10;
-                    const targetX = this.player.x + Math.cos(dog.guardAngle) * guardDistance;
-                    const targetY = this.player.y + Math.sin(dog.guardAngle) * guardDistance;
+                    const guardDistance = this.stats.guardDistance;
+                    const targetX = this.player.x + Math.cos(dog.angle) * guardDistance;
+                    const targetY = this.player.y + Math.sin(dog.angle) * guardDistance;
                     
                     this.moveTowardsPoint(dog, targetX, targetY, delta);
                     
                     // If returned to guard position, switch back to guarding
-                    if (this.getDistance(dogX, dogY, targetX, targetY) < 10) {
+                    if (this.getDistance(dog.sprite.x, dog.sprite.y, targetX, targetY) < 10) {
                         dog.state = 'guarding';
-                        // Clear target so it can find new ones
                         dog.targetEnemy = null;
                     }
-                    break;
-
-                case 'guarding':
-                    // Update guard position
-                    const guardDist = this.stats.guardDistance + Math.sin(time * 0.002) * 10;
-                    const guardX = this.player.x + Math.cos(dog.guardAngle) * guardDist;
-                    const guardY = this.player.y + Math.sin(dog.guardAngle) * guardDist;
-                    
-                    this.moveTowardsPoint(dog, guardX, guardY, delta);
                     break;
             }
 
             // Check if too far from player
-            const distanceToPlayer = this.getDistance(dogX, dogY, this.player.x, this.player.y);
+            const distanceToPlayer = this.getDistance(dog.sprite.x, dog.sprite.y, this.player.x, this.player.y);
             if (distanceToPlayer > this.stats.range) {
                 dog.targetEnemy = null;
                 dog.state = 'returning';
             }
         });
-        
-        // Update particle trails for max level
-        if (this.currentLevel === this.maxLevel) {
-            this.activeProjectiles.forEach(dog => {
-                if (dog.sprite && dog.sprite.particles) {
-                    dog.sprite.particles.setPosition(dog.sprite.x, dog.sprite.y);
-                }
-            });
-        }
     }
 
     levelUp() {
