@@ -5,7 +5,7 @@ class EnemyBasic extends BasePlayer {
         // Set enemy specific defaults
         const enemyConfig = {
             maxHealth: 100,
-            moveSpeed: Phaser.Math.FloatBetween(0.5, 2.5),
+            moveSpeed: Phaser.Math.FloatBetween(2.0, 3.0),  // Increased base speed range
             defense: 0,
             attackSpeed: 1,
             attackDamage: 8,
@@ -31,7 +31,10 @@ class EnemyBasic extends BasePlayer {
         this.targetPlayer = null;
         this.moveSpeed = enemyConfig.moveSpeed;
         this.movementEnabled = true;
-        this.movementRange = Phaser.Math.Between(100, 300);
+        this.movementRange = 500;  // Fixed larger movement range
+        this.minDistance = 20;     // Reduced minimum distance
+        this.lastMoveTime = 0;     // Add timestamp for movement updates
+        this.moveUpdateInterval = 16;  // Update movement every 16ms (60fps)
 
         // Set sprite depth
         this.sprite.setDepth(10);
@@ -94,32 +97,33 @@ class EnemyBasic extends BasePlayer {
     update() {
         super.update();
         
-        if (this.movementEnabled && !this.isStaggered && this.targetPlayer) {
+        const currentTime = Date.now();
+        
+        // Only update movement at fixed intervals
+        if (currentTime - this.lastMoveTime < this.moveUpdateInterval) {
+            return;
+        }
+        
+        this.lastMoveTime = currentTime;
+        
+        if (this.movementEnabled && !this.isStaggered && this.targetPlayer && !this.isDying && !this.isDead) {
             // Calculate distance to player
             const dx = this.targetPlayer.sprite.x - this.sprite.x;
             const dy = this.targetPlayer.sprite.y - this.sprite.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Only move if within movement range
-            if (distance <= this.movementRange && distance > 50) {
-                // Store previous position
-                const prevX = this.sprite.x;
-                const prevY = this.sprite.y;
-                
+            // Move if within range and not too close
+            if (distance <= this.movementRange && distance > this.minDistance) {
                 // Normalize direction
                 const normalizedDx = dx / distance;
                 const normalizedDy = dy / distance;
                 
+                // Calculate movement step
+                const step = this.moveSpeed * (this.moveUpdateInterval / 1000);
+                
                 // Move towards player
-                this.sprite.x += normalizedDx * this.moveSpeed;
-                this.sprite.y += normalizedDy * this.moveSpeed;
-
-                // Debug: Log actual movement
-                // const actualDx = this.sprite.x - prevX;
-                // const actualDy = this.sprite.y - prevY;
-                // if (Math.abs(actualDx) > 0.01 || Math.abs(actualDy) > 0.01) {
-                //     console.log(`Enemy actually moved: dx=${actualDx}, dy=${actualDy}`);
-                // }
+                this.sprite.x += normalizedDx * step;
+                this.sprite.y += normalizedDy * step;
                 
                 // Update health bar position
                 if (this.healthBar) {
@@ -137,7 +141,6 @@ class EnemyBasic extends BasePlayer {
                 }
 
                 // Add trail effect if moving
-                const currentTime = Date.now();
                 if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
                     super.createTrailEffect();
                     this.lastTrailTime = currentTime;
@@ -148,7 +151,10 @@ class EnemyBasic extends BasePlayer {
 
     takeDamage(amount, sourceX, sourceY) {
         // If already dying or dead, don't process damage
-        if (this.isDying || this.isDead) return 0;
+        if (this.isDying || this.isDead) {
+            console.log('Enemy already dying or dead, ignoring damage');
+            return 0;
+        }
 
         // Ensure amount is a valid number
         const damage = Number(amount) || 0;
@@ -193,8 +199,10 @@ class EnemyBasic extends BasePlayer {
         console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
         
         // Check for death
-        if (this.stats.currentHealth <= 0 && !this.isDying) {
-            this.isDying = true;  // Set dying flag before calling onDeath
+        if (this.stats.currentHealth <= 0) {
+            console.log('Enemy health depleted, triggering death');
+            this.isDying = true;  // Set dying flag
+            this.isDead = true;   // Set dead flag immediately to prevent any race conditions
             this.onDeath();
         }
         
@@ -412,9 +420,11 @@ class EnemyBasic extends BasePlayer {
     }
 
     onDeath() {
-        // Prevent multiple death triggers
-        if (this.isDead) return;
-        this.isDead = true;
+        // Prevent multiple death triggers by checking both flags
+        if (this.isDying && this.isDead) {
+            console.log('Death already being processed, skipping');
+            return;
+        }
         
         console.log('Enemy death triggered');
         // Clean up health bar

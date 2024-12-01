@@ -12,7 +12,7 @@ const MenuScene = {
     }).setOrigin(0.5);
 
     // Add start text
-    const startText = this.add.text(width / 2, height / 2, 'Click or Press Movement Keys to Start', {
+    const startText = this.add.text(width / 2, height / 2, 'Click to Start', {
       fontFamily: 'var(--font-vt323)',
       fontSize: '32px',
       color: '#ffdd00'
