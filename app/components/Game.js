@@ -261,13 +261,13 @@ const GameScene = {
     uiContainer.add(gridContainer);
 
     // Helper function to create and scale weapon icons
-    this.createWeaponIcon = (x, y, texture, cellIndex) => {
+    const createWeaponIcon = (x, y, texture, cellIndex, cells) => {
       const padding = 8;
       const maxDimension = gridCellSize - padding;
       const icon = this.add.image(x, y, texture);
       const scale = maxDimension / Math.max(icon.width, icon.height);
       icon.setScale(scale);
-      this.gridCells[cellIndex].icon = icon;
+      cells[cellIndex].icon = icon;
       gridContainer.add(icon);
       return icon;
     };
@@ -321,51 +321,56 @@ const GameScene = {
 
         // Add dog weapon icon to first cell
         if (row === 0 && col === 0) {
-          weaponIcon = this.createWeaponIcon(
+          weaponIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'weapon-dog-projectile',
-            0
+            0,
+            gridCells
           );
         }
         
         // Add wand weapon icon to second cell
         if (row === 0 && col === 1) {
-          wandIcon = this.createWeaponIcon(
+          wandIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'weapon-wand-icon',
-            1
+            1,
+            gridCells
           );
         }
 
         // Add Glizzy Blaster icon to third cell
         if (row === 0 && col === 2) {
-          glizzyIcon = this.createWeaponIcon(
+          glizzyIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'weapon-hotdog-projectile',
-            2
+            2,
+            gridCells
           );
         }
 
         // Add axe icon to fourth cell
         if (row === 0 && col === 3) {
-          axeIcon = this.createWeaponIcon(
+          axeIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'weapon-axe-projectile',
-            3
+            3,
+            gridCells
           );
         }
 
         // Add hammer icon to fifth cell
         if (row === 0 && col === 4) {
-          hammerIcon = this.createWeaponIcon(
+          hammerIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
             'weapon-hammer-projectile',
-            4
+            4,
+            gridCells
           );
         }
       }
