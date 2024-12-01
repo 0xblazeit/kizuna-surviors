@@ -583,7 +583,7 @@ const GameScene = {
     // Setup camera to follow player
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
-    this.cameras.main.setZoom(0.8);
+    this.cameras.main.setZoom(0.9);
 
     // Initialize stats display
     this.updateStatsDisplay();
