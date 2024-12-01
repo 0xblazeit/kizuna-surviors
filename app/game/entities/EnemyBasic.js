@@ -24,6 +24,8 @@ class EnemyBasic extends BasePlayer {
         this.staggerDuration = 500;   // Added separate stagger duration
         this.knockbackForce = 30;     // Reduced from 150 to 30
         this.clickDamage = enemyConfig.clickDamage;
+        this.isDying = false;  // Add flag to track death state
+        this.isDead = false;   // Add flag to track death state
         
         // Movement properties
         this.targetPlayer = null;
@@ -145,6 +147,9 @@ class EnemyBasic extends BasePlayer {
     }
 
     takeDamage(amount, sourceX, sourceY) {
+        // If already dying or dead, don't process damage
+        if (this.isDying || this.isDead) return 0;
+
         // Ensure amount is a valid number
         const damage = Number(amount) || 0;
         console.log(`Enemy taking ${damage} damage`);
@@ -186,6 +191,13 @@ class EnemyBasic extends BasePlayer {
         }
         
         console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
+        
+        // Check for death
+        if (this.stats.currentHealth <= 0 && !this.isDying) {
+            this.isDying = true;  // Set dying flag before calling onDeath
+            this.onDeath();
+        }
+        
         return damageDealt;
     }
 
@@ -400,6 +412,10 @@ class EnemyBasic extends BasePlayer {
     }
 
     onDeath() {
+        // Prevent multiple death triggers
+        if (this.isDead) return;
+        this.isDead = true;
+        
         console.log('Enemy death triggered');
         // Clean up health bar
         if (this.healthBar) {
@@ -407,7 +423,7 @@ class EnemyBasic extends BasePlayer {
             this.healthBar.container.destroy();
         }
 
-        // Increment kill counter
+        // Increment kill counter only once
         this.scene.gameState.kills++;
         this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
 
