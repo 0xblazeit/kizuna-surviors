@@ -13,7 +13,7 @@ export class SonicBoomHammer extends BaseWeapon {
             speed: 250,          // Moderate projectile speed
             knockback: 150,      // Strong knockback
             accuracy: 0.3,       // Low accuracy (0-1, lower means more spread)
-            scale: 1.2,          // Large projectile
+            scale: 0.8,          // Reduced from 1.2 to 0.8
             criticalChance: 0.15 // 15% crit chance
         };
 
@@ -32,14 +32,14 @@ export class SonicBoomHammer extends BaseWeapon {
         this.currentLevel = 0;
         this.maxLevel = 8;
         this.levelConfigs = {
-            1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 1.25 },
-            2: { damage: 80,  pierce: 2, cooldown: 1800, knockback: 170, accuracy: 0.34, scale: 1.3 },
-            3: { damage: 95,  pierce: 3, cooldown: 1700, knockback: 180, accuracy: 0.36, scale: 1.35 },
-            4: { damage: 110, pierce: 3, cooldown: 1600, knockback: 190, accuracy: 0.38, scale: 1.4 },
-            5: { damage: 130, pierce: 3, cooldown: 1500, knockback: 200, accuracy: 0.40, scale: 1.45 },
-            6: { damage: 150, pierce: 4, cooldown: 1400, knockback: 220, accuracy: 0.42, scale: 1.5 },
-            7: { damage: 175, pierce: 4, cooldown: 1300, knockback: 240, accuracy: 0.44, scale: 1.55 },
-            8: { damage: 200, pierce: 5, cooldown: 1200, knockback: 260, accuracy: 0.46, scale: 1.6 }
+            1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.85 },  // Reduced scales
+            2: { damage: 80,  pierce: 2, cooldown: 1800, knockback: 170, accuracy: 0.34, scale: 0.9 },
+            3: { damage: 95,  pierce: 3, cooldown: 1700, knockback: 180, accuracy: 0.36, scale: 0.95 },
+            4: { damage: 110, pierce: 3, cooldown: 1600, knockback: 190, accuracy: 0.38, scale: 1.0 },
+            5: { damage: 130, pierce: 3, cooldown: 1500, knockback: 200, accuracy: 0.40, scale: 1.05 },
+            6: { damage: 150, pierce: 4, cooldown: 1400, knockback: 220, accuracy: 0.42, scale: 1.1 },
+            7: { damage: 175, pierce: 4, cooldown: 1300, knockback: 240, accuracy: 0.44, scale: 1.15 },
+            8: { damage: 200, pierce: 5, cooldown: 1200, knockback: 260, accuracy: 0.46, scale: 1.2 }
         };
 
         console.log('Sonic Boom Hammer initialized with stats:', this.stats);
@@ -228,10 +228,9 @@ export class SonicBoomHammer extends BaseWeapon {
         proj.active = true;
         this.lastFiredTime = time;
 
-        // Add screen shake effect
+        // Add very subtle screen shake effect
         if (this.scene.cameras && this.scene.cameras.main) {
-            // Stronger screen shake for hammer
-            this.scene.cameras.main.shake(150, 0.008);
+            this.scene.cameras.main.shake(100, 0.002);
         }
     }
 
@@ -278,13 +277,13 @@ export class SonicBoomHammer extends BaseWeapon {
     createHitEffect(enemy, proj, isCritical) {
         // Create impact effect
         const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
-        impact.setScale(0.5);
+        impact.setScale(0.3); // Reduced from 0.5
         impact.setTint(isCritical ? this.effectColors.secondary : this.effectColors.primary);
         impact.setAlpha(0.8);
 
         // Create ground crack effect
         const crack = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
-        crack.setScale(0.3);
+        crack.setScale(0.2); // Reduced from 0.3
         crack.setTint(this.effectColors.energy);
         crack.setAlpha(0.5);
         crack.setAngle(Math.random() * 360); // Random rotation for variety
@@ -292,7 +291,7 @@ export class SonicBoomHammer extends BaseWeapon {
         // Animate impact
         this.scene.tweens.add({
             targets: impact,
-            scale: isCritical ? 2.5 : 2,
+            scale: isCritical ? 1.5 : 1.2, // Reduced from 2.5/2.0
             alpha: 0,
             duration: 200,
             ease: 'Power2',
@@ -302,16 +301,16 @@ export class SonicBoomHammer extends BaseWeapon {
         // Animate ground crack
         this.scene.tweens.add({
             targets: crack,
-            scale: isCritical ? 1.5 : 1,
+            scale: isCritical ? 1.0 : 0.8, // Reduced from 1.5/1.0
             alpha: 0,
             duration: 400,
             ease: 'Power1',
             onComplete: () => crack.destroy()
         });
 
-        // Add screen shake on critical hits
+        // Add subtle screen shake on critical hits only
         if (isCritical && this.scene.cameras && this.scene.cameras.main) {
-            this.scene.cameras.main.shake(200, 0.012);
+            this.scene.cameras.main.shake(150, 0.003);
         }
     }
 
