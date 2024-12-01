@@ -54,7 +54,7 @@ export class MagicWandWeapon extends BaseWeapon {
         // Clear existing projectiles
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
-                if (proj.sprite.glow) {sd
+                if (proj.sprite.glow) {
                     proj.sprite.glow.destroy();
                 }
                 proj.sprite.destroy();
