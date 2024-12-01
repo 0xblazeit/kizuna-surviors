@@ -1,14 +1,9 @@
 import { RotatingDogWeapon } from '../weapons/RotatingDogWeapon';
 
-class GameScene {
+export default class GameScene extends Phaser.Scene {
   constructor() {
+    super({ key: 'GameScene' });
     console.log('GameScene constructor called');
-    if (typeof window !== 'undefined' && window.Phaser) {
-      const scene = new window.Phaser.Scene({ key: 'GameScene' });
-      Object.assign(this, scene);
-      console.log('GameScene initialized');
-      return this;
-    }
   }
 
   init() {
@@ -19,40 +14,50 @@ class GameScene {
   preload() {
     console.log('GameScene preload called');
     
-    // Create a canvas for the particle texture
+    // Create debug text
+    this.debugText = this.add.text(10, 10, 'Loading...', { fontSize: '16px', fill: '#fff' });
+
+    // Debug loading process
+    this.load.on('start', () => {
+      console.log('Loading started');
+      this.debugText.setText('Loading started...');
+    });
+
+    this.load.on('complete', () => {
+      console.log('All assets loaded');
+      this.debugText.setText('All assets loaded');
+    });
+
+    this.load.on('loaderror', (file) => {
+      console.error('Error loading file:', file.key, file.src);
+      this.debugText.setText(`Error loading: ${file.key}`);
+    });
+
+    // Create a particle texture
     const particleCanvas = document.createElement('canvas');
-    particleCanvas.width = 16;
-    particleCanvas.height = 16;
+    particleCanvas.width = 4;
+    particleCanvas.height = 4;
     const ctx = particleCanvas.getContext('2d');
-
-    // Draw a white circle
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(8, 8, 8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Create a base64 texture from the canvas
+    ctx.fillRect(0, 0, 4, 4);
     const base64Texture = particleCanvas.toDataURL();
     
     // Load the texture into Phaser
     this.load.image('particle', base64Texture);
-    
-    // Load weapon sprites
-    console.log('Loading weapon sprite...');
-    this.load.on('filecomplete-image-weapon-dog-projectile', () => {
-        console.log('Dog projectile sprite loaded successfully!');
-    });
-    this.load.on('loaderror', (file) => {
-        console.error('Error loading file:', file.src);
-    });
-    
-    // Try loading with the correct path relative to public
-    this.load.image('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg');
   }
 
   create() {
     console.log('GameScene create called');
     const { width, height } = this.scale;
+
+    // Verify if the dog sprite loaded correctly
+    if (this.textures.exists('weapon-dog-projectile')) {
+      console.log('Dog sprite loaded successfully');
+      this.debugText.setText('Dog sprite loaded successfully');
+    } else {
+      console.error('Dog sprite failed to load');
+      this.debugText.setText('Dog sprite failed to load');
+    }
 
     // Add background for better visibility
     this.add.rectangle(width/2, height/2, width, height, 0x222222);
@@ -130,5 +135,3 @@ class GameScene {
     }
   }
 }
-
-export default GameScene;

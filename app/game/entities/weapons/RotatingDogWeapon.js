@@ -19,9 +19,41 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     spawnDogs() {
+        console.log('Spawning dogs...');
+        
+        // Check if texture exists
+        if (!this.scene.textures.exists('weapon-dog-projectile')) {
+            console.error('Dog sprite texture not found! Creating fallback sprite...');
+            // Create a fallback sprite using graphics
+            const graphics = this.scene.add.graphics();
+            graphics.lineStyle(2, 0xff0000);
+            graphics.fillStyle(0xff0000, 0.5);
+            graphics.beginPath();
+            graphics.arc(0, 0, 15, 0, Math.PI * 2);
+            graphics.closePath();
+            graphics.strokePath();
+            graphics.fillPath();
+            
+            // Convert graphics to texture
+            graphics.generateTexture('weapon-dog-projectile', 32, 32);
+            graphics.destroy();
+        }
+
         for (let i = 0; i < this.stats.count; i++) {
+            console.log(`Creating dog ${i + 1}/${this.stats.count}`);
+            
             const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-dog-projectile');
-            sprite.setScale(0.4); // Adjust scale to match the desired size
+            
+            // Debug sprite information
+            console.log('Sprite created:', {
+                texture: sprite.texture.key,
+                frame: sprite.frame.name,
+                width: sprite.width,
+                height: sprite.height
+            });
+
+            sprite.setScale(0.4);
+            sprite.setOrigin(0.5, 0.5);
             
             // Add a subtle glow effect if FX is available
             if (sprite.preFX) {
@@ -34,7 +66,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 targetEnemy: null,
                 lastAttackTime: 0,
                 guardAngle: (i * (2 * Math.PI)) / this.stats.count,
-                lerpFactor: 0.1, // For smooth movement
+                lerpFactor: 0.1,
                 currentSpeed: 0,
                 maxSpeed: this.stats.speed,
                 acceleration: 1000,
@@ -194,6 +226,9 @@ export class RotatingDogWeapon extends BaseWeapon {
     destroy() {
         this.activeProjectiles.forEach(dog => {
             if (dog.sprite) {
+                if (dog.sprite.preFX) {
+                    dog.sprite.preFX.clear();
+                }
                 dog.sprite.destroy();
             }
         });

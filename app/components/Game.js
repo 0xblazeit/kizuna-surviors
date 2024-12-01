@@ -118,7 +118,9 @@ const GameScene = {
     this.load.svg('enemy-basic-six', '/assets/game/characters/enemies-basic/basic-six.svg');
 
     // Load weapon sprites
-    this.load.image('dogProjectile', './assets/game/weapons/weapon-dog-projectile.svg');
+    this.load.svg('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg', {
+      scale: 0.5
+    });
   },
 
   create: function() {
