@@ -27,6 +27,17 @@ export class MagicWandWeapon extends BaseWeapon {
         this.maxProjectiles = 10;
         this.activeProjectiles = [];
         
+        // Initialize level configuration
+        this.currentLevel = 0;
+        this.maxLevel = 5;
+        this.levelConfigs = {
+            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12 },
+            2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15 },
+            3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17 },
+            4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20 },
+            5: { damage: 40, pierce: 6, cooldown: 250, magicPower: 50, criticalChance: 0.25 }
+        };
+        
         console.log('Magic Wand initialized with stats:', this.stats);
 
         this.createMagicProjectiles();
