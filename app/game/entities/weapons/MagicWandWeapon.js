@@ -9,11 +9,12 @@ export class MagicWandWeapon extends BaseWeapon {
             damage: 10,
             pierce: 3,
             cooldown: 500,  // milliseconds between shots
-            range: 400,     // pixels
+            range: 300,     // pixels
             speed: 300,     // pixels per second
             magicPower: 20, // percentage increase to damage
             criticalChance: 0.1,
-            elementalDamage: 5
+            elementalDamage: 5,
+            scale: 0.5     // base projectile scale
         };
 
         // Effect colors for magic wand
@@ -29,13 +30,16 @@ export class MagicWandWeapon extends BaseWeapon {
         
         // Initialize level configuration
         this.currentLevel = 0;
-        this.maxLevel = 5;
+        this.maxLevel = 8;
         this.levelConfigs = {
-            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12 },
-            2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15 },
-            3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17 },
-            4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20 },
-            5: { damage: 40, pierce: 6, cooldown: 250, magicPower: 50, criticalChance: 0.25 }
+            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12, range: 350, scale: 0.55 },
+            2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15, range: 400, scale: 0.60 },
+            3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17, range: 450, scale: 0.65 },
+            4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20, range: 500, scale: 0.70 },
+            5: { damage: 40, pierce: 6, cooldown: 250, magicPower: 50, criticalChance: 0.25, range: 550, scale: 0.75 },
+            6: { damage: 50, pierce: 6, cooldown: 200, magicPower: 60, criticalChance: 0.30, range: 600, scale: 0.80 },
+            7: { damage: 65, pierce: 7, cooldown: 150, magicPower: 70, criticalChance: 0.35, range: 650, scale: 0.85 },
+            8: { damage: 80, pierce: 8, cooldown: 100, magicPower: 100, criticalChance: 0.40, range: 700, scale: 0.90 }
         };
         
         console.log('Magic Wand initialized with stats:', this.stats);
@@ -47,6 +51,9 @@ export class MagicWandWeapon extends BaseWeapon {
         // Clear existing projectiles
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
+                if (proj.sprite.glow) {
+                    proj.sprite.glow.destroy();
+                }
                 proj.sprite.destroy();
             }
         });
@@ -55,14 +62,14 @@ export class MagicWandWeapon extends BaseWeapon {
         // Create new projectiles
         for (let i = 0; i < this.maxProjectiles; i++) {
             const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
-            sprite.setScale(0.5);
+            sprite.setScale(this.stats.scale);
             sprite.setActive(true);
             sprite.setVisible(false);
             sprite.setTint(this.effectColors.primary);
 
             // Add a simple glow effect using a second sprite
             const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
-            glowSprite.setScale(0.7);
+            glowSprite.setScale(this.stats.scale * 1.4); // Glow is 40% larger than the projectile
             glowSprite.setAlpha(0.3);
             glowSprite.setVisible(false);
             glowSprite.setTint(this.effectColors.secondary);
@@ -81,10 +88,14 @@ export class MagicWandWeapon extends BaseWeapon {
     }
 
     deactivateProjectile(proj) {
+        if (!proj) return;
+        
         proj.active = false;
-        proj.sprite.setVisible(false);
-        if (proj.sprite.glow) {
-            proj.sprite.glow.setVisible(false);
+        if (proj.sprite) {
+            proj.sprite.setVisible(false);
+            if (proj.sprite.glow) {
+                proj.sprite.glow.setVisible(false);
+            }
         }
     }
 
@@ -350,9 +361,6 @@ export class MagicWandWeapon extends BaseWeapon {
         this.currentLevel++;
         const newStats = this.levelConfigs[this.currentLevel];
         
-        // Store old count to check if we need to spawn more projectiles
-        const oldCount = this.stats.count;
-        
         // Update stats
         this.stats = {
             ...this.stats,
@@ -361,11 +369,8 @@ export class MagicWandWeapon extends BaseWeapon {
 
         console.log(`Magic Wand leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
-        // If count increased, respawn projectiles
-        if (newStats.count > oldCount) {
-            console.log(`Increasing projectile count from ${oldCount} to ${newStats.count}`);
-            this.createMagicProjectiles();
-        }
+        // Recreate projectiles with new scale
+        this.createMagicProjectiles();
 
         // Create level up effects
         this.activeProjectiles.forEach(proj => {
@@ -375,6 +380,52 @@ export class MagicWandWeapon extends BaseWeapon {
                 burst.setScale(0.2);
                 burst.setAlpha(0.7);
                 burst.setTint(0xffff00);
+
+                // Special max level animation
+                if (this.currentLevel === this.maxLevel) {
+                    // Create multiple orbiting particles
+                    for (let i = 0; i < 8; i++) {
+                        const particle = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-projectile');
+                        particle.setScale(0.3);
+                        particle.setAlpha(0.8);
+                        particle.setTint(0xff00ff);
+
+                        // Create an orbit animation
+                        this.scene.tweens.add({
+                            targets: particle,
+                            x: {
+                                getStart: () => proj.sprite.x + Math.cos(i * Math.PI / 4) * 30,
+                                getEnd: () => proj.sprite.x + Math.cos((i * Math.PI / 4) + Math.PI * 2) * 30
+                            },
+                            y: {
+                                getStart: () => proj.sprite.y + Math.sin(i * Math.PI / 4) * 30,
+                                getEnd: () => proj.sprite.y + Math.sin((i * Math.PI / 4) + Math.PI * 2) * 30
+                            },
+                            scaleX: { from: 0.3, to: 0 },
+                            scaleY: { from: 0.3, to: 0 },
+                            alpha: { from: 0.8, to: 0 },
+                            duration: 1000,
+                            ease: 'Quad.easeOut',
+                            onComplete: () => particle.destroy()
+                        });
+                    }
+
+                    // Create a larger burst for max level
+                    const maxLevelBurst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
+                    maxLevelBurst.setScale(0.4);
+                    maxLevelBurst.setAlpha(0.9);
+                    maxLevelBurst.setTint(0xff00ff);
+
+                    this.scene.tweens.add({
+                        targets: maxLevelBurst,
+                        scaleX: 3,
+                        scaleY: 3,
+                        alpha: 0,
+                        duration: 800,
+                        ease: 'Quad.easeOut',
+                        onComplete: () => maxLevelBurst.destroy()
+                    });
+                }
 
                 this.scene.tweens.add({
                     targets: burst,
