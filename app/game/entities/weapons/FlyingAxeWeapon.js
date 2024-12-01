@@ -9,7 +9,7 @@ class FlyingAxeWeapon extends BaseWeapon {
             1: {
                 damage: 25,
                 pierce: 1,
-                cooldown: 1200,    // Time between throws
+                cooldown: 2200,    // Time between throws
                 range: 400,        // Distance before returning
                 speed: 250,        // Projectile speed
                 rotationSpeed: 5,  // Rotation speed of the axe

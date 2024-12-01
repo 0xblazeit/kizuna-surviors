@@ -7,7 +7,7 @@ export class MagicWandWeapon extends BaseWeapon {
         this.stats = {
             damage: 10,
             pierce: 3,
-            cooldown: 500,  // milliseconds between shots
+            cooldown: 900,  // milliseconds between shots
             range: 300,     // pixels
             speed: 300,     // pixels per second
             magicPower: 20, // percentage increase to damage
@@ -31,7 +31,7 @@ export class MagicWandWeapon extends BaseWeapon {
         this.currentLevel = 0;
         this.maxLevel = 8;
         this.levelConfigs = {
-            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12, range: 450, scale: 0.55 },
+            1: { damage: 15, pierce: 4, cooldown: 950, magicPower: 25, criticalChance: 0.12, range: 450, scale: 0.55 },
             2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15, range: 500, scale: 0.60 },
             3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17, range: 650, scale: 0.65 },
             4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20, range: 700, scale: 0.70 },
