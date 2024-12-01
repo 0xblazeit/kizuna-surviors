@@ -7,11 +7,13 @@ export class RotatingDogWeapon extends BaseWeapon {
             damage: 15,
             pierce: 2,
             count: 3,
-            cooldown: 2000,
-            range: 150,
-            speed: 200,
-            detectionRange: 200,
+            cooldown: 800,     // Attack cooldown
+            range: 200,
+            speed: 400,
+            detectionRange: 150,
             guardDistance: 80,
+            attackDuration: 200,  // Reduced attack duration for faster cycles
+            returnSpeed: 450,
         };
         
         this.activeProjectiles = [];
@@ -39,38 +41,52 @@ export class RotatingDogWeapon extends BaseWeapon {
             graphics.destroy();
         }
 
+        // Clear existing projectiles
+        this.activeProjectiles.forEach(dog => {
+            if (dog.sprite) {
+                dog.sprite.destroy();
+            }
+        });
+        this.activeProjectiles = [];
+
+        // Calculate initial angles for each dog
         for (let i = 0; i < this.stats.count; i++) {
             console.log(`Creating dog ${i + 1}/${this.stats.count}`);
+            const angle = (i * (2 * Math.PI)) / this.stats.count;
             
-            const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-dog-projectile');
+            // Create sprite at guard position
+            const guardDistance = this.stats.guardDistance;
+            const x = this.player.x + Math.cos(angle) * guardDistance;
+            const y = this.player.y + Math.sin(angle) * guardDistance;
+            
+            const sprite = this.scene.add.sprite(x, y, 'weapon-dog-projectile');
+            sprite.setScale(0.4);
+            sprite.setOrigin(0.5, 0.5);
+            sprite.setDepth(5); // Set depth to appear above ground but below some entities
             
             // Debug sprite information
             console.log('Sprite created:', {
                 texture: sprite.texture.key,
                 frame: sprite.frame.name,
                 width: sprite.width,
-                height: sprite.height
+                height: sprite.height,
+                x: x,
+                y: y
             });
-
-            sprite.setScale(0.4);
-            sprite.setOrigin(0.5, 0.5);
-            
-            // Add a subtle glow effect if FX is available
-            if (sprite.preFX) {
-                sprite.preFX.addGlow(0x4444ff, 0.5, 0, false, 0.1, 16);
-            }
             
             const dog = {
                 sprite,
                 state: 'guarding',
                 targetEnemy: null,
                 lastAttackTime: 0,
-                guardAngle: (i * (2 * Math.PI)) / this.stats.count,
+                guardAngle: angle,
                 lerpFactor: 0.1,
                 currentSpeed: 0,
                 maxSpeed: this.stats.speed,
-                acceleration: 1000,
-                deceleration: 1500
+                acceleration: 1500,
+                deceleration: 2000,
+                attackStartTime: 0,
+                originalScale: 0.4,
             };
             this.activeProjectiles.push(dog);
         }
@@ -116,74 +132,132 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
-        if (!this.player) return;
+        if (!this.player || !this.scene.enemies) return;
 
-        const enemies = Array.isArray(this.scene.enemies) ? this.scene.enemies : [];
+        // Get active enemies
+        const enemies = this.scene.enemies.filter(e => {
+            return e && e.sprite && e.sprite.active && !e.isDead;
+        });
+
+        if (enemies.length === 0) return;
 
         this.activeProjectiles.forEach((dog, index) => {
-            // Update guard formation angle based on time for subtle movement
-            dog.guardAngle += 0.0005 * delta;
+            if (!dog.sprite || !dog.sprite.active) return;
 
             const dogX = dog.sprite.x;
             const dogY = dog.sprite.y;
 
             // Check if current target is still valid
-            if (dog.targetEnemy && (!dog.targetEnemy.active || 
-                this.getDistance(dogX, dogY, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y) > this.stats.detectionRange)) {
-                dog.targetEnemy = null;
-                dog.state = 'returning';
+            if (dog.targetEnemy) {
+                const targetValid = dog.targetEnemy && 
+                                  dog.targetEnemy.sprite && 
+                                  dog.targetEnemy.sprite.active && 
+                                  !dog.targetEnemy.isDead;
+                
+                if (!targetValid) {
+                    dog.targetEnemy = null;
+                    dog.state = 'returning';
+                }
             }
 
-            // Find new target if needed
-            if (!dog.targetEnemy && dog.state !== 'returning') {
+            // Find new target if not attacking or returning
+            if (!dog.targetEnemy && dog.state !== 'attacking' && dog.state !== 'returning') {
                 let nearestEnemy = null;
                 let nearestDistance = Infinity;
 
-                enemies.forEach(enemy => {
-                    if (enemy?.active && enemy.sprite) {
-                        const distance = this.getDistance(dogX, dogY, enemy.sprite.x, enemy.sprite.y);
-                        if (distance < this.stats.detectionRange && distance < nearestDistance) {
-                            nearestDistance = distance;
-                            nearestEnemy = enemy;
-                        }
+                for (const enemy of enemies) {
+                    const distanceToEnemy = this.getDistance(dogX, dogY, enemy.sprite.x, enemy.sprite.y);
+                    if (distanceToEnemy < this.stats.detectionRange && distanceToEnemy < nearestDistance) {
+                        nearestDistance = distanceToEnemy;
+                        nearestEnemy = enemy;
                     }
-                });
+                }
 
-                if (nearestEnemy) {
+                if (nearestEnemy && time - dog.lastAttackTime >= this.stats.cooldown) {
                     dog.targetEnemy = nearestEnemy;
                     dog.state = 'chasing';
+                    console.log(`Dog ${index} found target at distance ${nearestDistance}`);
                 }
             }
 
             // Update dog behavior based on state
             switch (dog.state) {
                 case 'chasing':
-                    if (dog.targetEnemy?.sprite) {
-                        this.moveTowardsPoint(dog, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y, delta);
-                        
-                        // Attack if close enough
+                    if (dog.targetEnemy && dog.targetEnemy.sprite) {
                         const distanceToEnemy = this.getDistance(
                             dogX, dogY, 
                             dog.targetEnemy.sprite.x, 
                             dog.targetEnemy.sprite.y
                         );
-                        
-                        if (distanceToEnemy < 30 && time - dog.lastAttackTime >= this.stats.cooldown) {
+
+                        // Move towards enemy
+                        this.moveTowardsPoint(dog, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y, delta);
+
+                        // Attack when close enough
+                        if (distanceToEnemy < 40 && time - dog.lastAttackTime >= this.stats.cooldown) {
+                            console.log(`Dog ${index} attacking enemy`);
+                            dog.state = 'attacking';
+                            dog.attackStartTime = time;
                             this.handleHit(dog.targetEnemy, dog);
                             dog.lastAttackTime = time;
-                            
-                            // Add attack animation
+
+                            // Attack animation
+                            this.scene.tweens.add({
+                                targets: dog.sprite,
+                                scaleX: dog.originalScale * 1.5,
+                                scaleY: dog.originalScale * 1.5,
+                                duration: 100,
+                                yoyo: true,
+                                ease: 'Quad.easeOut',
+                                onComplete: () => {
+                                    if (dog.sprite && dog.sprite.active) {
+                                        dog.sprite.setScale(dog.originalScale);
+                                    }
+                                }
+                            });
+
+                            // Flash effect
                             dog.sprite.setTint(0xff0000);
                             this.scene.time.delayedCall(100, () => {
-                                if (dog.sprite) dog.sprite.clearTint();
+                                if (dog.sprite && dog.sprite.active) {
+                                    dog.sprite.clearTint();
+                                }
                             });
+                        }
+                    } else {
+                        dog.state = 'returning';
+                    }
+                    break;
+
+                case 'attacking':
+                    const attackProgress = (time - dog.attackStartTime) / this.stats.attackDuration;
+                    
+                    // After attack duration, check if we should continue attacking or return
+                    if (attackProgress >= 1) {
+                        // If target is still valid and in range, go back to chasing
+                        if (dog.targetEnemy && dog.targetEnemy.sprite && !dog.targetEnemy.isDead) {
+                            const distanceToEnemy = this.getDistance(
+                                dogX, dogY,
+                                dog.targetEnemy.sprite.x,
+                                dog.targetEnemy.sprite.y
+                            );
+                            
+                            if (distanceToEnemy < this.stats.detectionRange) {
+                                dog.state = 'chasing';  // Continue chasing the same target
+                                console.log(`Dog ${index} continuing chase`);
+                            } else {
+                                dog.targetEnemy = null;
+                                dog.state = 'returning';
+                            }
+                        } else {
+                            dog.targetEnemy = null;
+                            dog.state = 'returning';
                         }
                     }
                     break;
 
                 case 'returning':
-                case 'guarding':
-                    // Calculate guard position with some variation
+                    // Calculate guard position
                     const guardDistance = this.stats.guardDistance + Math.sin(time * 0.002) * 10;
                     const targetX = this.player.x + Math.cos(dog.guardAngle) * guardDistance;
                     const targetY = this.player.y + Math.sin(dog.guardAngle) * guardDistance;
@@ -191,10 +265,20 @@ export class RotatingDogWeapon extends BaseWeapon {
                     this.moveTowardsPoint(dog, targetX, targetY, delta);
                     
                     // If returned to guard position, switch back to guarding
-                    if (dog.state === 'returning' && 
-                        this.getDistance(dogX, dogY, targetX, targetY) < 10) {
+                    if (this.getDistance(dogX, dogY, targetX, targetY) < 10) {
                         dog.state = 'guarding';
+                        // Clear target so it can find new ones
+                        dog.targetEnemy = null;
                     }
+                    break;
+
+                case 'guarding':
+                    // Update guard position
+                    const guardDist = this.stats.guardDistance + Math.sin(time * 0.002) * 10;
+                    const guardX = this.player.x + Math.cos(dog.guardAngle) * guardDist;
+                    const guardY = this.player.y + Math.sin(dog.guardAngle) * guardDist;
+                    
+                    this.moveTowardsPoint(dog, guardX, guardY, delta);
                     break;
             }
 
@@ -208,10 +292,37 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     handleHit(enemy, dog) {
-        if (enemy && enemy.damage) {
-            enemy.damage(this.stats.damage);
+        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
+
+        console.log('Applying damage to enemy');
+        
+        // Get the source position for the hit effect
+        const sourceX = dog.sprite.x;
+        const sourceY = dog.sprite.y;
+        
+        // Apply damage using the enemy's takeDamage method
+        if (typeof enemy.takeDamage === 'function') {
+            enemy.takeDamage(this.stats.damage, sourceX, sourceY);
             
-            // Create hit effect if the sprite exists
+            // Visual feedback on enemy
+            enemy.sprite.setTint(0xff0000);
+            this.scene.time.delayedCall(100, () => {
+                if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
+                    enemy.sprite.clearTint();
+                }
+            });
+
+            // Scale effect
+            this.scene.tweens.add({
+                targets: enemy.sprite,
+                scaleX: '*=0.8',
+                scaleY: '*=0.8',
+                duration: 50,
+                yoyo: true,
+                ease: 'Quad.easeInOut'
+            });
+            
+            // Create hit effect
             if (this.scene.textures.exists('hit_effect')) {
                 const hitEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'hit_effect');
                 hitEffect.setScale(0.5);
@@ -220,6 +331,13 @@ export class RotatingDogWeapon extends BaseWeapon {
                     hitEffect.destroy();
                 });
             }
+            
+            // Emit damage numbers if available
+            if (this.scene.emitDamageNumber) {
+                this.scene.emitDamageNumber(this.stats.damage, enemy.sprite.x, enemy.sprite.y);
+            }
+        } else {
+            console.error('Enemy does not have takeDamage method:', enemy);
         }
     }
 

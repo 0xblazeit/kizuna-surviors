@@ -501,21 +501,35 @@ const GameScene = {
 
     // Update all enemies
     if (this.enemies) {
-      this.enemies.forEach(enemy => {
+      this.enemies.forEach((enemy, index) => {
         if (enemy && enemy.update) {
-          enemy.update();
+          try {
+            enemy.update(time, delta);
+            
+            // Remove dead enemies
+            if (enemy.isDead) {
+              enemy.sprite.destroy();
+              this.enemies[index] = null;
+            }
+          } catch (error) {
+            console.error('Error updating enemy:', error);
+          }
         }
       });
+      
+      // Clean up null entries
+      this.enemies = this.enemies.filter(enemy => enemy !== null);
     }
 
     // Update all weapons with explicit debug
     if (this.weapons && this.weapons.length > 0) {
-      console.log('Updating weapons...');
       this.weapons.forEach((weapon, index) => {
         if (weapon && typeof weapon.update === 'function') {
-          weapon.update(time, delta);
-        } else {
-          console.error(`Invalid weapon at index ${index}:`, weapon);
+          try {
+            weapon.update(time, delta);
+          } catch (error) {
+            console.error(`Error updating weapon ${index}:`, error);
+          }
         }
       });
     }
