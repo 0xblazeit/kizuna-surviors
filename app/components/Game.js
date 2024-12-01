@@ -430,6 +430,15 @@ const GameScene = {
     // Listen for level up events to update stats
     this.events.on('playerLevelUp', (level) => {
       this.updateStatsDisplay();
+      
+      // Level up weapons when player levels up
+      if (this.weapons && this.weapons.length > 0) {
+        this.weapons.forEach(weapon => {
+          if (weapon.levelUp) {
+            weapon.levelUp();
+          }
+        });
+      }
     });
 
     // Add spacebar XP debug handler
@@ -485,6 +494,7 @@ const GameScene = {
           `Active Weapons: ${this.weapons.length}`,
           `Dog Projectiles: ${weapon?.activeProjectiles?.length || 0}`,
           `Weapon Stats:`,
+          `  Level: ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
           `  Damage: ${stats.damage || 0}`,
           `  Pierce: ${stats.pierce || 0}`,
           `  Range: ${stats.range || 0}`,

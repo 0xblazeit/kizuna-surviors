@@ -3,14 +3,90 @@ import { BaseWeapon } from '../../weapons/BaseWeapon.js';
 export class RotatingDogWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
+        
+        // Level-up configurations using Fibonacci sequence (1,1,2,3,5,8,13,21)
+        this.levelConfigs = {
+            1: {
+                damage: 15,
+                pierce: 2,
+                count: 3,
+                cooldown: 800,
+                range: 200,
+                speed: 400,
+                detectionRange: 150,
+            },
+            2: {  // First upgrade
+                damage: 20,      // +5
+                pierce: 2,
+                count: 3,
+                cooldown: 750,   // Faster
+                range: 220,      // +20
+                speed: 420,      // +20
+                detectionRange: 160,  // +10
+            },
+            3: {  // Getting stronger
+                damage: 30,      // +10
+                pierce: 3,       // +1
+                count: 4,        // +1
+                cooldown: 700,
+                range: 240,
+                speed: 440,
+                detectionRange: 170,
+            },
+            4: {  // Significant boost
+                damage: 45,      // +15
+                pierce: 3,
+                count: 4,
+                cooldown: 650,
+                range: 260,
+                speed: 460,
+                detectionRange: 180,
+            },
+            5: {  // Major power spike
+                damage: 70,      // +25
+                pierce: 4,       // +1
+                count: 5,        // +1
+                cooldown: 600,
+                range: 280,
+                speed: 480,
+                detectionRange: 190,
+            },
+            6: {  // Getting powerful
+                damage: 105,     // +35
+                pierce: 4,
+                count: 5,
+                cooldown: 550,
+                range: 300,
+                speed: 500,
+                detectionRange: 200,
+            },
+            7: {  // Near maximum power
+                damage: 150,     // +45
+                pierce: 5,       // +1
+                count: 6,        // +1
+                cooldown: 500,
+                range: 320,
+                speed: 520,
+                detectionRange: 220,
+            },
+            8: {  // Maximum power
+                damage: 200,     // +50
+                pierce: 6,       // +1
+                count: 7,        // +1
+                cooldown: 450,
+                range: 350,
+                speed: 550,
+                detectionRange: 250,
+            }
+        };
+
+        // Initialize at level 1
+        this.currentLevel = 1;
+        this.maxLevel = 8;
+
+        // Set initial stats from level 1 config
         this.stats = {
-            damage: 15,
-            pierce: 2,
-            count: 3,
-            cooldown: 800,
-            range: 200,
-            speed: 400,
-            detectionRange: 150,
+            ...this.levelConfigs[1],
             guardDistance: 80,
             attackDuration: 200,
             returnSpeed: 450,
@@ -18,9 +94,9 @@ export class RotatingDogWeapon extends BaseWeapon {
         
         // Attack effect colors
         this.effectColors = {
-            primary: 0x4444ff,    // Blue
-            secondary: 0x0099ff,  // Light blue
-            energy: 0xaaddff     // Very light blue
+            primary: 0x4444ff,
+            secondary: 0x0099ff,
+            energy: 0xaaddff
         };
         
         this.activeProjectiles = [];
@@ -378,6 +454,80 @@ export class RotatingDogWeapon extends BaseWeapon {
         } else {
             console.error('Enemy does not have takeDamage method:', enemy);
         }
+    }
+
+    levelUp() {
+        if (this.currentLevel >= this.maxLevel) {
+            console.log('Weapon already at max level!');
+            return false;
+        }
+
+        this.currentLevel++;
+        const newStats = this.levelConfigs[this.currentLevel];
+        
+        // Store old count to check if we need to spawn more dogs
+        const oldCount = this.stats.count;
+        
+        // Update stats
+        this.stats = {
+            ...this.stats,
+            ...newStats
+        };
+
+        console.log(`Weapon leveled up to ${this.currentLevel}! New stats:`, this.stats);
+
+        // If count increased, respawn dogs
+        if (newStats.count > oldCount) {
+            console.log(`Increasing dog count from ${oldCount} to ${newStats.count}`);
+            this.spawnDogs();
+        }
+
+        // Create level up effect
+        if (this.activeProjectiles.length > 0) {
+            this.activeProjectiles.forEach(dog => {
+                if (dog.sprite && dog.sprite.active) {
+                    // Create a burst effect
+                    const burst = this.scene.add.sprite(dog.sprite.x, dog.sprite.y, 'weapon-dog-projectile');
+                    burst.setScale(0.2);
+                    burst.setAlpha(0.7);
+                    burst.setTint(0xffff00); // Yellow color for level up
+
+                    this.scene.tweens.add({
+                        targets: burst,
+                        scaleX: 2,
+                        scaleY: 2,
+                        alpha: 0,
+                        duration: 500,
+                        ease: 'Quad.easeOut',
+                        onComplete: () => burst.destroy()
+                    });
+
+                    // Scale animation on dog
+                    this.scene.tweens.add({
+                        targets: dog.sprite,
+                        scaleX: dog.originalScale * 1.5,
+                        scaleY: dog.originalScale * 1.5,
+                        duration: 200,
+                        yoyo: true,
+                        ease: 'Quad.easeOut',
+                        onComplete: () => {
+                            if (dog.sprite && dog.sprite.active) {
+                                dog.sprite.setScale(dog.originalScale);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        return true;
+    }
+
+    getNextLevelPreview() {
+        if (this.currentLevel >= this.maxLevel) {
+            return null;
+        }
+        return this.levelConfigs[this.currentLevel + 1];
     }
 
     destroy() {
