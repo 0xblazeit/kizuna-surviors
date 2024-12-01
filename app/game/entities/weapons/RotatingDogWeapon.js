@@ -7,13 +7,20 @@ export class RotatingDogWeapon extends BaseWeapon {
             damage: 15,
             pierce: 2,
             count: 3,
-            cooldown: 800,     // Attack cooldown
+            cooldown: 800,
             range: 200,
             speed: 400,
             detectionRange: 150,
             guardDistance: 80,
-            attackDuration: 200,  // Reduced attack duration for faster cycles
+            attackDuration: 200,
             returnSpeed: 450,
+        };
+        
+        // Attack effect colors
+        this.effectColors = {
+            primary: 0x4444ff,    // Blue
+            secondary: 0x0099ff,  // Light blue
+            energy: 0xaaddff     // Very light blue
         };
         
         this.activeProjectiles = [];
@@ -131,6 +138,58 @@ export class RotatingDogWeapon extends BaseWeapon {
         }
     }
 
+    createAttackEffect(dog, targetX, targetY) {
+        const sprite = dog.sprite;
+        if (!sprite || !sprite.active) return;
+
+        // Create energy burst effect
+        const burst = this.scene.add.sprite(sprite.x, sprite.y, 'weapon-dog-projectile');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(this.effectColors.energy);
+        
+        // Burst animation
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 1.5,
+            scaleY: 1.5,
+            alpha: 0,
+            duration: 200,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
+        });
+
+        // Dog attack animation
+        this.scene.tweens.add({
+            targets: sprite,
+            scaleX: dog.originalScale * 1.3,
+            scaleY: dog.originalScale * 1.3,
+            duration: 100,
+            yoyo: true,
+            ease: 'Quad.easeOut',
+            onComplete: () => {
+                if (sprite.active) {
+                    sprite.setScale(dog.originalScale);
+                }
+            }
+        });
+
+        // Add a subtle glow pulse
+        const glowSprite = this.scene.add.sprite(sprite.x, sprite.y, 'weapon-dog-projectile');
+        glowSprite.setScale(dog.originalScale * 1.5);
+        glowSprite.setAlpha(0.3);
+        glowSprite.setTint(this.effectColors.energy);
+        
+        this.scene.tweens.add({
+            targets: glowSprite,
+            alpha: 0,
+            scale: dog.originalScale * 2.5,
+            duration: 200,
+            ease: 'Quad.easeOut',
+            onComplete: () => glowSprite.destroy()
+        });
+    }
+
     update(time, delta) {
         if (!this.player || !this.scene.enemies) return;
 
@@ -201,28 +260,8 @@ export class RotatingDogWeapon extends BaseWeapon {
                             this.handleHit(dog.targetEnemy, dog);
                             dog.lastAttackTime = time;
 
-                            // Attack animation
-                            this.scene.tweens.add({
-                                targets: dog.sprite,
-                                scaleX: dog.originalScale * 1.5,
-                                scaleY: dog.originalScale * 1.5,
-                                duration: 100,
-                                yoyo: true,
-                                ease: 'Quad.easeOut',
-                                onComplete: () => {
-                                    if (dog.sprite && dog.sprite.active) {
-                                        dog.sprite.setScale(dog.originalScale);
-                                    }
-                                }
-                            });
-
-                            // Flash effect
-                            dog.sprite.setTint(0xff0000);
-                            this.scene.time.delayedCall(100, () => {
-                                if (dog.sprite && dog.sprite.active) {
-                                    dog.sprite.clearTint();
-                                }
-                            });
+                            // Create attack effect
+                            this.createAttackEffect(dog, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y);
                         }
                     } else {
                         dog.state = 'returning';
