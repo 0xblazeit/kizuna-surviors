@@ -5,6 +5,7 @@ import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
+import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -127,6 +128,9 @@ const GameScene = {
       scale: 0.5
     });
     this.load.svg('weapon-wand-projectile', '/assets/game/weapons/weapon-wand-projectile.svg', {
+      scale: 0.5
+    });
+    this.load.svg('weapon-hotdog-projectile', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
       scale: 0.5
     });
   },
@@ -253,6 +257,7 @@ const GameScene = {
     const gridCells = [];
     let weaponIcon = null;  // Store icon reference
     let wandIcon = null;    // Store wand icon reference
+    let glizzyIcon = null;  // Store glizzy icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -276,7 +281,7 @@ const GameScene = {
         // Make cell interactive
         cell.on('pointerdown', () => {
           // Only process clicks for cells with weapons
-          if (cellIndex === 0 || cellIndex === 1) {
+          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
             
@@ -323,6 +328,22 @@ const GameScene = {
           wandIcon.setScale(scale);
           gridCells[1].icon = wandIcon;
           gridContainer.add(wandIcon);
+        }
+
+        // Add Glizzy Blaster icon to third cell
+        if (row === 0 && col === 2) {
+          glizzyIcon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'weapon-hotdog-projectile'
+          );
+          // Use same scaling logic as other weapons
+          const padding = 8;
+          const maxDimension = gridCellSize - padding;
+          const scale = maxDimension / Math.max(glizzyIcon.width, glizzyIcon.height);
+          glizzyIcon.setScale(scale);
+          gridCells[2].icon = glizzyIcon;
+          gridContainer.add(glizzyIcon);
         }
       }
     }
@@ -438,11 +459,11 @@ const GameScene = {
 
     // Initialize weapon system
     console.log('Initializing weapon system...');
-    this.weapons = [];
-    const dogWeapon = new RotatingDogWeapon(this, this.player);
-    const wandWeapon = new MagicWandWeapon(this, this.player);
-    this.weapons.push(dogWeapon);
-    this.weapons.push(wandWeapon);
+    this.weapons = [
+      new RotatingDogWeapon(this, this.player),
+      new MagicWandWeapon(this, this.player),
+      new GlizzyBlasterWeapon(this, this.player)
+    ];
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
 
@@ -716,7 +737,7 @@ export default function Game() {
           default: 'arcade',
           arcade: {
             gravity: { y: 0 },
-            debug: true
+            debug: false
           }
         },
         input: {
