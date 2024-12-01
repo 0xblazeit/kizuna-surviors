@@ -126,6 +126,9 @@ const GameScene = {
     this.load.svg('weapon-wand-icon', '/assets/game/weapons/weapon-wand-icon.svg', {
       scale: 0.5
     });
+    this.load.svg('weapon-wand-projectile', '/assets/game/weapons/weapon-wand-projectile.svg', {
+      scale: 0.5
+    });
   },
 
   create: function() {
