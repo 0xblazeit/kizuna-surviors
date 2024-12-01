@@ -263,6 +263,75 @@ export class SonicBoomHammer extends BaseWeapon {
 
         return true;
     }
+
+    update(time, delta) {
+        // Check cooldown and attack if ready
+        if (time - this.lastFiredTime >= this.stats.cooldown) {
+            this.attack(time);
+        }
+
+        // Update active projectiles
+        this.activeProjectiles.forEach(proj => {
+            if (proj.active) {
+                // Move projectile
+                proj.sprite.x += Math.cos(proj.angle) * this.stats.speed * (delta / 1000);
+                proj.sprite.y += Math.sin(proj.angle) * this.stats.speed * (delta / 1000);
+                
+                // Update shockwave position
+                if (proj.sprite.shockwave) {
+                    proj.sprite.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
+                }
+
+                // Check for enemy collisions
+                if (this.scene.enemies) {
+                    this.scene.enemies.forEach(enemy => {
+                        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
+
+                        const dist = this.getDistance(
+                            proj.sprite.x, proj.sprite.y,
+                            enemy.sprite.x, enemy.sprite.y
+                        );
+
+                        if (dist < 30) { // Collision radius
+                            this.handleHit(enemy, proj);
+                        }
+                    });
+                }
+
+                // Check if projectile is out of range
+                const distFromStart = this.getDistance(
+                    proj.sprite.x, proj.sprite.y,
+                    this.player.x, this.player.y
+                );
+
+                if (distFromStart > this.stats.range) {
+                    this.deactivateProjectile(proj);
+                }
+            }
+        });
+    }
+
+    attack(time) {
+        // Find an inactive projectile
+        const proj = this.activeProjectiles.find(p => !p.active);
+        if (proj) {
+            this.fireProjectile(proj, time);
+        }
+    }
+
+    deactivateProjectile(proj) {
+        proj.active = false;
+        proj.sprite.setVisible(false);
+        if (proj.sprite.shockwave) {
+            proj.sprite.shockwave.setVisible(false);
+        }
+    }
+
+    getDistance(x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 }
 
 export default SonicBoomHammer;
