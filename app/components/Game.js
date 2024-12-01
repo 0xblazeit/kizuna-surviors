@@ -260,6 +260,18 @@ const GameScene = {
     const gridContainer = this.add.container(0, 0);
     uiContainer.add(gridContainer);
 
+    // Helper function to create and scale weapon icons
+    this.createWeaponIcon = (x, y, texture, cellIndex) => {
+      const padding = 8;
+      const maxDimension = gridCellSize - padding;
+      const icon = this.add.image(x, y, texture);
+      const scale = maxDimension / Math.max(icon.width, icon.height);
+      icon.setScale(scale);
+      this.gridCells[cellIndex].icon = icon;
+      gridContainer.add(icon);
+      return icon;
+    };
+
     // Create grid cells and store them in an array
     const gridCells = [];
     let weaponIcon = null;  // Store icon reference
@@ -309,82 +321,52 @@ const GameScene = {
 
         // Add dog weapon icon to first cell
         if (row === 0 && col === 0) {
-          weaponIcon = this.add.image(
+          weaponIcon = this.createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            'weapon-dog-projectile'
+            'weapon-dog-projectile',
+            0
           );
-          // Scale to fit within cell (leaving some padding)
-          const padding = 8;  // 4px padding on each side
-          const maxDimension = gridCellSize - padding;
-          const scale = maxDimension / Math.max(weaponIcon.width, weaponIcon.height);
-          weaponIcon.setScale(scale);
-          gridCells[0].icon = weaponIcon;
-          gridContainer.add(weaponIcon);
         }
         
         // Add wand weapon icon to second cell
         if (row === 0 && col === 1) {
-          wandIcon = this.add.image(
+          wandIcon = this.createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            'weapon-wand-icon'
+            'weapon-wand-icon',
+            1
           );
-          // Use same scaling logic as first weapon
-          const padding = 8;
-          const maxDimension = gridCellSize - padding;
-          const scale = maxDimension / Math.max(wandIcon.width, wandIcon.height);
-          wandIcon.setScale(scale);
-          gridCells[1].icon = wandIcon;
-          gridContainer.add(wandIcon);
         }
 
         // Add Glizzy Blaster icon to third cell
         if (row === 0 && col === 2) {
-          glizzyIcon = this.add.image(
+          glizzyIcon = this.createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            'weapon-hotdog-projectile'
+            'weapon-hotdog-projectile',
+            2
           );
-          // Use same scaling logic as other weapons
-          const padding = 8;
-          const maxDimension = gridCellSize - padding;
-          const scale = maxDimension / Math.max(glizzyIcon.width, glizzyIcon.height);
-          glizzyIcon.setScale(scale);
-          gridCells[2].icon = glizzyIcon;
-          gridContainer.add(glizzyIcon);
         }
 
-        // Add Flying Axe icon to fourth cell
+        // Add axe icon to fourth cell
         if (row === 0 && col === 3) {
-          axeIcon = this.add.image(
+          axeIcon = this.createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            'weapon-axe-projectile'
+            'weapon-axe-projectile',
+            3
           );
-          // Use same scaling logic as other weapons
-          const padding = 8;
-          const maxDimension = gridCellSize - padding;
-          const scale = maxDimension / Math.max(axeIcon.width, axeIcon.height);
-          axeIcon.setScale(scale);
-          gridCells[3].icon = axeIcon;
-          gridContainer.add(axeIcon);
         }
 
         // Add hammer icon to fifth cell
         if (row === 0 && col === 4) {
-          hammerIcon = this.add.image(
+          hammerIcon = this.createWeaponIcon(
             gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,  
-            'weapon-hammer-projectile'
+            uiRowY + row * gridCellSize,
+            'weapon-hammer-projectile',
+            4
           );
-          // Use same scaling logic as other weapons
-          const padding = 8;
-          const maxDimension = gridCellSize - padding;
-          const scale = maxDimension / Math.max(hammerIcon.width, hammerIcon.height);
-          hammerIcon.setScale(scale);
-          gridCells[4].icon = hammerIcon;
-          gridContainer.add(hammerIcon);
         }
       }
     }
