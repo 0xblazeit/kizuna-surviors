@@ -54,16 +54,17 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Create new projectiles
         for (let i = 0; i < this.maxProjectiles; i++) {
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-wand-projectile');
+            const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
             sprite.setScale(0.5);
             sprite.setActive(true);
             sprite.setVisible(false);
             sprite.setTint(this.effectColors.primary);
 
             // Add a simple glow effect using a second sprite
-            const glowSprite = this.scene.add.sprite(0, 0, 'weapon-wand-projectile');
+            const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
             glowSprite.setScale(0.7);
             glowSprite.setAlpha(0.3);
+            glowSprite.setVisible(false);
             glowSprite.setTint(this.effectColors.secondary);
             glowSprite.setBlendMode(Phaser.BlendModes.ADD);
             
@@ -82,10 +83,8 @@ export class MagicWandWeapon extends BaseWeapon {
     deactivateProjectile(proj) {
         proj.active = false;
         proj.sprite.setVisible(false);
-        proj.sprite.setPosition(this.player.x, this.player.y);
         if (proj.sprite.glow) {
             proj.sprite.glow.setVisible(false);
-            proj.sprite.glow.setPosition(this.player.x, this.player.y);
         }
     }
 
