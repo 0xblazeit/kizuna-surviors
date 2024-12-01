@@ -137,6 +137,9 @@ const GameScene = {
     this.load.svg('weapon-axe-projectile', '/assets/game/weapons/weapon-axe-projectile.svg', {
       scale: 0.5
     });
+    this.load.svg('weapon-hammer-projectile', '/assets/game/weapons/weapon-hammer-projectile.svg', {
+      scale: 0.5
+    });
   },
 
   create: function() {
@@ -263,6 +266,7 @@ const GameScene = {
     let wandIcon = null;    // Store wand icon reference
     let glizzyIcon = null;  // Store glizzy icon reference
     let axeIcon = null;     // Store axe icon reference
+    let hammerIcon = null;  // Store hammer icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -286,7 +290,7 @@ const GameScene = {
         // Make cell interactive
         cell.on('pointerdown', () => {
           // Only process clicks for cells with weapons
-          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2 || cellIndex === 3) {
+          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2 || cellIndex === 3 || cellIndex === 4) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
             
@@ -365,6 +369,22 @@ const GameScene = {
           axeIcon.setScale(scale);
           gridCells[3].icon = axeIcon;
           gridContainer.add(axeIcon);
+        }
+
+        // Add hammer icon to fifth cell
+        if (row === 0 && col === 4) {
+          hammerIcon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,  
+            'weapon-hammer-projectile'
+          );
+          // Use same scaling logic as other weapons
+          const padding = 8;
+          const maxDimension = gridCellSize - padding;
+          const scale = maxDimension / Math.max(hammerIcon.width, hammerIcon.height);
+          hammerIcon.setScale(scale);
+          gridCells[4].icon = hammerIcon;
+          gridContainer.add(hammerIcon);
         }
       }
     }
