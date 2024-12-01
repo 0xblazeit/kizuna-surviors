@@ -69,7 +69,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 520,
                 detectionRange: 220,
             },
-            8: {  // Maximum power
+            8: {  // Maximum power - Special effects
                 damage: 200,     // +50
                 pierce: 6,       // +1
                 count: 7,        // +1
@@ -77,6 +77,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 range: 350,
                 speed: 550,
                 detectionRange: 250,
+                isMaxLevel: true  // Special flag for max level
             }
         };
 
@@ -92,11 +93,17 @@ export class RotatingDogWeapon extends BaseWeapon {
             returnSpeed: 450,
         };
         
-        // Attack effect colors
+        // Effect colors based on level
         this.effectColors = {
             primary: 0x4444ff,
             secondary: 0x0099ff,
-            energy: 0xaaddff
+            energy: 0xaaddff,
+            // Max level colors (golden theme)
+            maxLevel: {
+                primary: 0xFFD700,    // Gold
+                secondary: 0xFFA500,  // Orange
+                energy: 0xFFFF00      // Yellow
+            }
         };
         
         this.activeProjectiles = [];
@@ -132,31 +139,42 @@ export class RotatingDogWeapon extends BaseWeapon {
         });
         this.activeProjectiles = [];
 
-        // Calculate initial angles for each dog
-        for (let i = 0; i < this.stats.count; i++) {
-            console.log(`Creating dog ${i + 1}/${this.stats.count}`);
-            const angle = (i * (2 * Math.PI)) / this.stats.count;
+        const count = this.stats.count;
+        const angleStep = (Math.PI * 2) / count;
+        
+        for (let i = 0; i < count; i++) {
+            const angle = i * angleStep;
+            const sprite = this.scene.add.sprite(0, 0, 'weapon-dog-projectile');
             
-            // Create sprite at guard position
-            const guardDistance = this.stats.guardDistance;
-            const x = this.player.x + Math.cos(angle) * guardDistance;
-            const y = this.player.y + Math.sin(angle) * guardDistance;
-            
-            const sprite = this.scene.add.sprite(x, y, 'weapon-dog-projectile');
+            // Set the sprite's appearance
             sprite.setScale(0.4);
-            sprite.setOrigin(0.5, 0.5);
-            sprite.setDepth(5); // Set depth to appear above ground but below some entities
             
-            // Debug sprite information
-            console.log('Sprite created:', {
-                texture: sprite.texture.key,
-                frame: sprite.frame.name,
-                width: sprite.width,
-                height: sprite.height,
-                x: x,
-                y: y
-            });
-            
+            // Apply special effects for max level
+            if (this.currentLevel === this.maxLevel) {
+                sprite.setTint(this.effectColors.maxLevel.primary);
+                
+                // Add glow effect
+                const glowFX = sprite.preFX.addGlow();
+                glowFX.color = this.effectColors.maxLevel.energy;
+                glowFX.outerStrength = 4;
+                glowFX.innerStrength = 2;
+                
+                // Add special particle trail
+                const particles = this.scene.add.particles(0, 0, 'weapon-dog-projectile', {
+                    scale: { start: 0.2, end: 0 },
+                    alpha: { start: 0.6, end: 0 },
+                    tint: [this.effectColors.maxLevel.primary, this.effectColors.maxLevel.secondary],
+                    speed: 20,
+                    lifespan: 200,
+                    quantity: 1,
+                    blendMode: 'ADD'
+                });
+                
+                sprite.particles = particles;
+            } else {
+                sprite.setTint(this.effectColors.primary);
+            }
+
             const dog = {
                 sprite,
                 state: 'guarding',
@@ -264,6 +282,119 @@ export class RotatingDogWeapon extends BaseWeapon {
             ease: 'Quad.easeOut',
             onComplete: () => glowSprite.destroy()
         });
+    }
+
+    handleHit(enemy, dog) {
+        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
+
+        console.log('Applying damage to enemy');
+        
+        // Get the source position for the hit effect
+        const sourceX = dog.sprite.x;
+        const sourceY = dog.sprite.y;
+        
+        // Special max level effects on hit
+        if (this.currentLevel === this.maxLevel) {
+            // Create larger energy burst
+            const burst = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-dog-projectile');
+            burst.setScale(0.1);
+            burst.setAlpha(0.8);
+            burst.setTint(this.effectColors.maxLevel.energy);
+            
+            this.scene.tweens.add({
+                targets: burst,
+                scaleX: 3,
+                scaleY: 3,
+                alpha: 0,
+                duration: 400,
+                ease: 'Quad.easeOut',
+                onComplete: () => burst.destroy()
+            });
+            
+            // Add circular shockwave
+            const shockwave = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-dog-projectile');
+            shockwave.setScale(0.1);
+            shockwave.setAlpha(0.4);
+            shockwave.setTint(this.effectColors.maxLevel.secondary);
+            
+            this.scene.tweens.add({
+                targets: shockwave,
+                scaleX: 4,
+                scaleY: 4,
+                alpha: 0,
+                duration: 600,
+                ease: 'Sine.easeOut',
+                onComplete: () => shockwave.destroy()
+            });
+            
+            // Add extra damage for max level
+            const critMultiplier = 1.5;
+            const critChance = 0.3; // 30% chance
+            if (Math.random() < critChance) {
+                const critDamage = Math.floor(this.stats.damage * critMultiplier);
+                enemy.takeDamage(critDamage);
+                
+                // Show crit text
+                const critText = this.scene.add.text(enemy.sprite.x, enemy.sprite.y - 20, `CRIT! ${critDamage}`, {
+                    fontSize: '24px',
+                    fontFamily: 'VT323',
+                    fill: '#FFD700',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5);
+                
+                this.scene.tweens.add({
+                    targets: critText,
+                    y: critText.y - 40,
+                    alpha: 0,
+                    duration: 1000,
+                    ease: 'Cubic.Out',
+                    onComplete: () => critText.destroy()
+                });
+                
+                return;
+            }
+        }
+        
+        // Apply damage using the enemy's takeDamage method
+        if (typeof enemy.takeDamage === 'function') {
+            enemy.takeDamage(this.stats.damage, sourceX, sourceY);
+            
+            // Visual feedback on enemy
+            enemy.sprite.setTint(0xff0000);
+            this.scene.time.delayedCall(100, () => {
+                if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
+                    enemy.sprite.clearTint();
+                }
+            });
+
+            // Scale effect
+            this.scene.tweens.add({
+                targets: enemy.sprite,
+                scaleX: '*=0.8',
+                scaleY: '*=0.8',
+                duration: 50,
+                yoyo: true,
+                ease: 'Quad.easeInOut'
+            });
+            
+            // Create hit effect
+            if (this.scene.textures.exists('hit_effect')) {
+                const hitEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'hit_effect');
+                hitEffect.setScale(0.5);
+                hitEffect.play('hit_animation');
+                hitEffect.once('animationcomplete', () => {
+                    hitEffect.destroy();
+                });
+            }
+            
+            // Emit damage numbers if available
+            if (this.scene.emitDamageNumber) {
+                this.scene.emitDamageNumber(this.stats.damage, enemy.sprite.x, enemy.sprite.y);
+            }
+        } else {
+            console.error('Enemy does not have takeDamage method:', enemy);
+        }
     }
 
     update(time, delta) {
@@ -404,55 +535,14 @@ export class RotatingDogWeapon extends BaseWeapon {
                 dog.state = 'returning';
             }
         });
-    }
-
-    handleHit(enemy, dog) {
-        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
-
-        console.log('Applying damage to enemy');
         
-        // Get the source position for the hit effect
-        const sourceX = dog.sprite.x;
-        const sourceY = dog.sprite.y;
-        
-        // Apply damage using the enemy's takeDamage method
-        if (typeof enemy.takeDamage === 'function') {
-            enemy.takeDamage(this.stats.damage, sourceX, sourceY);
-            
-            // Visual feedback on enemy
-            enemy.sprite.setTint(0xff0000);
-            this.scene.time.delayedCall(100, () => {
-                if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
-                    enemy.sprite.clearTint();
+        // Update particle trails for max level
+        if (this.currentLevel === this.maxLevel) {
+            this.activeProjectiles.forEach(dog => {
+                if (dog.sprite && dog.sprite.particles) {
+                    dog.sprite.particles.setPosition(dog.sprite.x, dog.sprite.y);
                 }
             });
-
-            // Scale effect
-            this.scene.tweens.add({
-                targets: enemy.sprite,
-                scaleX: '*=0.8',
-                scaleY: '*=0.8',
-                duration: 50,
-                yoyo: true,
-                ease: 'Quad.easeInOut'
-            });
-            
-            // Create hit effect
-            if (this.scene.textures.exists('hit_effect')) {
-                const hitEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'hit_effect');
-                hitEffect.setScale(0.5);
-                hitEffect.play('hit_animation');
-                hitEffect.once('animationcomplete', () => {
-                    hitEffect.destroy();
-                });
-            }
-            
-            // Emit damage numbers if available
-            if (this.scene.emitDamageNumber) {
-                this.scene.emitDamageNumber(this.stats.damage, enemy.sprite.x, enemy.sprite.y);
-            }
-        } else {
-            console.error('Enemy does not have takeDamage method:', enemy);
         }
     }
 
