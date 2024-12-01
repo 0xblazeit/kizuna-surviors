@@ -1,5 +1,6 @@
 import { RotatingDogWeapon } from '../weapons/RotatingDogWeapon';
 import EnemyBasic from '../enemies/EnemyBasic';
+import FlyingAxeWeapon from '../entities/weapons/FlyingAxeWeapon';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -75,7 +76,8 @@ export default class GameScene extends Phaser.Scene {
     console.log('Initializing weapon system...');
     this.weapons = [];
     const dogWeapon = new RotatingDogWeapon(this, this.player);
-    this.weapons.push(dogWeapon);
+    const axeWeapon = new FlyingAxeWeapon(this, this.player);
+    this.weapons.push(dogWeapon, axeWeapon);
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
 

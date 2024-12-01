@@ -6,6 +6,7 @@ import EnemyBasic from '../game/entities/EnemyBasic';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
+import FlyingAxeWeapon from '../game/entities/weapons/FlyingAxeWeapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -131,6 +132,9 @@ const GameScene = {
       scale: 0.5
     });
     this.load.svg('weapon-hotdog-projectile', '/assets/game/weapons/weapon-hotdog-projectile.svg', {
+      scale: 0.5
+    });
+    this.load.svg('weapon-axe-projectile', '/assets/game/weapons/weapon-axe-projectile.svg', {
       scale: 0.5
     });
   },
@@ -462,7 +466,8 @@ const GameScene = {
     this.weapons = [
       new RotatingDogWeapon(this, this.player),
       new MagicWandWeapon(this, this.player),
-      new GlizzyBlasterWeapon(this, this.player)
+      new GlizzyBlasterWeapon(this, this.player),
+      new FlyingAxeWeapon(this, this.player)
     ];
     this.weaponInitialized = true;
     console.log('Weapon system initialized');

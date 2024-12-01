@@ -13,7 +13,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
                 spreadAngle: 0,
                 cooldown: 200,      // Faster firing
                 range: 800,         // Much longer range
-                speed: 600,         // Faster projectiles
+                speed: 200,         // Faster projectiles
                 scale: 0.4
             },
             2: {
