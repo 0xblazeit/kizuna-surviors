@@ -1,5 +1,4 @@
-import { BaseWeapon } from '../../weapons/BaseWeapon.js';
-
+import { BaseWeapon } from './BaseWeapon.js';
 export class GlizzyBlasterWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);

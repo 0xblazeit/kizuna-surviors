@@ -1,5 +1,4 @@
-import { BaseWeapon } from '../../weapons/BaseWeapon';
-
+import { BaseWeapon } from './BaseWeapon.js';
 export class MagicWandWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);

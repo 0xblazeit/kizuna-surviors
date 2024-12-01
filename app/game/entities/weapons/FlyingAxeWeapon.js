@@ -1,4 +1,4 @@
-import BaseWeapon from '../../weapons/BaseWeapon';
+import { BaseWeapon } from './BaseWeapon.js';
 
 class FlyingAxeWeapon extends BaseWeapon {
     constructor(scene, player) {
