@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
+import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -65,21 +66,6 @@ const MenuScene = {
 const GameScene = {
   key: 'GameScene',
 
-  preload: function() {
-    // Load player sprite
-    this.load.svg('player', '/assets/game/characters/player.svg', {
-      scale: 0.1
-    });
-
-    // Load enemy sprites
-    this.load.svg('enemy-basic-one', '/assets/game/characters/enemies-basic/basic-one.svg');
-    this.load.svg('enemy-basic-two', '/assets/game/characters/enemies-basic/basic-two.svg');
-    this.load.svg('enemy-basic-three', '/assets/game/characters/enemies-basic/basic-three.svg');
-    this.load.svg('enemy-basic-four', '/assets/game/characters/enemies-basic/basic-four.svg');
-    this.load.svg('enemy-basic-five', '/assets/game/characters/enemies-basic/basic-five.svg');
-    this.load.svg('enemy-basic-six', '/assets/game/characters/enemies-basic/basic-six.svg');
-  },
-
   init: function() {
     // Initialize game state
     this.gameState = {
@@ -109,6 +95,30 @@ const GameScene = {
       this.xpBarFill.fillRect(22, 22, progress * fillWidth, 16);
       this.xpText.setText(`Level ${this.gameState.level} (${this.gameState.xp}/${this.gameState.xpToNextLevel} XP)`);
     };
+
+    this.weaponInitialized = false;
+    this.enemies = this.add.group();
+    this.projectiles = this.add.group();
+    this.score = 0;
+    this.gameOver = false;
+  },
+
+  preload: function() {
+    // Load player sprite
+    this.load.svg('player', '/assets/game/characters/player.svg', {
+      scale: 0.1
+    });
+
+    // Load enemy sprites
+    this.load.svg('enemy-basic-one', '/assets/game/characters/enemies-basic/basic-one.svg');
+    this.load.svg('enemy-basic-two', '/assets/game/characters/enemies-basic/basic-two.svg');
+    this.load.svg('enemy-basic-three', '/assets/game/characters/enemies-basic/basic-three.svg');
+    this.load.svg('enemy-basic-four', '/assets/game/characters/enemies-basic/basic-four.svg');
+    this.load.svg('enemy-basic-five', '/assets/game/characters/enemies-basic/basic-five.svg');
+    this.load.svg('enemy-basic-six', '/assets/game/characters/enemies-basic/basic-six.svg');
+
+    // Load weapon sprites
+    this.load.image('dogProjectile', './assets/game/weapons/weapon-dog-projectile.svg');
   },
 
   create: function() {
@@ -314,6 +324,37 @@ const GameScene = {
       spriteKey: 'player'
     });
 
+    // Initialize weapon system
+    console.log('Initializing weapon system...');
+    this.weapons = [];
+    const dogWeapon = new RotatingDogWeapon(this, this.player);
+    this.weapons.push(dogWeapon);
+    this.weaponInitialized = true;
+    console.log('Weapon system initialized');
+
+    // Create new debug text with smaller font and transparent background
+    const debugConfig = {
+      fontFamily: 'VT323',
+      fontSize: '16px',
+      color: '#ffffff',
+      backgroundColor: '#00000088',
+      padding: { x: 5, y: 3 },
+      lineSpacing: 3
+    };
+
+    // Position below the existing inventory grid
+    const gridBottom = uiRowY + (gridRows * gridCellSize);
+    this.debugText = this.add.text(
+      gridX,  // Same X as inventory grid
+      gridBottom + 10, // 10px spacing below grid
+      'Initializing debug...',
+      debugConfig
+    )
+    .setScrollFactor(0)
+    .setDepth(9999)
+    .setOrigin(0, 0)
+    .setAlpha(0.8);
+
     // Create array to store enemies
     this.enemies = [];
     
@@ -402,13 +443,6 @@ const GameScene = {
     // Initialize stats display
     this.updateStatsDisplay();
 
-    // Add position debug text (make it fixed to camera)
-    this.debugText = this.add.text(16, height - 40, '', {
-      fontFamily: 'VT323',
-      fontSize: '24px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
-
     // Setup keyboard input
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
@@ -424,7 +458,7 @@ const GameScene = {
     });
   },
 
-  update: function() {
+  update: function(time, delta) {
     if (!this.gameState) return;
 
     // Handle player movement using the new system
@@ -435,10 +469,32 @@ const GameScene = {
       down: this.cursors.down.isDown || this.wasd.down.isDown
     };
 
-    // Update player with movement input
     if (this.player) {
       this.player.handleMovement(input);
-      this.player.update();
+    }
+
+    // Update debug text first
+    if (this.debugText && this.player && this.weapons) {
+      try {
+        const weapon = this.weapons[0];
+        const stats = weapon?.stats || {};
+        const text = [
+          `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
+          `Active Weapons: ${this.weapons.length}`,
+          `Dog Projectiles: ${weapon?.activeProjectiles?.length || 0}`,
+          `Weapon Stats:`,
+          `  Damage: ${stats.damage || 0}`,
+          `  Pierce: ${stats.pierce || 0}`,
+          `  Range: ${stats.range || 0}`,
+          `  Speed: ${stats.speed || 0}`,
+          `FPS: ${Math.round(1000 / delta)}`,
+          `Time: ${Math.round(time / 1000)}s`
+        ].join('\n');
+
+        this.debugText.setText(text);
+      } catch (error) {
+        console.error('Error updating debug text:', error);
+      }
     }
 
     // Update all enemies
@@ -446,6 +502,18 @@ const GameScene = {
       this.enemies.forEach(enemy => {
         if (enemy && enemy.update) {
           enemy.update();
+        }
+      });
+    }
+
+    // Update all weapons with explicit debug
+    if (this.weapons && this.weapons.length > 0) {
+      console.log('Updating weapons...');
+      this.weapons.forEach((weapon, index) => {
+        if (weapon && typeof weapon.update === 'function') {
+          weapon.update(time, delta);
+        } else {
+          console.error(`Invalid weapon at index ${index}:`, weapon);
         }
       });
     }
@@ -482,10 +550,10 @@ const GameScene = {
       });
     }
 
-    // Update debug text with world position
-    this.debugText.setText(
-      `Position: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`
-    );
+    // Update player with movement input
+    if (this.player) {
+      this.player.update();
+    }
   }
 };
 

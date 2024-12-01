@@ -113,11 +113,11 @@ class EnemyBasic extends BasePlayer {
                 this.sprite.y += normalizedDy * this.moveSpeed;
 
                 // Debug: Log actual movement
-                const actualDx = this.sprite.x - prevX;
-                const actualDy = this.sprite.y - prevY;
-                if (Math.abs(actualDx) > 0.01 || Math.abs(actualDy) > 0.01) {
-                    console.log(`Enemy actually moved: dx=${actualDx}, dy=${actualDy}`);
-                }
+                // const actualDx = this.sprite.x - prevX;
+                // const actualDy = this.sprite.y - prevY;
+                // if (Math.abs(actualDx) > 0.01 || Math.abs(actualDy) > 0.01) {
+                //     console.log(`Enemy actually moved: dx=${actualDx}, dy=${actualDy}`);
+                // }
                 
                 // Update health bar position
                 if (this.healthBar) {
