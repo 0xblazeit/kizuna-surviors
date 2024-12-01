@@ -193,6 +193,7 @@ const GameScene = {
     // Create UI Container that stays fixed to camera
     const uiContainer = this.add.container(0, 0);
     uiContainer.setScrollFactor(0);
+    uiContainer.setDepth(1000); // Ensure UI is always on top
 
     // XP Progress Bar (at top of screen)
     const xpBarWidth = width - 40;  // 20px padding on each side
@@ -203,9 +204,11 @@ const GameScene = {
     const xpBarBg = this.add.rectangle(20, xpBarY, xpBarWidth, xpBarHeight, 0x000000);
     xpBarBg.setOrigin(0, 0);
     xpBarBg.setStrokeStyle(2, 0x666666);
+    uiContainer.add(xpBarBg);
     
     // XP Bar fill using graphics
     this.xpBarFill = this.add.graphics();
+    uiContainer.add(this.xpBarFill);
 
     // XP Text
     this.xpText = this.add.text(width/2, xpBarY + xpBarHeight/2, '', {
@@ -213,6 +216,7 @@ const GameScene = {
       fontSize: '18px',
       color: '#ffffff'
     }).setOrigin(0.5, 0.5);
+    uiContainer.add(this.xpText);
 
     // Initialize XP bar display
     this.updateXPBar();
@@ -224,6 +228,7 @@ const GameScene = {
       fontSize: '24px',
       color: '#ffffff'
     }).setOrigin(0.5, 0);
+    uiContainer.add(this.timerText);
 
     // Create main UI row (adjusted padding below timer)
     const uiRowY = timerY + 40;
@@ -235,6 +240,10 @@ const GameScene = {
     const gridWidth = gridCellSize * gridCols;
     const gridHeight = gridCellSize * gridRows;
     const gridX = 40;  // Increased from 20 to 40 for more left padding
+
+    // Create grid container to hold all grid elements
+    const gridContainer = this.add.container(0, 0);
+    uiContainer.add(gridContainer);
 
     // Create grid cells and store them in an array
     const gridCells = [];
@@ -255,8 +264,12 @@ const GameScene = {
         const strokeColor = cellIndex === this.gameState.selectedWeaponIndex ? 0xffffff : 0x666666;
         cell.setStrokeStyle(2, strokeColor);
         
+        // Make cell interactive and ensure it stays interactive
+        cell.setInteractive({ useHandCursor: true })
+            .setDepth(1001) // Higher than UI container to ensure clickability
+            .setScrollFactor(0); // Ensure it doesn't move with camera
+        
         // Make cell interactive
-        cell.setInteractive();
         cell.on('pointerdown', () => {
           // Only process clicks for cells with weapons
           if (cellIndex === 0 || cellIndex === 1) {
@@ -274,6 +287,7 @@ const GameScene = {
         });
         
         gridCells.push(cell);
+        gridContainer.add(cell);
 
         // Add dog weapon icon to first cell
         if (row === 0 && col === 0) {
@@ -288,6 +302,7 @@ const GameScene = {
           const scale = maxDimension / Math.max(weaponIcon.width, weaponIcon.height);
           weaponIcon.setScale(scale);
           gridCells[0].icon = weaponIcon;
+          gridContainer.add(weaponIcon);
         }
         
         // Add wand weapon icon to second cell
@@ -303,6 +318,7 @@ const GameScene = {
           const scale = maxDimension / Math.max(wandIcon.width, wandIcon.height);
           wandIcon.setScale(scale);
           gridCells[1].icon = wandIcon;
+          gridContainer.add(wandIcon);
         }
       }
     }
@@ -314,12 +330,14 @@ const GameScene = {
       fontSize: '24px',
       color: '#ffdd00'
     }).setOrigin(1, 0);
+    uiContainer.add(this.goldText);
 
     this.killsText = this.add.text(statsX, uiRowY + 40, 'Kills: 0', {
       fontFamily: 'VT323',
       fontSize: '24px',
       color: '#ff4444'
     }).setOrigin(1, 0);
+    uiContainer.add(this.killsText);
 
     // Controls text (right side, below stats)
     const controlsText = this.add.text(statsX, uiRowY + 80, 'ESC - Back to Menu', {
@@ -327,12 +345,14 @@ const GameScene = {
       fontSize: '18px',
       color: '#aaaaaa'
     }).setOrigin(1, 0);
+    uiContainer.add(controlsText);
 
     const controlsText2 = this.add.text(statsX, uiRowY + 104, 'Move: Arrow Keys / WASD', {
       fontFamily: 'VT323',
       fontSize: '18px',
       color: '#aaaaaa'
     }).setOrigin(1, 0);
+    uiContainer.add(controlsText2);
 
     // Stats display (below controls)
     const statsStyle = {
@@ -346,6 +366,7 @@ const GameScene = {
       ...statsStyle,
       color: '#ffffff'
     }).setOrigin(1, 0);
+    uiContainer.add(statsHeader);
 
     // Create stats text objects
     this.statsTexts = {
@@ -354,6 +375,9 @@ const GameScene = {
       defense: this.add.text(statsX, uiRowY + 214, '', statsStyle).setOrigin(1, 0),
       speed: this.add.text(statsX, uiRowY + 236, '', statsStyle).setOrigin(1, 0)
     };
+
+    // Add stats text to UI container
+    uiContainer.add(Object.values(this.statsTexts));
 
     // Function to update stats display
     this.updateStatsDisplay = () => {
@@ -388,15 +412,15 @@ const GameScene = {
     };
 
     // Add all UI elements to the container
-    uiContainer.add([
-      xpBarBg, this.xpBarFill, this.xpText,
-      ...gridCells,
-      this.timerText, this.goldText, this.killsText,
-      controlsText, controlsText2, statsHeader,
-      ...Object.values(this.statsTexts),
-      weaponIcon,  // Add weapon icon to UI container
-      wandIcon     // Add wand icon to UI container
-    ]);
+    // uiContainer.add([
+    //   xpBarBg, this.xpBarFill, this.xpText,
+    //   ...gridCells,
+    //   this.timerText, this.goldText, this.killsText,
+    //   controlsText, controlsText2, statsHeader,
+    //   ...Object.values(this.statsTexts),
+    //   weaponIcon,  // Add weapon icon to UI container
+    //   wandIcon     // Add wand icon to UI container
+    // ]);
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -438,6 +462,7 @@ const GameScene = {
     .setDepth(9999)
     .setOrigin(0, 0)
     .setAlpha(0.8);
+    uiContainer.add(this.debugText);
 
     // Create array to store enemies
     this.enemies = [];
@@ -683,6 +708,10 @@ export default function Game() {
             gravity: { y: 0 },
             debug: true
           }
+        },
+        input: {
+          activePointers: 1,
+          pixelPerfect: true
         },
         scene: [MenuScene, GameScene]
       };
