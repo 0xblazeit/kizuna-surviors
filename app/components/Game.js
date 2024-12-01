@@ -234,6 +234,7 @@ const GameScene = {
 
     // Create grid cells and store them in an array
     const gridCells = [];
+    let weaponIcon = null;  // Store icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cell = this.add.rectangle(
@@ -245,6 +246,21 @@ const GameScene = {
         );
         cell.setStrokeStyle(2, 0x666666);
         gridCells.push(cell);
+
+        // Add dog weapon icon to first cell
+        if (row === 0 && col === 0) {
+          weaponIcon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'weapon-dog-projectile'
+          );
+          // Scale to fit within cell (leaving some padding)
+          const padding = 8;  // 4px padding on each side
+          const maxDimension = gridCellSize - padding;
+          const scale = maxDimension / Math.max(weaponIcon.width, weaponIcon.height);
+          weaponIcon.setScale(scale);
+          gridCells[0].icon = weaponIcon;
+        }
       }
     }
 
@@ -313,7 +329,8 @@ const GameScene = {
       ...gridCells,
       this.timerText, this.goldText, this.killsText,
       controlsText, controlsText2, statsHeader,
-      ...Object.values(this.statsTexts)
+      ...Object.values(this.statsTexts),
+      weaponIcon  // Add weapon icon to UI container
     ]);
 
     // Create trail effect container

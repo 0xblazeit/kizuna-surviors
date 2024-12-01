@@ -102,7 +102,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         
         // Effect colors based on level
         this.effectColors = {
-            primary: 0x4444ff,
+            primary: 0xffffff,
             secondary: 0x0099ff,
             energy: 0xaaddff,
             // Max level colors (golden theme)
@@ -151,8 +151,6 @@ export class RotatingDogWeapon extends BaseWeapon {
             // Set the initial tint based on level
             if (this.currentLevel === this.maxLevel) {
                 sprite.setTint(this.effectColors.maxLevel.primary);
-            } else {
-                sprite.setTint(this.effectColors.primary);
             }
 
             // Add the dog to active projectiles
