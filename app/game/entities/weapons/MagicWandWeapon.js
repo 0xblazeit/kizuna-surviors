@@ -4,123 +4,31 @@ export class MagicWandWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
-        // Level-up configurations for magic wand
-        this.levelConfigs = {
-            1: {
-                damage: 25,
-                pierce: 3,
-                count: 1,
-                cooldown: 800,         // Faster casting
-                range: 350,            // Long range
-                speed: 500,            // Fast projectile speed
-                magicPower: 20,        // Special magic wand stat
-                criticalChance: 0.15,  // 15% crit chance
-                elementalDamage: 10    // Bonus elemental damage
-            },
-            2: {
-                damage: 35,
-                pierce: 3,
-                count: 1,
-                cooldown: 750,
-                range: 370,
-                speed: 520,
-                magicPower: 30,
-                criticalChance: 0.17,
-                elementalDamage: 15
-            },
-            3: {
-                damage: 45,
-                pierce: 4,
-                count: 2,
-                cooldown: 700,
-                range: 390,
-                speed: 540,
-                magicPower: 40,
-                criticalChance: 0.19,
-                elementalDamage: 20
-            },
-            4: {
-                damage: 60,
-                pierce: 4,
-                count: 2,
-                cooldown: 650,
-                range: 410,
-                speed: 560,
-                magicPower: 55,
-                criticalChance: 0.21,
-                elementalDamage: 25
-            },
-            5: {
-                damage: 80,
-                pierce: 5,
-                count: 3,
-                cooldown: 600,
-                range: 430,
-                speed: 580,
-                magicPower: 75,
-                criticalChance: 0.23,
-                elementalDamage: 35
-            },
-            6: {
-                damage: 105,
-                pierce: 5,
-                count: 3,
-                cooldown: 550,
-                range: 450,
-                speed: 600,
-                magicPower: 100,
-                criticalChance: 0.25,
-                elementalDamage: 45
-            },
-            7: {
-                damage: 135,
-                pierce: 6,
-                count: 4,
-                cooldown: 500,
-                range: 470,
-                speed: 620,
-                magicPower: 130,
-                criticalChance: 0.27,
-                elementalDamage: 60
-            },
-            8: {
-                damage: 175,
-                pierce: 6,
-                count: 4,
-                cooldown: 450,
-                range: 500,
-                speed: 650,
-                magicPower: 175,
-                criticalChance: 0.30,
-                elementalDamage: 80,
-                isMaxLevel: true
-            }
-        };
-
-        // Initialize at level 1
-        this.currentLevel = 1;
-        this.maxLevel = 8;
-
-        // Set initial stats from level 1 config
+        // Set weapon stats
         this.stats = {
-            ...this.levelConfigs[1],
-            attackDuration: 150,
-            projectileSize: 1.0
+            damage: 10,
+            pierce: 3,
+            cooldown: 500,  // milliseconds between shots
+            range: 400,     // pixels
+            speed: 300,     // pixels per second
+            magicPower: 20, // percentage increase to damage
+            criticalChance: 0.1,
+            elementalDamage: 5
         };
-        
+
         // Effect colors for magic wand
         this.effectColors = {
             primary: 0x00ffff,    // Cyan
             secondary: 0xff00ff,  // Magenta
-            energy: 0xf0f0ff,     // Light blue-white
-            maxLevel: {
-                primary: 0x00ffaa,    // Magical green
-                secondary: 0xff00ff,  // Bright magenta
-                energy: 0xffffff      // Pure white
-            }
+            energy: 0xf0f0ff     // Light blue-white
         };
-        
+
+        // Initialize projectile pool
+        this.maxProjectiles = 10;
         this.activeProjectiles = [];
+        
+        console.log('Magic Wand initialized with stats:', this.stats);
+
         this.createMagicProjectiles();
     }
 
@@ -128,52 +36,98 @@ export class MagicWandWeapon extends BaseWeapon {
         // Clear existing projectiles
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
-                if (proj.sprite.particles) {
-                    proj.sprite.particles.destroy();
-                }
                 proj.sprite.destroy();
             }
         });
         this.activeProjectiles = [];
 
         // Create new projectiles
-        for (let i = 0; i < this.stats.count; i++) {
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-wand-icon');
-            sprite.setScale(0.4);
-            sprite.setDepth(5);
+        for (let i = 0; i < this.maxProjectiles; i++) {
+            const sprite = this.scene.add.sprite(0, 0, 'weapon-wand-projectile');
+            sprite.setScale(0.5);
+            sprite.setActive(true);
+            sprite.setVisible(false);
+            sprite.setTint(this.effectColors.primary);
 
-            // Add glow effect
-            if (this.currentLevel === this.maxLevel) {
-                sprite.setTint(this.effectColors.maxLevel.primary);
-                this.addMaxLevelEffects(sprite);
-            } else {
-                sprite.setTint(this.effectColors.primary);
-            }
+            // Add a simple glow effect using a second sprite
+            const glowSprite = this.scene.add.sprite(0, 0, 'weapon-wand-projectile');
+            glowSprite.setScale(0.7);
+            glowSprite.setAlpha(0.3);
+            glowSprite.setTint(this.effectColors.secondary);
+            glowSprite.setBlendMode(Phaser.BlendModes.ADD);
+            
+            // Make the glow sprite follow the main sprite
+            sprite.glow = glowSprite;
 
             this.activeProjectiles.push({
-                sprite,
+                sprite: sprite,
                 active: false,
-                pierceCount: this.stats.pierce,
                 angle: 0,
-                index: i
+                pierceCount: this.stats.pierce
             });
         }
     }
 
-    addMaxLevelEffects(sprite) {
-        // Add particle effects for max level
-        const particles = this.scene.add.particles(0, 0, 'weapon-wand-icon', {
-            scale: { start: 0.2, end: 0.1 },
-            alpha: { start: 0.6, end: 0 },
-            speed: 20,
-            angle: { min: 0, max: 360 },
-            rotate: { min: 0, max: 360 },
-            lifespan: 1000,
-            frequency: 100,
-            tint: this.effectColors.maxLevel.energy
-        });
+    deactivateProjectile(proj) {
+        proj.active = false;
+        proj.sprite.setVisible(false);
+        proj.sprite.setPosition(this.player.x, this.player.y);
+        if (proj.sprite.glow) {
+            proj.sprite.glow.setVisible(false);
+            proj.sprite.glow.setPosition(this.player.x, this.player.y);
+        }
+    }
+
+    updateProjectile(proj, delta) {
+        if (!proj.active || !proj.sprite || !proj.sprite.active) return;
+
+        // Convert delta to seconds for consistent speed
+        const deltaSeconds = delta / 1000;
         
-        sprite.particles = particles;
+        // Calculate movement based on angle and speed
+        const speed = this.stats.speed;
+        const moveX = Math.cos(proj.angle) * speed * deltaSeconds;
+        const moveY = Math.sin(proj.angle) * speed * deltaSeconds;
+
+        // Update position
+        proj.sprite.x += moveX;
+        proj.sprite.y += moveY;
+
+        // Update glow position
+        if (proj.sprite.glow) {
+            proj.sprite.glow.x = proj.sprite.x;
+            proj.sprite.glow.y = proj.sprite.y;
+        }
+
+        // Check if projectile is out of range
+        const distanceFromPlayer = Math.sqrt(
+            Math.pow(proj.sprite.x - this.player.x, 2) + 
+            Math.pow(proj.sprite.y - this.player.y, 2)
+        );
+
+        if (distanceFromPlayer > this.stats.range) {
+            console.log('Projectile out of range, deactivating');
+            this.deactivateProjectile(proj);
+            return;
+        }
+
+        // Check if projectile is out of bounds
+        const margin = 50;
+        const bounds = {
+            left: -margin,
+            right: this.scene.game.config.width + margin,
+            top: -margin,
+            bottom: this.scene.game.config.height + margin
+        };
+
+        if (proj.sprite.x < bounds.left || 
+            proj.sprite.x > bounds.right || 
+            proj.sprite.y < bounds.top || 
+            proj.sprite.y > bounds.bottom) {
+            
+            console.log('Projectile out of bounds, deactivating');
+            this.deactivateProjectile(proj);
+        }
     }
 
     update(time, delta) {
@@ -188,13 +142,105 @@ export class MagicWandWeapon extends BaseWeapon {
                 }
             } else {
                 this.updateProjectile(proj, delta);
+                
+                // Get active enemies
+                const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
+                    return e && e.sprite && e.sprite.active && !e.isDead;
+                }) : [];
+
+                // Check for collisions with enemies
+                enemies.forEach(enemy => {
+                    // Only check collision if projectile is active and has pierce remaining
+                    if (proj.active && proj.pierceCount > 0) {
+                        // Get the actual positions for collision check
+                        const projX = proj.sprite.x;
+                        const projY = proj.sprite.y;
+                        const enemyX = enemy.sprite.x;
+                        const enemyY = enemy.sprite.y;
+
+                        // Calculate distance for collision
+                        const dx = projX - enemyX;
+                        const dy = projY - enemyY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        // Collision thresholds
+                        const projRadius = 20;
+                        const enemyRadius = 25;
+                        const collisionThreshold = projRadius + enemyRadius;
+
+                        // Check if collision occurred
+                        if (distance < collisionThreshold) {
+                            console.log('Projectile collision:', {
+                                projectile: { x: projX, y: projY, active: proj.active, pierce: proj.pierceCount },
+                                enemy: { x: enemyX, y: enemyY, health: enemy.stats.currentHealth },
+                                distance,
+                                threshold: collisionThreshold
+                            });
+
+                            // Handle the hit
+                            this.handleHit(enemy, proj);
+                        }
+                    }
+                });
             }
         });
+    }
+
+    handleHit(enemy, proj) {
+        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+            console.log('Invalid enemy or already dead, skipping hit');
+            return;
+        }
+
+        // Calculate damage
+        let finalDamage = this.stats.damage;
+        let isCritical = false;
+
+        if (Math.random() < this.stats.criticalChance) {
+            finalDamage *= 2;
+            isCritical = true;
+            console.log('Critical hit!', finalDamage);
+        }
+
+        // Add elemental damage
+        finalDamage += this.stats.elementalDamage;
+        
+        // Apply magic power bonus
+        finalDamage *= (1 + this.stats.magicPower / 100);
+        
+        const roundedDamage = Math.round(finalDamage);
+        console.log('Applying hit:', {
+            projectile: { x: proj.sprite.x, y: proj.sprite.y, pierce: proj.pierceCount },
+            enemy: { x: enemy.sprite.x, y: enemy.sprite.y, health: enemy.stats.currentHealth },
+            damage: roundedDamage,
+            isCritical
+        });
+
+        // Apply damage with source position for proper hit effects
+        enemy.takeDamage(roundedDamage, proj.sprite.x, proj.sprite.y);
+
+        // Create hit effect
+        this.createHitEffect(enemy, proj, isCritical);
+
+        // Reduce pierce count and handle projectile state
+        proj.pierceCount--;
+        console.log('Pierce count after hit:', proj.pierceCount);
+        
+        if (proj.pierceCount <= 0) {
+            this.deactivateProjectile(proj);
+        }
     }
 
     fireProjectile(proj, time) {
         if (!proj.sprite || !proj.sprite.active) return;
 
+        // Reset pierce count and make visible
+        proj.pierceCount = this.stats.pierce;
+        proj.sprite.setVisible(true);
+        if (proj.sprite.glow) {
+            proj.sprite.glow.setVisible(true);
+        }
+        
         // Get mouse position or nearest enemy position
         const target = this.getTargetPosition();
         if (!target) return;
@@ -207,37 +253,19 @@ export class MagicWandWeapon extends BaseWeapon {
         // Set initial position
         proj.sprite.setPosition(this.player.x, this.player.y);
         proj.sprite.rotation = proj.angle;
+        if (proj.sprite.glow) {
+            proj.sprite.glow.setPosition(this.player.x, this.player.y);
+            proj.sprite.glow.rotation = proj.angle;
+        }
+        
         proj.active = true;
-        proj.pierceCount = this.stats.pierce;
         this.lastFiredTime = time;
 
-        // Add firing effects
-        this.createFiringEffects(proj);
-    }
-
-    updateProjectile(proj, delta) {
-        if (!proj.active || !proj.sprite || !proj.sprite.active) return;
-
-        // Move projectile
-        const speed = (this.stats.speed * delta) / 1000;
-        proj.sprite.x += Math.cos(proj.angle) * speed;
-        proj.sprite.y += Math.sin(proj.angle) * speed;
-
-        // Update particles if they exist
-        if (proj.sprite.particles) {
-            proj.sprite.particles.setPosition(proj.sprite.x, proj.sprite.y);
-        }
-
-        // Check if projectile is out of range
-        const distanceFromPlayer = this.getDistance(
-            this.player.x, this.player.y,
-            proj.sprite.x, proj.sprite.y
-        );
-
-        if (distanceFromPlayer > this.stats.range) {
-            proj.active = false;
-            proj.sprite.setPosition(this.player.x, this.player.y);
-        }
+        console.log('Firing projectile:', {
+            from: { x: this.player.x, y: this.player.y },
+            angle: proj.angle,
+            pierce: proj.pierceCount
+        });
     }
 
     createFiringEffects(proj) {
@@ -366,38 +394,6 @@ export class MagicWandWeapon extends BaseWeapon {
         });
 
         return true;
-    }
-
-    handleHit(enemy, proj) {
-        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
-
-        // Calculate damage with critical chance
-        let finalDamage = this.stats.damage;
-        let isCritical = false;
-
-        if (Math.random() < this.stats.criticalChance) {
-            finalDamage *= 2;
-            isCritical = true;
-        }
-
-        // Add elemental damage
-        finalDamage += this.stats.elementalDamage;
-        
-        // Apply magic power bonus
-        finalDamage *= (1 + this.stats.magicPower / 100);
-
-        // Apply damage
-        enemy.takeDamage(Math.round(finalDamage));
-
-        // Create hit effect
-        this.createHitEffect(enemy, proj, isCritical);
-
-        // Reduce pierce count
-        proj.pierceCount--;
-        if (proj.pierceCount <= 0) {
-            proj.active = false;
-            proj.sprite.setPosition(this.player.x, this.player.y);
-        }
     }
 
     createHitEffect(enemy, proj, isCritical) {
