@@ -32,16 +32,19 @@ export class MagicWandWeapon extends BaseWeapon {
         this.currentLevel = 0;
         this.maxLevel = 8;
         this.levelConfigs = {
-            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12, range: 350, scale: 0.55 },
-            2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15, range: 400, scale: 0.60 },
-            3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17, range: 450, scale: 0.65 },
-            4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20, range: 500, scale: 0.70 },
-            5: { damage: 40, pierce: 6, cooldown: 250, magicPower: 50, criticalChance: 0.25, range: 550, scale: 0.75 },
-            6: { damage: 50, pierce: 6, cooldown: 200, magicPower: 60, criticalChance: 0.30, range: 600, scale: 0.80 },
-            7: { damage: 65, pierce: 7, cooldown: 150, magicPower: 70, criticalChance: 0.35, range: 650, scale: 0.85 },
-            8: { damage: 80, pierce: 8, cooldown: 100, magicPower: 100, criticalChance: 0.40, range: 700, scale: 0.90 }
+            1: { damage: 15, pierce: 4, cooldown: 450, magicPower: 25, criticalChance: 0.12, range: 450, scale: 0.55 },
+            2: { damage: 20, pierce: 4, cooldown: 400, magicPower: 30, criticalChance: 0.15, range: 500, scale: 0.60 },
+            3: { damage: 25, pierce: 5, cooldown: 350, magicPower: 35, criticalChance: 0.17, range: 650, scale: 0.65 },
+            4: { damage: 30, pierce: 5, cooldown: 300, magicPower: 40, criticalChance: 0.20, range: 700, scale: 0.70 },
+            5: { damage: 40, pierce: 6, cooldown: 250, magicPower: 50, criticalChance: 0.25, range: 850, scale: 0.75 },
+            6: { damage: 50, pierce: 6, cooldown: 200, magicPower: 60, criticalChance: 0.30, range: 900, scale: 0.80 },
+            7: { damage: 65, pierce: 7, cooldown: 150, magicPower: 70, criticalChance: 0.35, range: 950, scale: 0.85 },
+            8: { damage: 80, pierce: 8, cooldown: 100, magicPower: 100, criticalChance: 0.40, range: 999, scale: 0.90 }
         };
         
+        // Track last movement direction
+        this.lastDirection = { x: 1, y: 0 }; // Default right direction
+
         console.log('Magic Wand initialized with stats:', this.stats);
 
         this.createMagicProjectiles();
@@ -51,7 +54,7 @@ export class MagicWandWeapon extends BaseWeapon {
         // Clear existing projectiles
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
-                if (proj.sprite.glow) {
+                if (proj.sprite.glow) {sd
                     proj.sprite.glow.destroy();
                 }
                 proj.sprite.destroy();
@@ -153,6 +156,18 @@ export class MagicWandWeapon extends BaseWeapon {
 
     update(time, delta) {
         if (!this.player) return;
+
+        // Update last movement direction if player is moving
+        if (this.player.body && (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0)) {
+            const velocity = this.player.body.velocity;
+            const magnitude = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            if (magnitude > 0) {
+                this.lastDirection = {
+                    x: velocity.x / magnitude,
+                    y: velocity.y / magnitude
+                };
+            }
+        }
 
         // Update each projectile
         this.activeProjectiles.forEach((proj, index) => {
@@ -262,7 +277,7 @@ export class MagicWandWeapon extends BaseWeapon {
             proj.sprite.glow.setVisible(true);
         }
         
-        // Get mouse position or nearest enemy position
+        // Get target position
         const target = this.getTargetPosition();
         if (!target) return;
 
@@ -289,37 +304,15 @@ export class MagicWandWeapon extends BaseWeapon {
         });
     }
 
-    createFiringEffects(proj) {
-        // Create magical firing effect
-        const burst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
-        burst.setScale(0.2);
-        burst.setAlpha(0.7);
-        burst.setTint(this.effectColors.secondary);
-
-        this.scene.tweens.add({
-            targets: burst,
-            scaleX: 1.5,
-            scaleY: 1.5,
-            alpha: 0,
-            duration: 300,
-            ease: 'Quad.easeOut',
-            onComplete: () => burst.destroy()
-        });
-    }
-
     getTargetPosition() {
-        // Get nearest enemy or mouse position
+        // Get nearest enemy or use last movement direction
         const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
             return e && e.sprite && e.sprite.active && !e.isDead;
         }) : [];
 
         if (enemies.length > 0) {
-            // Find closest enemy
-            let closest = enemies[0];
-            let closestDist = this.getDistance(
-                this.player.x, this.player.y,
-                closest.sprite.x, closest.sprite.y
-            );
+            let closest = null;
+            let closestDist = Number.MAX_VALUE;
 
             enemies.forEach(enemy => {
                 const dist = this.getDistance(
@@ -332,17 +325,19 @@ export class MagicWandWeapon extends BaseWeapon {
                 }
             });
 
-            return {
-                x: closest.sprite.x,
-                y: closest.sprite.y
-            };
+            if (closest) {
+                return {
+                    x: closest.sprite.x,
+                    y: closest.sprite.y
+                };
+            }
         }
 
-        // If no enemies, return a point in the direction of mouse
-        const pointer = this.scene.input.activePointer;
+        // Use last movement direction if no enemies
+        const targetDistance = 100; // Distance to project the target point
         return {
-            x: pointer.x,
-            y: pointer.y
+            x: this.player.x + this.lastDirection.x * targetDistance,
+            y: this.player.y + this.lastDirection.y * targetDistance
         };
     }
 

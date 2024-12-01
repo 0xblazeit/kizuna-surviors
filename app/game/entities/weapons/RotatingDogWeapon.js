@@ -9,17 +9,17 @@ export class RotatingDogWeapon extends BaseWeapon {
             1: {
                 damage: 15,
                 pierce: 2,
-                count: 3,
+                count: 1,
                 cooldown: 600,         // Reduced cooldown
-                range: 300,            // Increased range
+                range: 100,            // Increased range
                 speed: 450,            // Increased speed
-                detectionRange: 250,   // Increased detection range
+                detectionRange: 125,   // Increased detection range
                 guardDistance: 120,
             },
             2: {  // First upgrade
                 damage: 20,      // +5
                 pierce: 2,
-                count: 3,
+                count: 1,
                 cooldown: 550,   // Faster
                 range: 320,      // +20
                 speed: 470,      // +20
@@ -29,7 +29,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             3: {  // Getting stronger
                 damage: 30,      // +10
                 pierce: 3,       // +1
-                count: 4,        // +1
+                count: 2,        // +1
                 cooldown: 500,
                 range: 340,
                 speed: 490,
@@ -39,7 +39,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             4: {  // Significant boost
                 damage: 45,      // +15
                 pierce: 3,
-                count: 4,
+                count: 2,
                 cooldown: 450,
                 range: 360,
                 speed: 510,
@@ -49,7 +49,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             5: {  // Major power spike
                 damage: 70,      // +25
                 pierce: 4,       // +1
-                count: 5,        // +1
+                count: 3,        // +1
                 cooldown: 400,
                 range: 380,
                 speed: 530,
@@ -59,7 +59,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             6: {  // Getting powerful
                 damage: 105,     // +35
                 pierce: 4,
-                count: 5,
+                count: 3,
                 cooldown: 350,
                 range: 400,
                 speed: 550,
@@ -69,7 +69,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             7: {  // Near maximum power
                 damage: 150,     // +45
                 pierce: 5,       // +1
-                count: 6,        // +1
+                count: 5,        // +1
                 cooldown: 300,
                 range: 420,
                 speed: 570,
