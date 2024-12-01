@@ -24,7 +24,6 @@ class EnemyBasic extends BasePlayer {
         this.staggerDuration = 500;   // Added separate stagger duration
         this.knockbackForce = 30;     // Reduced from 150 to 30
         this.clickDamage = enemyConfig.clickDamage;
-        this.isDying = false;  // Add flag to track death state
         this.isDead = false;   // Add flag to track death state
         
         // Movement properties
@@ -36,6 +35,11 @@ class EnemyBasic extends BasePlayer {
         this.lastMoveTime = 0;     // Add timestamp for movement updates
         this.moveUpdateInterval = 16;  // Update movement every 16ms (60fps)
 
+        // Create a basic sprite if texture isn't provided
+        if (!this.sprite) {
+            this.sprite = scene.add.rectangle(x, y, 40, 40, 0xff0000);
+        }
+        
         // Set sprite depth
         this.sprite.setDepth(10);
 
@@ -62,8 +66,16 @@ class EnemyBasic extends BasePlayer {
         // Add a black border to make the health bar more visible
         this.healthBar.background.setStrokeStyle(1, 0x000000);
 
+        // Set target player
+        this.targetPlayer = scene.player;
+
         // Initialize enemy
         this.initEnemy();
+        
+        // Add to scene's enemy list if it exists
+        if (scene.enemies && !scene.enemies.includes(this)) {
+            scene.enemies.push(this);
+        }
     }
 
     initEnemy() {
@@ -106,7 +118,8 @@ class EnemyBasic extends BasePlayer {
         
         this.lastMoveTime = currentTime;
         
-        if (this.movementEnabled && !this.isStaggered && this.targetPlayer && !this.isDying && !this.isDead) {
+        // Only check isDead for movement, not isDying
+        if (this.movementEnabled && !this.isStaggered && this.targetPlayer && !this.isDead) {
             // Calculate distance to player
             const dx = this.targetPlayer.sprite.x - this.sprite.x;
             const dy = this.targetPlayer.sprite.y - this.sprite.y;
@@ -150,9 +163,9 @@ class EnemyBasic extends BasePlayer {
     }
 
     takeDamage(amount, sourceX, sourceY) {
-        // If already dying or dead, don't process damage
-        if (this.isDying || this.isDead) {
-            console.log('Enemy already dying or dead, ignoring damage');
+        // Only check isDead for damage, not isDying
+        if (this.isDead) {
+            console.log('Enemy already dead, ignoring damage');
             return 0;
         }
 
@@ -201,8 +214,7 @@ class EnemyBasic extends BasePlayer {
         // Check for death
         if (this.stats.currentHealth <= 0) {
             console.log('Enemy health depleted, triggering death');
-            this.isDying = true;  // Set dying flag
-            this.isDead = true;   // Set dead flag immediately to prevent any race conditions
+            this.isDead = true;   // Only set isDead, remove isDying
             this.onDeath();
         }
         
@@ -420,8 +432,8 @@ class EnemyBasic extends BasePlayer {
     }
 
     onDeath() {
-        // Prevent multiple death triggers by checking both flags
-        if (this.isDying && this.isDead) {
+        // Only check isDead
+        if (this.isDead) {
             console.log('Death already being processed, skipping');
             return;
         }

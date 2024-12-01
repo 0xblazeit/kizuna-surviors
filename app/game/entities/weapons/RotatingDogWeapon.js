@@ -184,7 +184,7 @@ export class RotatingDogWeapon extends BaseWeapon {
 
         // Get active enemies if they exist
         const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-            return e && e.sprite && e.sprite.active && !e.isDead && !e.isDying;
+            return e && e.sprite && e.sprite.active && !e.isDead;
         }) : [];
 
         // Debug: Log number of active enemies
@@ -209,8 +209,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 const targetValid = dog.targetEnemy && 
                                   dog.targetEnemy.sprite && 
                                   dog.targetEnemy.sprite.active && 
-                                  !dog.targetEnemy.isDead && 
-                                  !dog.targetEnemy.isDying;
+                                  !dog.targetEnemy.isDead;
                 
                 if (!targetValid) {
                     dog.targetEnemy = null;

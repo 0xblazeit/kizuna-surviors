@@ -1,4 +1,5 @@
 import { RotatingDogWeapon } from '../weapons/RotatingDogWeapon';
+import EnemyBasic from '../enemies/EnemyBasic';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -9,6 +10,10 @@ export default class GameScene extends Phaser.Scene {
   init() {
     console.log('GameScene init called');
     this.weaponInitialized = false;
+    this.gameState = {
+      kills: 0,
+      enemies: []
+    };
   }
 
   preload() {
@@ -74,10 +79,19 @@ export default class GameScene extends Phaser.Scene {
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
 
+    // Initialize enemy list
+    this.enemies = [];
+
     // Add debug text
     this.debugText = this.add.text(16, 16, 'Debug Info', {
       color: '#ffffff',
       fontSize: '14px'
+    });
+    
+    // Add kills text
+    this.killsText = this.add.text(16, height - 40, 'Kills: 0', {
+      color: '#ffffff',
+      fontSize: '20px'
     });
     
     // Set up keyboard controls
@@ -88,6 +102,34 @@ export default class GameScene extends Phaser.Scene {
       this.weapons.forEach(weapon => weapon.destroy());
       this.scene.start('MenuScene');
     });
+
+    // Clean up any existing enemies
+    this.enemies.forEach(enemy => {
+      if (enemy.sprite) enemy.sprite.destroy();
+    });
+    this.enemies = [];
+
+    // Spawn initial enemies
+    this.spawnEnemies(10); // Spawn 10 enemies to start
+  }
+
+  spawnEnemies(count) {
+    const { width, height } = this.scale;
+    const margin = 100; // Keep enemies away from edges
+    
+    for (let i = 0; i < count; i++) {
+      // Generate position away from player
+      let x, y;
+      do {
+        x = Phaser.Math.Between(margin, width - margin);
+        y = Phaser.Math.Between(margin, height - margin);
+      } while (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 200);
+
+      // Create enemy
+      const enemy = new EnemyBasic(this, x, y, 'enemy');
+      this.enemies.push(enemy);
+      console.log(`Spawned enemy at ${x}, ${y}`);
+    }
   }
 
   update(time, delta) {
@@ -117,6 +159,7 @@ export default class GameScene extends Phaser.Scene {
         `Player: ${Math.round(this.player.x)}, ${Math.round(this.player.y)}`,
         `Weapon Initialized: ${this.weaponInitialized}`,
         `Active Weapons: ${this.weapons.length}`,
+        `Active Enemies: ${this.enemies.filter(e => !e.isDead).length}`,
         `Time: ${Math.round(time)}`,
         `Delta: ${Math.round(delta)}`
       ]);
@@ -124,7 +167,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Update all weapons with explicit debug
     if (this.weapons && this.weapons.length > 0) {
-      console.log('Updating weapons...');
       this.weapons.forEach((weapon, index) => {
         if (weapon && typeof weapon.update === 'function') {
           weapon.update(time, delta);
@@ -132,6 +174,26 @@ export default class GameScene extends Phaser.Scene {
           console.error(`Invalid weapon at index ${index}:`, weapon);
         }
       });
+    }
+
+    // Update all enemies
+    if (this.enemies) {
+      // Clean up dead enemies and update active ones
+      this.enemies = this.enemies.filter(enemy => {
+        if (!enemy || enemy.isDead) {
+          if (enemy && enemy.sprite) {
+            enemy.sprite.destroy();
+          }
+          return false;
+        }
+        enemy.update(time, delta);
+        return true;
+      });
+
+      // Spawn more enemies if needed
+      if (this.enemies.length < 5) {  // Maintain minimum of 5 enemies
+        this.spawnEnemies(5);
+      }
     }
   }
 }
