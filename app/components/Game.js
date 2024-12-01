@@ -7,6 +7,7 @@ import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
 import FlyingAxeWeapon from '../game/entities/weapons/FlyingAxeWeapon';
+import SonicBoomHammer from '../game/entities/weapons/SonicBoomHammer';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -491,7 +492,8 @@ const GameScene = {
       new RotatingDogWeapon(this, this.player),
       new MagicWandWeapon(this, this.player),
       new GlizzyBlasterWeapon(this, this.player),
-      new FlyingAxeWeapon(this, this.player)
+      new FlyingAxeWeapon(this, this.player),
+      new SonicBoomHammer(this, this.player)
     ];
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
