@@ -121,6 +121,9 @@ const GameScene = {
     this.load.svg('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg', {
       scale: 0.5
     });
+    this.load.svg('weapon-wand-icon', '/assets/game/weapons/weapon-wand-icon.svg', {
+      scale: 0.5
+    });
   },
 
   create: function() {
@@ -235,6 +238,7 @@ const GameScene = {
     // Create grid cells and store them in an array
     const gridCells = [];
     let weaponIcon = null;  // Store icon reference
+    let wandIcon = null;    // Store wand icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cell = this.add.rectangle(
@@ -260,6 +264,21 @@ const GameScene = {
           const scale = maxDimension / Math.max(weaponIcon.width, weaponIcon.height);
           weaponIcon.setScale(scale);
           gridCells[0].icon = weaponIcon;
+        }
+        
+        // Add wand weapon icon to second cell
+        if (row === 0 && col === 1) {
+          wandIcon = this.add.image(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'weapon-wand-icon'
+          );
+          // Use same scaling logic as first weapon
+          const padding = 8;
+          const maxDimension = gridCellSize - padding;
+          const scale = maxDimension / Math.max(wandIcon.width, wandIcon.height);
+          wandIcon.setScale(scale);
+          gridCells[1].icon = wandIcon;
         }
       }
     }
@@ -330,7 +349,8 @@ const GameScene = {
       this.timerText, this.goldText, this.killsText,
       controlsText, controlsText2, statsHeader,
       ...Object.values(this.statsTexts),
-      weaponIcon  // Add weapon icon to UI container
+      weaponIcon,  // Add weapon icon to UI container
+      wandIcon     // Add wand icon to UI container
     ]);
 
     // Create trail effect container
