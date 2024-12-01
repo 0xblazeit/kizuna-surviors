@@ -75,7 +75,8 @@ const GameScene = {
       xp: 0,
       xpToNextLevel: 100,
       gold: 0,
-      kills: 0
+      kills: 0,
+      selectedWeaponIndex: 0
     };
 
     // Bind methods to this scene
@@ -241,6 +242,7 @@ const GameScene = {
     let wandIcon = null;    // Store wand icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
+        const cellIndex = row * gridCols + col;
         const cell = this.add.rectangle(
           gridX + col * gridCellSize,
           uiRowY + row * gridCellSize,
@@ -248,7 +250,29 @@ const GameScene = {
           gridCellSize - 4,
           0x000000
         );
-        cell.setStrokeStyle(2, 0x666666);
+        
+        // Set initial stroke style with white highlight instead of green
+        const strokeColor = cellIndex === this.gameState.selectedWeaponIndex ? 0xffffff : 0x666666;
+        cell.setStrokeStyle(2, strokeColor);
+        
+        // Make cell interactive
+        cell.setInteractive();
+        cell.on('pointerdown', () => {
+          // Only process clicks for cells with weapons
+          if (cellIndex === 0 || cellIndex === 1) {
+            // Update selected weapon index
+            this.gameState.selectedWeaponIndex = cellIndex;
+            
+            // Update all cell borders with white highlight
+            gridCells.forEach((c, i) => {
+              c.setStrokeStyle(2, i === cellIndex ? 0xffffff : 0x666666);
+            });
+            
+            // Update stats display for selected weapon
+            this.updateStatsDisplay();
+          }
+        });
+        
         gridCells.push(cell);
 
         // Add dog weapon icon to first cell
@@ -336,10 +360,31 @@ const GameScene = {
       if (!this.player) return;
       
       const stats = this.player.stats;
-      this.statsTexts.health.setText(`HP: ${stats.currentHealth}/${stats.maxHealth}`);
-      this.statsTexts.attack.setText(`ATK: ${stats.damage.toFixed(1)}`);
-      this.statsTexts.defense.setText(`DEF: ${stats.defense.toFixed(1)}`);
-      this.statsTexts.speed.setText(`SPD: ${stats.moveSpeed.toFixed(1)}`);
+      const selectedWeapon = this.weapons[this.gameState.selectedWeaponIndex];
+      
+      // Base stats
+      let displayStats = {
+        health: `HP: ${stats.currentHealth}/${stats.maxHealth}`,
+        attack: `ATK: ${stats.damage.toFixed(1)}`,
+        defense: `DEF: ${stats.defense.toFixed(1)}`,
+        speed: `SPD: ${stats.moveSpeed.toFixed(1)}`
+      };
+      
+      // Add weapon-specific stats if a weapon is selected
+      if (selectedWeapon) {
+        if (selectedWeapon.stats) {
+          displayStats.attack = `ATK: ${(stats.damage + (selectedWeapon.stats.damage || 0)).toFixed(1)}`;
+          if (selectedWeapon.stats.attackSpeed) {
+            displayStats.attack += ` (${selectedWeapon.stats.attackSpeed}/s)`;
+          }
+        }
+      }
+      
+      // Update the display
+      this.statsTexts.health.setText(displayStats.health);
+      this.statsTexts.attack.setText(displayStats.attack);
+      this.statsTexts.defense.setText(displayStats.defense);
+      this.statsTexts.speed.setText(displayStats.speed);
     };
 
     // Add all UI elements to the container
