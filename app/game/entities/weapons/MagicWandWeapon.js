@@ -93,6 +93,8 @@ export class MagicWandWeapon extends BaseWeapon {
         if (!proj) return;
         
         proj.active = false;
+        proj.pierceCount = 0;
+        
         if (proj.sprite) {
             proj.sprite.setVisible(false);
             if (proj.sprite.glow) {
@@ -122,33 +124,47 @@ export class MagicWandWeapon extends BaseWeapon {
             proj.sprite.glow.y = proj.sprite.y;
         }
 
-        // Check if projectile is out of range
+        // Check if projectile is out of range from player
         const distanceFromPlayer = Math.sqrt(
             Math.pow(proj.sprite.x - this.player.x, 2) + 
             Math.pow(proj.sprite.y - this.player.y, 2)
         );
 
         if (distanceFromPlayer > this.stats.range) {
-            console.log('Projectile out of range, deactivating');
             this.deactivateProjectile(proj);
             return;
         }
 
-        // Check if projectile is out of bounds
-        const margin = 50;
+        // Get the camera viewport bounds
+        const camera = this.scene.cameras.main;
+        const margin = 100; // Increased margin for better visibility
+        
+        // Calculate viewport bounds
         const bounds = {
-            left: -margin,
-            right: this.scene.game.config.width + margin,
-            top: -margin,
-            bottom: this.scene.game.config.height + margin
+            left: camera.scrollX - margin,
+            right: camera.scrollX + camera.width + margin,
+            top: camera.scrollY - margin,
+            bottom: camera.scrollY + camera.height + margin
         };
 
+        // Check if projectile is outside camera view (with margin)
         if (proj.sprite.x < bounds.left || 
             proj.sprite.x > bounds.right || 
             proj.sprite.y < bounds.top || 
             proj.sprite.y > bounds.bottom) {
             
-            console.log('Projectile out of bounds, deactivating');
+            this.deactivateProjectile(proj);
+            return;
+        }
+
+        // Check world bounds if they exist
+        const worldBounds = this.scene.physics.world.bounds;
+        if (worldBounds && (
+            proj.sprite.x < worldBounds.x || 
+            proj.sprite.x > worldBounds.x + worldBounds.width ||
+            proj.sprite.y < worldBounds.y || 
+            proj.sprite.y > worldBounds.y + worldBounds.height
+        )) {
             this.deactivateProjectile(proj);
         }
     }
@@ -168,14 +184,26 @@ export class MagicWandWeapon extends BaseWeapon {
             }
         }
 
-        // Update each projectile
-        this.activeProjectiles.forEach((proj, index) => {
-            if (!proj.active) {
-                // Check if it's time to fire
-                if (time - this.lastFiredTime >= this.stats.cooldown) {
-                    this.fireProjectile(proj, time);
-                }
-            } else {
+        // Check if it's time to fire
+        if (time - this.lastFiredTime >= this.stats.cooldown) {
+            // Find an inactive projectile or one that's ready to be recycled
+            const availableProj = this.activeProjectiles.find(proj => 
+                !proj.active || 
+                !proj.sprite.visible || 
+                proj.pierceCount <= 0
+            );
+            
+            if (availableProj) {
+                // Reset the projectile state before firing
+                availableProj.active = false;
+                availableProj.pierceCount = this.stats.pierce;
+                this.fireProjectile(availableProj, time);
+            }
+        }
+
+        // Update active projectiles
+        this.activeProjectiles.forEach(proj => {
+            if (proj.active) {
                 this.updateProjectile(proj, delta);
                 
                 // Get active enemies
@@ -185,34 +213,21 @@ export class MagicWandWeapon extends BaseWeapon {
 
                 // Check for collisions with enemies
                 enemies.forEach(enemy => {
-                    // Only check collision if projectile is active and has pierce remaining
-                    if (proj.active && proj.pierceCount > 0) {
-                        // Get the actual positions for collision check
+                    if (proj.active && proj.pierceCount > 0 && proj.sprite.visible) {
                         const projX = proj.sprite.x;
                         const projY = proj.sprite.y;
                         const enemyX = enemy.sprite.x;
                         const enemyY = enemy.sprite.y;
 
-                        // Calculate distance for collision
                         const dx = projX - enemyX;
                         const dy = projY - enemyY;
                         const distance = Math.sqrt(dx * dx + dy * dy);
 
-                        // Collision thresholds
                         const projRadius = 20;
                         const enemyRadius = 25;
                         const collisionThreshold = projRadius + enemyRadius;
 
-                        // Check if collision occurred
                         if (distance < collisionThreshold) {
-                            console.log('Projectile collision:', {
-                                projectile: { x: projX, y: projY, active: proj.active, pierce: proj.pierceCount },
-                                enemy: { x: enemyX, y: enemyY, health: enemy.stats.currentHealth },
-                                distance,
-                                threshold: collisionThreshold
-                            });
-
-                            // Handle the hit
                             this.handleHit(enemy, proj);
                         }
                     }
@@ -304,36 +319,74 @@ export class MagicWandWeapon extends BaseWeapon {
     }
 
     getTargetPosition() {
-        // Get nearest enemy or use last movement direction
-        const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-            return e && e.sprite && e.sprite.active && !e.isDead;
-        }) : [];
+        // Ensure we have valid enemies array
+        if (!Array.isArray(this.scene.enemies)) {
+            console.log('No valid enemies array found');
+            return this.getDefaultTarget();
+        }
 
-        if (enemies.length > 0) {
-            let closest = null;
-            let closestDist = Number.MAX_VALUE;
+        // Filter valid and reachable enemies
+        const validEnemies = this.scene.enemies.filter(enemy => {
+            if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+                return false;
+            }
 
-            enemies.forEach(enemy => {
+            // Check if enemy is within range
+            const dist = this.getDistance(
+                this.player.x, this.player.y,
+                enemy.sprite.x, enemy.sprite.y
+            );
+            
+            // Add a small buffer to range for better targeting
+            return dist <= (this.stats.range * 1.2);
+        });
+
+        if (validEnemies.length > 0) {
+            // Find the best target based on distance and angle
+            let bestTarget = null;
+            let bestScore = Number.MAX_VALUE;
+
+            validEnemies.forEach(enemy => {
                 const dist = this.getDistance(
                     this.player.x, this.player.y,
                     enemy.sprite.x, enemy.sprite.y
                 );
-                if (dist < closestDist) {
-                    closest = enemy;
-                    closestDist = dist;
+                
+                // Calculate angle difference from current direction
+                const angle = Math.atan2(
+                    enemy.sprite.y - this.player.y,
+                    enemy.sprite.x - this.player.x
+                );
+                const currentAngle = Math.atan2(this.lastDirection.y, this.lastDirection.x);
+                let angleDiff = Math.abs(angle - currentAngle);
+                if (angleDiff > Math.PI) {
+                    angleDiff = 2 * Math.PI - angleDiff;
+                }
+
+                // Score based on distance and angle (lower is better)
+                // Prioritize enemies in front of the player
+                const score = dist + (angleDiff * 100);
+
+                if (score < bestScore) {
+                    bestTarget = enemy;
+                    bestScore = score;
                 }
             });
 
-            if (closest) {
+            if (bestTarget) {
                 return {
-                    x: closest.sprite.x,
-                    y: closest.sprite.y
+                    x: bestTarget.sprite.x,
+                    y: bestTarget.sprite.y
                 };
             }
         }
 
-        // Use last movement direction if no enemies
-        const targetDistance = 100; // Distance to project the target point
+        return this.getDefaultTarget();
+    }
+
+    getDefaultTarget() {
+        // Use last movement direction if no valid enemies
+        const targetDistance = Math.min(100, this.stats.range * 0.5); // Don't shoot too far when no enemies
         return {
             x: this.player.x + this.lastDirection.x * targetDistance,
             y: this.player.y + this.lastDirection.y * targetDistance
