@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
+import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -436,7 +437,9 @@ const GameScene = {
     console.log('Initializing weapon system...');
     this.weapons = [];
     const dogWeapon = new RotatingDogWeapon(this, this.player);
+    const wandWeapon = new MagicWandWeapon(this, this.player);
     this.weapons.push(dogWeapon);
+    this.weapons.push(wandWeapon);
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
 
@@ -599,13 +602,17 @@ const GameScene = {
         const text = [
           `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
           `Active Weapons: ${this.weapons.length}`,
-          `Dog Projectiles: ${weapon?.activeProjectiles?.length || 0}`,
           `Weapon Stats:`,
           `  Level: ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
           `  Damage: ${stats.damage || 0}`,
           `  Pierce: ${stats.pierce || 0}`,
           `  Range: ${stats.range || 0}`,
           `  Speed: ${stats.speed || 0}`,
+          ...(stats.magicPower ? [
+            `  Magic Power: ${stats.magicPower}`,
+            `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
+            `  Elemental Damage: ${stats.elementalDamage}`
+          ] : []),
           `FPS: ${Math.round(1000 / delta)}`,
           `Time: ${Math.round(time / 1000)}s`
         ].join('\n');

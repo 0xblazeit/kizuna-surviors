@@ -42,3 +42,5 @@ export class BaseWeapon {
         // To be implemented by specific weapons
     }
 }
+
+export default BaseWeapon;
