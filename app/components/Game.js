@@ -569,7 +569,7 @@ const GameScene = {
     // Update debug text first
     if (this.debugText && this.player && this.weapons) {
       try {
-        const weapon = this.weapons[0];
+        const weapon = this.weapons[this.gameState.selectedWeaponIndex];
         const stats = weapon?.stats || {};
         const text = [
           `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
