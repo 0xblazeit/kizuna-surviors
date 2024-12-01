@@ -149,28 +149,79 @@ export class SonicBoomHammer extends BaseWeapon {
         const dy = target.y - this.player.y;
         proj.angle = Math.atan2(dy, dx);
 
-        // Set initial position
-        proj.sprite.setPosition(this.player.x, this.player.y);
-        proj.sprite.rotation = proj.angle;
-        if (proj.sprite.shockwave) {
-            proj.sprite.shockwave.setPosition(this.player.x, this.player.y);
-            proj.sprite.shockwave.rotation = proj.angle;
-        }
+        // Set initial position slightly behind the player for wind-up
+        const windupDistance = 40;
+        proj.sprite.setPosition(
+            this.player.x - Math.cos(proj.angle) * windupDistance,
+            this.player.y - Math.sin(proj.angle) * windupDistance
+        );
         
-        // Add a slight spin effect
+        // Set initial rotation for wind-up
+        proj.sprite.rotation = proj.angle - Math.PI / 2;
+        
+        // Create the swing animation timeline
+        const swingDuration = 400; // Duration of the swing in ms
+        
+        // Wind-up tween (pull back and rotate)
         this.scene.tweens.add({
             targets: proj.sprite,
-            rotation: proj.angle + Math.PI * 2,
-            duration: 1000,
-            repeat: -1
+            rotation: proj.angle - Math.PI, // Wind up rotation
+            duration: swingDuration * 0.3,
+            ease: 'Cubic.easeIn',
+            onComplete: () => {
+                // Forward swing with acceleration
+                this.scene.tweens.add({
+                    targets: proj.sprite,
+                    rotation: proj.angle + Math.PI / 4, // Swing past the target slightly
+                    duration: swingDuration * 0.7,
+                    ease: 'Cubic.easeOut'
+                });
+            }
         });
-        
+
+        // Movement tween (follows the swing)
+        this.scene.tweens.add({
+            targets: proj.sprite,
+            x: target.x,
+            y: target.y,
+            duration: swingDuration,
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                // Create shockwave effect at the end of swing
+                const shockwave = this.scene.add.sprite(target.x, target.y, 'weapon-hammer-projectile');
+                shockwave.setScale(0.5);
+                shockwave.setAlpha(0.6);
+                shockwave.setTint(this.effectColors.energy);
+                
+                // Expand and fade shockwave
+                this.scene.tweens.add({
+                    targets: shockwave,
+                    scale: 2,
+                    alpha: 0,
+                    duration: 300,
+                    ease: 'Cubic.easeOut',
+                    onComplete: () => {
+                        shockwave.destroy();
+                    }
+                });
+            }
+        });
+
+        // Add trailing effect
         if (proj.sprite.shockwave) {
+            proj.sprite.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
+            proj.sprite.shockwave.setScale(0.8);
+            proj.sprite.shockwave.setAlpha(0.4);
+            
+            // Make shockwave follow the hammer with slight delay
             this.scene.tweens.add({
                 targets: proj.sprite.shockwave,
-                rotation: proj.angle + Math.PI * 2,
-                duration: 1000,
-                repeat: -1
+                x: target.x,
+                y: target.y,
+                scale: 1.5,
+                alpha: 0,
+                duration: swingDuration * 1.2,
+                ease: 'Cubic.easeOut'
             });
         }
         
@@ -179,33 +230,36 @@ export class SonicBoomHammer extends BaseWeapon {
 
         // Add screen shake effect
         if (this.scene.cameras && this.scene.cameras.main) {
-            this.scene.cameras.main.shake(100, 0.005);
+            // Stronger screen shake for hammer
+            this.scene.cameras.main.shake(150, 0.008);
         }
     }
 
     handleHit(enemy, proj) {
         if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
 
-        // Calculate damage
+        // Calculate damage with critical hit chance
         let finalDamage = this.stats.damage;
         let isCritical = Math.random() < this.stats.criticalChance;
 
         if (isCritical) {
             finalDamage *= 2;
+            console.log('Critical hit! Damage:', finalDamage);
         }
 
-        // Apply damage
+        // Apply damage and show damage number
         enemy.takeDamage(Math.round(finalDamage), proj.sprite.x, proj.sprite.y);
 
         // Apply knockback
         const angle = Math.atan2(
-            enemy.sprite.y - this.player.y,
-            enemy.sprite.x - this.player.x
+            enemy.sprite.y - proj.sprite.y,
+            enemy.sprite.x - proj.sprite.x
         );
         
-        if (enemy.body) {
-            enemy.body.velocity.x += Math.cos(angle) * this.stats.knockback;
-            enemy.body.velocity.y += Math.sin(angle) * this.stats.knockback;
+        if (enemy.sprite.body) {
+            const knockbackForce = isCritical ? this.stats.knockback * 1.5 : this.stats.knockback;
+            enemy.sprite.body.velocity.x += Math.cos(angle) * knockbackForce;
+            enemy.sprite.body.velocity.y += Math.sin(angle) * knockbackForce;
         }
 
         // Create hit effect
@@ -216,28 +270,48 @@ export class SonicBoomHammer extends BaseWeapon {
         if (proj.pierceCount <= 0) {
             this.deactivateProjectile(proj);
         }
+
+        // Debug log for hit confirmation
+        console.log(`Hammer hit enemy! Damage: ${finalDamage}, Critical: ${isCritical}`);
     }
 
     createHitEffect(enemy, proj, isCritical) {
-        // Create explosion effect
-        const explosion = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
-        explosion.setScale(0.5);
-        explosion.setTint(isCritical ? this.effectColors.secondary : this.effectColors.primary);
-        explosion.setAlpha(0.8);
+        // Create impact effect
+        const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
+        impact.setScale(0.5);
+        impact.setTint(isCritical ? this.effectColors.secondary : this.effectColors.primary);
+        impact.setAlpha(0.8);
 
-        // Explosion animation
+        // Create ground crack effect
+        const crack = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
+        crack.setScale(0.3);
+        crack.setTint(this.effectColors.energy);
+        crack.setAlpha(0.5);
+        crack.setAngle(Math.random() * 360); // Random rotation for variety
+
+        // Animate impact
         this.scene.tweens.add({
-            targets: explosion,
-            scale: this.stats.scale * 2,
+            targets: impact,
+            scale: isCritical ? 2.5 : 2,
             alpha: 0,
-            duration: 300,
+            duration: 200,
             ease: 'Power2',
-            onComplete: () => explosion.destroy()
+            onComplete: () => impact.destroy()
+        });
+
+        // Animate ground crack
+        this.scene.tweens.add({
+            targets: crack,
+            scale: isCritical ? 1.5 : 1,
+            alpha: 0,
+            duration: 400,
+            ease: 'Power1',
+            onComplete: () => crack.destroy()
         });
 
         // Add screen shake on critical hits
         if (isCritical && this.scene.cameras && this.scene.cameras.main) {
-            this.scene.cameras.main.shake(150, 0.008);
+            this.scene.cameras.main.shake(200, 0.012);
         }
     }
 
@@ -292,7 +366,9 @@ export class SonicBoomHammer extends BaseWeapon {
                             enemy.sprite.x, enemy.sprite.y
                         );
 
-                        if (dist < 30) { // Collision radius
+                        // Increased collision radius for better hit detection
+                        const collisionRadius = 40; // Increased from 30
+                        if (dist < collisionRadius) {
                             this.handleHit(enemy, proj);
                         }
                     });
