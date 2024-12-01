@@ -87,12 +87,16 @@ class FlyingAxeWeapon extends BaseWeapon {
                 damage: 175,
                 pierce: 5,
                 cooldown: 500,
-                range: 750,
+                range: 600,
                 speed: 400,
                 rotationSpeed: 8.5,
                 scale: 0.85,
-                orbitRadius: 170,  // Initial orbit radius
-                orbitSpeed: 4.4      // Speed of orbital motion
+                orbitRadius: 170,
+                orbitSpeed: 4.4,
+                orbitCount: 3,        // Number of axes in orbit
+                orbitSpread: 120,     // Degrees between each axe
+                maxOrbitTime: 2.0,    // Time before seeking phase
+                isMaxLevel: true
             }
         };
 
@@ -140,27 +144,54 @@ class FlyingAxeWeapon extends BaseWeapon {
     }
 
     fireProjectile() {
-        const proj = this.getInactiveProjectile();
-        if (!proj) return;
+        if (this.currentLevel === 8) {
+            // Special level 8 firing pattern
+            for (let i = 0; i < this.stats.orbitCount; i++) {
+                const proj = this.getInactiveProjectile();
+                if (!proj) continue;
 
-        // Set initial position at player
-        const startX = this.player.x;
-        const startY = this.player.y;
+                const startX = this.player.x;
+                const startY = this.player.y;
 
-        // Set up projectile
-        proj.active = true;
-        proj.pierceCount = this.stats.pierce;
-        proj.phase = 'orbit';  // New phase: 'orbit', 'seeking', 'return'
-        proj.startX = startX;
-        proj.startY = startY;
-        proj.orbitAngle = Math.random() * Math.PI * 2; // Random start angle
-        proj.rotation = 0;
-        proj.orbitTime = 0;
+                proj.active = true;
+                proj.pierceCount = this.stats.pierce;
+                proj.phase = 'orbit';
+                proj.startX = startX;
+                proj.startY = startY;
+                // Spread axes evenly in a circle
+                proj.orbitAngle = (i * this.stats.orbitSpread * Math.PI / 180);
+                proj.rotation = 0;
+                proj.orbitTime = 0;
+                proj.orbitIndex = i; // Track which axe this is in the formation
 
-        if (proj.sprite) {
-            proj.sprite.setPosition(startX, startY);
-            proj.sprite.setVisible(true);
-            proj.sprite.setActive(true);
+                if (proj.sprite) {
+                    proj.sprite.setPosition(startX, startY);
+                    proj.sprite.setVisible(true);
+                    proj.sprite.setActive(true);
+                }
+            }
+        } else {
+            // Original firing logic for levels 1-7
+            const proj = this.getInactiveProjectile();
+            if (!proj) return;
+
+            const startX = this.player.x;
+            const startY = this.player.y;
+
+            proj.active = true;
+            proj.pierceCount = this.stats.pierce;
+            proj.phase = 'orbit';
+            proj.startX = startX;
+            proj.startY = startY;
+            proj.orbitAngle = Math.random() * Math.PI * 2;
+            proj.rotation = 0;
+            proj.orbitTime = 0;
+
+            if (proj.sprite) {
+                proj.sprite.setPosition(startX, startY);
+                proj.sprite.setVisible(true);
+                proj.sprite.setActive(true);
+            }
         }
     }
 
@@ -202,21 +233,34 @@ class FlyingAxeWeapon extends BaseWeapon {
                     // Update orbit time
                     proj.orbitTime += delta / 1000;
                     
-                    // Increase orbit radius over time
-                    const currentRadius = this.stats.orbitRadius * (1 + proj.orbitTime);
+                    let currentRadius = this.stats.orbitRadius;
+                    if (this.currentLevel === 8) {
+                        // Level 8: Pulsating orbit radius
+                        const pulseFactor = Math.sin(proj.orbitTime * 4) * 30;
+                        currentRadius = this.stats.orbitRadius + pulseFactor;
+                    } else {
+                        // Normal expanding radius for other levels
+                        currentRadius *= (1 + proj.orbitTime);
+                    }
                     
-                    // Update orbit angle
-                    proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
+                    // Update orbit angle with potential phase offset for level 8
+                    if (this.currentLevel === 8) {
+                        proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
+                        // Add phase offset based on axe index
+                        const phaseOffset = (proj.orbitIndex * this.stats.orbitSpread * Math.PI / 180);
+                        const orbitX = proj.startX + Math.cos(proj.orbitAngle + phaseOffset) * currentRadius;
+                        const orbitY = proj.startY + Math.sin(proj.orbitAngle + phaseOffset) * currentRadius;
+                        proj.sprite.setPosition(orbitX, orbitY);
+                    } else {
+                        proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
+                        const orbitX = proj.startX + Math.cos(proj.orbitAngle) * currentRadius;
+                        const orbitY = proj.startY + Math.sin(proj.orbitAngle) * currentRadius;
+                        proj.sprite.setPosition(orbitX, orbitY);
+                    }
                     
-                    // Calculate new position
-                    const orbitX = proj.startX + Math.cos(proj.orbitAngle) * currentRadius;
-                    const orbitY = proj.startY + Math.sin(proj.orbitAngle) * currentRadius;
-                    
-                    // Update sprite position
-                    proj.sprite.setPosition(orbitX, orbitY);
-                    
-                    // After one full orbit, find closest enemy and switch to seeking phase
-                    if (proj.orbitTime >= 1.0) {
+                    // Transition to seeking phase
+                    const maxOrbitTime = this.currentLevel === 8 ? this.stats.maxOrbitTime : 1.0;
+                    if (proj.orbitTime >= maxOrbitTime) {
                         const closestEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
                         if (closestEnemy) {
                             proj.phase = 'seeking';
