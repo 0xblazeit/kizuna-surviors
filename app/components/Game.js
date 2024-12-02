@@ -514,16 +514,7 @@ const GameScene = {
       this.statsTexts.speed.setText(displayStats.speed);
     };
 
-    // Add all UI elements to the container
-    // uiContainer.add([
-    //   xpBarBg, this.xpBarFill, this.xpText,
-    //   ...gridCells,
-    //   this.timerText, this.goldText, this.killsText,
-    //   controlsText, controlsText2, statsHeader,
-    //   ...Object.values(this.statsTexts),
-    //   weaponIcon,  // Add weapon icon to UI container
-    //   wandIcon     // Add wand icon to UI container
-    // ]);
+
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
