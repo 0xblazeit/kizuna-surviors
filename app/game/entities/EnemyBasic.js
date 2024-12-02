@@ -443,43 +443,30 @@ class EnemyBasic extends BasePlayer {
     }
 
     die() {
-        console.log('Enemy die() method called');
-        if (this.isDead) {
-            console.log('Enemy already dead, skipping die()');
-            return;
+        // Drop a coin at the enemy's position
+        if (this.scene) {
+            // Create coin at enemy's position
+            new Coin(this.scene, this.sprite.x, this.sprite.y);
         }
         
-        this.isDead = true;
-        console.log('Enemy marked as dead');
-
-        // Always drop a coin for testing
-        console.log('Basic enemy dropping coin at:', this.sprite.x, this.sprite.y);
-        try {
-            const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, 1);
-            if (!this.scene.coins) {
-                console.error('Coins array not initialized!');
-                this.scene.coins = [];
-            }
-            this.scene.coins.push(coin);
-            console.log('Coin created and added to scene');
-        } catch (error) {
-            console.error('Error creating coin:', error);
-        }
-
-        // Add death animation
-        const self = this;  // Store reference to this
-        this.scene.tweens.add({
-            targets: this.sprite,
-            alpha: 0,
-            scale: 0.8,
-            duration: 200,
-            ease: 'Power2',
-            onComplete: function() {
-                console.log('Death animation complete, destroying enemy');
-                if (self.sprite) {
-                    self.sprite.destroy();
+        // Play death animation and cleanup
+        this.playDeathAnimation().then(() => {
+            // Remove from scene's enemy list
+            if (this.scene.enemies) {
+                const index = this.scene.enemies.indexOf(this);
+                if (index > -1) {
+                    this.scene.enemies.splice(index, 1);
                 }
-                self.scene.events.emit('enemyDefeated', self);
+            }
+            
+            // Cleanup health bar
+            if (this.healthBar) {
+                this.healthBar.container.destroy();
+            }
+            
+            // Destroy sprite
+            if (this.sprite) {
+                this.sprite.destroy();
             }
         });
     }
