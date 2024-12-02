@@ -388,15 +388,6 @@ const GameScene = {
             5,
             gridCells
           );
-          // Initialize with leche weapon stats
-          lecheIcon.setData('weaponStats', {
-            damage: 30,
-            pierce: 2,
-            cooldown: 1500,
-            range: 400,
-            speed: 300,
-            criticalChance: 0.15
-          });
         }
       }
     }
