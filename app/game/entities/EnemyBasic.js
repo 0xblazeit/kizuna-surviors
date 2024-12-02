@@ -479,20 +479,6 @@ class EnemyBasic extends BasePlayer {
         // Deal damage to the player
         const damageDealt = this.stats.attackDamage;
         this.targetPlayer.takeDamage(damageDealt);
-
-        // Visual feedback for attack
-        const attackEffect = this.scene.add.circle(this.sprite.x, this.sprite.y, this.attackRange, 0xff0000, 0.2);
-        attackEffect.setStrokeStyle(2, 0xff0000);
-        
-        // Fade out and remove the attack effect
-        this.scene.tweens.add({
-            targets: attackEffect,
-            alpha: 0,
-            duration: 200,
-            onComplete: () => {
-                attackEffect.destroy();
-            }
-        });
     }
 }
 
