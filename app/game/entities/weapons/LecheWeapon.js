@@ -28,7 +28,7 @@ class LecheWeapon extends BaseWeapon {
         this.activeProjectiles = [];
         
         // Initialize level configuration
-        this.currentLevel = 1;
+        this.currentLevel = 0;
         this.maxLevel = 8;
         this.levelConfigs = {
             1: { damage: 40,  pierce: 2, cooldown: 1400, scale: 0.82 },
