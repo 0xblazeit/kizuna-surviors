@@ -7,15 +7,15 @@ class FlyingAxeWeapon extends BaseWeapon {
         // Level-up configurations
         this.levelConfigs = {
             1: {
-                damage: 25,
+                damage: 15,
                 pierce: 1,
-                cooldown: 2200,    // Time between throws
-                range: 400,        // Distance before returning
-                speed: 250,        // Projectile speed
-                rotationSpeed: 5,  // Rotation speed of the axe
+                cooldown: 2500,
+                range: 350,
+                speed: 200,
+                rotationSpeed: 4,
                 scale: 0.5,
-                orbitRadius: 100,  // Initial orbit radius
-                orbitSpeed: 3      // Speed of orbital motion
+                orbitRadius: 80,
+                orbitSpeed: 2.5
             },
             2: {
                 damage: 35,
@@ -25,8 +25,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 270,
                 rotationSpeed: 5.5,
                 scale: 0.55,
-                orbitRadius: 110,  // Initial orbit radius
-                orbitSpeed: 3.2      // Speed of orbital motion
+                orbitRadius: 110,
+                orbitSpeed: 3.2
             },
             3: {
                 damage: 45,
@@ -36,8 +36,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 290,
                 rotationSpeed: 6,
                 scale: 0.6,
-                orbitRadius: 120,  // Initial orbit radius
-                orbitSpeed: 3.4      // Speed of orbital motion
+                orbitRadius: 120,
+                orbitSpeed: 3.4
             },
             4: {
                 damage: 60,
@@ -47,8 +47,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 310,
                 rotationSpeed: 6.5,
                 scale: 0.65,
-                orbitRadius: 130,  // Initial orbit radius
-                orbitSpeed: 3.6      // Speed of orbital motion
+                orbitRadius: 130,
+                orbitSpeed: 3.6
             },
             5: {
                 damage: 80,
@@ -58,8 +58,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 330,
                 rotationSpeed: 7,
                 scale: 0.7,
-                orbitRadius: 140,  // Initial orbit radius
-                orbitSpeed: 3.8      // Speed of orbital motion
+                orbitRadius: 140,
+                orbitSpeed: 3.8
             },
             6: {
                 damage: 105,
@@ -69,8 +69,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 350,
                 rotationSpeed: 7.5,
                 scale: 0.75,
-                orbitRadius: 150,  // Initial orbit radius
-                orbitSpeed: 4      // Speed of orbital motion
+                orbitRadius: 150,
+                orbitSpeed: 4
             },
             7: {
                 damage: 135,
@@ -80,8 +80,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 speed: 370,
                 rotationSpeed: 8,
                 scale: 0.8,
-                orbitRadius: 160,  // Initial orbit radius
-                orbitSpeed: 4.2      // Speed of orbital motion
+                orbitRadius: 160,
+                orbitSpeed: 4.2
             },
             8: {
                 damage: 175,
@@ -93,9 +93,9 @@ class FlyingAxeWeapon extends BaseWeapon {
                 scale: 0.85,
                 orbitRadius: 170,
                 orbitSpeed: 4.4,
-                orbitCount: 3,        // Number of axes in orbit
-                orbitSpread: 120,     // Degrees between each axe
-                maxOrbitTime: 2.0,    // Time before seeking phase
+                orbitCount: 3,
+                orbitSpread: 120,
+                maxOrbitTime: 2.0,
                 isMaxLevel: true
             }
         };

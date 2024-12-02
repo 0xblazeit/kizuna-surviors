@@ -10,16 +10,16 @@ export class MilkWeapon extends BaseWeapon {
         // Level-up configurations
         this.levelConfigs = {
             1: {
-                damage: 20,
-                pierce: 2,
-                cooldown: 1500,
-                range: 350,
+                damage: 10,
+                pierce: 1,
+                cooldown: 2000,
+                range: 300,
                 speed: 0,
                 scale: 0.5,
-                criticalChance: 0.1,
-                splashRadius: 50,
-                puddleCount: 3,
-                puddleDuration: 3000
+                criticalChance: 0.05,
+                splashRadius: 40,
+                puddleCount: 2,
+                puddleDuration: 2500
             },
             2: {
                 damage: 30,

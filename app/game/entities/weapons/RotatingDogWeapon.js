@@ -6,14 +6,14 @@ export class RotatingDogWeapon extends BaseWeapon {
         // Level-up configurations using Fibonacci sequence (1,1,2,3,5,8,13,21)
         this.levelConfigs = {
             1: {
-                damage: 15,
-                pierce: 2,
+                damage: 8,
+                pierce: 1,
                 count: 1,
-                cooldown: 600,         // Reduced cooldown
-                range: 100,            // Increased range
-                speed: 450,            // Increased speed
-                detectionRange: 125,   // Increased detection range
-                guardDistance: 120,
+                cooldown: 800,
+                range: 80,
+                speed: 400,
+                detectionRange: 100,
+                guardDistance: 100,
             },
             2: {  // First upgrade
                 damage: 20,      // +5

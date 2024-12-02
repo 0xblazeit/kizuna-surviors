@@ -6,15 +6,15 @@ export class SonicBoomHammer extends BaseWeapon {
         
         // Set weapon stats - slow but powerful
         this.stats = {
-            damage: 50,          // High base damage
-            pierce: 2,           // Can hit multiple enemies
-            cooldown: 2000,      // 2 seconds between shots (slow)
-            range: 500,          // Long range
-            speed: 250,          // Moderate projectile speed
-            knockback: 150,      // Strong knockback
-            accuracy: 0.3,       // Low accuracy (0-1, lower means more spread)
-            scale: 0.8,          // Reduced from 1.2 to 0.8
-            criticalChance: 0.15 // 15% crit chance
+            damage: 30,          // Reduced from 50
+            pierce: 1,           // Reduced from 2
+            cooldown: 2500,      // Increased from 2000
+            range: 400,          // Reduced from 500
+            speed: 200,          // Reduced from 250
+            knockback: 100,      // Reduced from 150
+            accuracy: 0.25,      // Reduced from 0.3
+            scale: 0.7,          // Reduced from 0.8
+            criticalChance: 0.1  // Reduced from 0.15
         };
 
         // Effect colors for sonic boom
