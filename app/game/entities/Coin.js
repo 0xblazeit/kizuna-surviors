@@ -1,87 +1,49 @@
 class Coin {
-    constructor(scene, x, y, value = 1) {
-        // Store references
+    constructor(scene, x, y) {
         this.scene = scene;
-        this.value = value;
-        this.isCollected = false;
         
-        // Create the sprite directly without physics
-        this.sprite = scene.add.sprite(x, y, 'coin');
-        this.sprite.setScale(0.15);
-        this.sprite.setDepth(5);
+        // Just create a basic image with the coin SVG
+        this.image = scene.add.image(x, y, 'coin');
+        this.image.setScale(0.15);
         
-        // Scale and tint based on value
-        if (value > 1) {
-            this.sprite.setScale(0.15 + (value * 0.02));
-            this.sprite.setTint(value >= 5 ? 0xffdd00 : 0xfff5cc);
-        }
-        
-        // Add floating animation
+        // Float up and down
         scene.tweens.add({
-            targets: this.sprite,
-            y: this.sprite.y - 5,
-            duration: 1000,
+            targets: this.image,
+            y: y - 10,
+            duration: 1500,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
         
-        // Add rotation
+        // Rotate
         scene.tweens.add({
-            targets: this.sprite,
+            targets: this.image,
             angle: 360,
-            duration: 3000,
+            duration: 4000,
             repeat: -1,
             ease: 'Linear'
         });
-        
-        // Collection properties
-        this.collectionRadius = 50;
     }
     
     update(player) {
-        if (this.isCollected || !this.sprite) return;
+        if (!this.image) return;
         
         const distance = Phaser.Math.Distance.Between(
-            this.sprite.x,
-            this.sprite.y,
+            this.image.x,
+            this.image.y,
             player.x,
             player.y
         );
         
-        if (distance <= this.collectionRadius) {
-            this.collect();
-        }
-    }
-    
-    collect() {
-        if (this.isCollected || !this.sprite) return;
-        this.isCollected = true;
-        
-        // Collection animation
-        this.scene.tweens.add({
-            targets: this.sprite,
-            y: this.sprite.y - 20,
-            alpha: 0,
-            scale: 0.2,
-            duration: 300,
-            ease: 'Back.easeIn',
-            onComplete: () => {
-                // Update game state
-                if (this.scene.gameState) {
-                    this.scene.gameState.coins += this.value;
-                    if (this.scene.coinText) {
-                        this.scene.coinText.setText(`Coins: ${this.scene.gameState.coins}`);
-                    }
+        if (distance <= 50) {
+            if (this.scene.gameState) {
+                this.scene.gameState.coins++;
+                if (this.scene.coinText) {
+                    this.scene.coinText.setText(`Coins: ${this.scene.gameState.coins}`);
                 }
-                this.destroy();
             }
-        });
-    }
-    
-    destroy() {
-        if (this.sprite) {
-            this.sprite.destroy();
+            this.image.destroy();
         }
     }
 }
