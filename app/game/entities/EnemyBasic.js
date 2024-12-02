@@ -35,6 +35,11 @@ class EnemyBasic extends BasePlayer {
         this.lastMoveTime = 0;     // Add timestamp for movement updates
         this.moveUpdateInterval = 16;  // Update movement every 16ms (60fps)
 
+        // Attack properties
+        this.attackRange = 50;     // Range at which enemy can attack player
+        this.lastAttackTime = 0;   // Track last attack time
+        this.attackCooldown = 1000; // Attack cooldown in milliseconds
+
         // Create a basic sprite if texture isn't provided
         if (!this.sprite) {
             this.sprite = scene.add.rectangle(x, y, 40, 40, 0xff0000);
@@ -124,6 +129,12 @@ class EnemyBasic extends BasePlayer {
             const dx = this.targetPlayer.sprite.x - this.sprite.x;
             const dy = this.targetPlayer.sprite.y - this.sprite.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Check if within attack range and cooldown is ready
+            if (distance <= this.attackRange && currentTime - this.lastAttackTime >= this.attackCooldown) {
+                this.attackPlayer();
+                this.lastAttackTime = currentTime;
+            }
             
             // Move if within range and not too close
             if (distance <= this.movementRange && distance > this.minDistance) {
@@ -459,6 +470,28 @@ class EnemyBasic extends BasePlayer {
             }
             // Emit any necessary events or handle additional cleanup
             this.scene.events.emit('enemyDefeated', this);
+        });
+    }
+
+    attackPlayer() {
+        if (!this.targetPlayer || this.isDead || this.isStaggered) return;
+
+        // Deal damage to the player
+        const damageDealt = this.stats.attackDamage;
+        this.targetPlayer.takeDamage(damageDealt);
+
+        // Visual feedback for attack
+        const attackEffect = this.scene.add.circle(this.sprite.x, this.sprite.y, this.attackRange, 0xff0000, 0.2);
+        attackEffect.setStrokeStyle(2, 0xff0000);
+        
+        // Fade out and remove the attack effect
+        this.scene.tweens.add({
+            targets: attackEffect,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => {
+                attackEffect.destroy();
+            }
         });
     }
 }
