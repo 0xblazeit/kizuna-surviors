@@ -5,15 +5,15 @@ export class MagicWandWeapon extends BaseWeapon {
         
         // Set weapon stats
         this.stats = {
-            damage: 10,
-            pierce: 3,
-            cooldown: 900,  // milliseconds between shots
-            range: 300,     // pixels
-            speed: 300,     // pixels per second
-            magicPower: 20, // percentage increase to damage
-            criticalChance: 0.1,
-            elementalDamage: 5,
-            scale: 0.5     // base projectile scale
+            damage: 6,
+            pierce: 2,
+            cooldown: 1000,
+            range: 250,
+            speed: 250,
+            magicPower: 15,
+            criticalChance: 0.05,
+            elementalDamage: 3,
+            scale: 0.4
         };
 
         // Effect colors for magic wand

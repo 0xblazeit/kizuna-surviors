@@ -6,84 +6,84 @@ export class RotatingDogWeapon extends BaseWeapon {
         // Level-up configurations using Fibonacci sequence (1,1,2,3,5,8,13,21)
         this.levelConfigs = {
             1: {
-                damage: 8,
+                damage: 4,
                 pierce: 1,
                 count: 1,
-                cooldown: 800,
-                range: 80,
-                speed: 400,
-                detectionRange: 100,
-                guardDistance: 100,
+                cooldown: 1200,
+                range: 60,
+                speed: 300,
+                detectionRange: 80,
+                guardDistance: 80,
             },
             2: {  // First upgrade
-                damage: 20,      // +5
-                pierce: 2,
+                damage: 6,
+                pierce: 1,
                 count: 1,
-                cooldown: 550,   // Faster
-                range: 320,      // +20
-                speed: 470,      // +20
-                detectionRange: 260,  // +10
-                guardDistance: 120,
+                cooldown: 1100,
+                range: 70,
+                speed: 320,
+                detectionRange: 90,
+                guardDistance: 85,
             },
             3: {  // Getting stronger
-                damage: 30,      // +10
-                pierce: 3,       // +1
-                count: 2,        // +1
-                cooldown: 500,
-                range: 340,
-                speed: 490,
-                detectionRange: 270,
-                guardDistance: 120,
+                damage: 9,
+                pierce: 2,
+                count: 2,
+                cooldown: 1000,
+                range: 80,
+                speed: 340,
+                detectionRange: 100,
+                guardDistance: 90,
             },
             4: {  // Significant boost
-                damage: 45,      // +15
-                pierce: 3,
+                damage: 12,
+                pierce: 2,
                 count: 2,
-                cooldown: 450,
-                range: 360,
-                speed: 510,
-                detectionRange: 280,
-                guardDistance: 120,
+                cooldown: 900,
+                range: 90,
+                speed: 360,
+                detectionRange: 110,
+                guardDistance: 95,
             },
             5: {  // Major power spike
-                damage: 70,      // +25
-                pierce: 4,       // +1
-                count: 3,        // +1
-                cooldown: 400,
-                range: 380,
-                speed: 530,
-                detectionRange: 290,
-                guardDistance: 120,
+                damage: 18,
+                pierce: 3,
+                count: 3,
+                cooldown: 800,
+                range: 100,
+                speed: 380,
+                detectionRange: 120,
+                guardDistance: 100,
             },
             6: {  // Getting powerful
-                damage: 105,     // +35
-                pierce: 4,
+                damage: 27,
+                pierce: 3,
                 count: 3,
-                cooldown: 350,
-                range: 400,
-                speed: 550,
-                detectionRange: 300,
-                guardDistance: 120,
+                cooldown: 700,
+                range: 110,
+                speed: 400,
+                detectionRange: 130,
+                guardDistance: 105,
             },
             7: {  // Near maximum power
-                damage: 150,     // +45
-                pierce: 5,       // +1
-                count: 5,        // +1
-                cooldown: 300,
-                range: 420,
-                speed: 570,
-                detectionRange: 310,
-                guardDistance: 120,
+                damage: 36,
+                pierce: 4,
+                count: 5,
+                cooldown: 600,
+                range: 120,
+                speed: 420,
+                detectionRange: 140,
+                guardDistance: 110,
             },
             8: {  // Maximum power - Special effects
-                damage: 200,     // +50
-                pierce: 6,       // +1
-                count: 7,        // +1
-                cooldown: 250,
-                range: 440,
-                speed: 590,
-                detectionRange: 320,
-                guardDistance: 120,
+                damage: 45,
+                pierce: 5,
+                count: 7,
+                cooldown: 500,
+                range: 130,
+                speed: 440,
+                detectionRange: 150,
+                guardDistance: 115,
                 isMaxLevel: true  // Special flag for max level
             }
         };
