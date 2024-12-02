@@ -23,6 +23,7 @@ class MainPlayer extends BasePlayer {
         // Player specific properties
         this.isStaggered = false;
         this.hitFlashDuration = 100;
+        this.isDead = false;  
 
         // Create health bar with proper spacing
         const spriteHeight = this.sprite.height * mainPlayerConfig.scale;
@@ -205,9 +206,34 @@ class MainPlayer extends BasePlayer {
     }
 
     takeDamage(amount) {
-        const damageDealt = super.takeDamage(amount);
+        super.takeDamage(amount);
+        
+        // Check for death
+        if (this.stats.health <= 0 && !this.isDead) {
+            this.isDead = true;
+            this.sprite.setTint(0x666666);  // Darken the player sprite
+            this.movementEnabled = false;  // Disable movement
+            
+            // Add physics to make player "float" when dead
+            this.sprite.body.setAllowGravity(false);
+            
+            // Add a slight random rotation and drift
+            const randomAngle = Phaser.Math.FloatBetween(-0.5, 0.5);
+            const randomVelocityX = Phaser.Math.FloatBetween(-20, 20);
+            const randomVelocityY = Phaser.Math.FloatBetween(-20, 20);
+            
+            this.sprite.body.setAngularVelocity(randomAngle);
+            this.sprite.body.setVelocity(randomVelocityX, randomVelocityY);
+            this.sprite.body.setDrag(0.1);
+
+            // Emit death event
+            this.scene.events.emit('playerDeath', {
+                level: this.experience.level,
+                gold: this.inventory.gold
+            });
+        }
+        
         this.updateHealthBar();
-        return damageDealt;
     }
 
     heal(amount) {

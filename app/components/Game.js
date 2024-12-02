@@ -81,7 +81,8 @@ const GameScene = {
       xpToNextLevel: 100,
       gold: 0,
       kills: 0,
-      selectedWeaponIndex: 0
+      selectedWeaponIndex: 0,
+      isGameOver: false
     };
 
     // Bind methods to this scene
@@ -514,8 +515,6 @@ const GameScene = {
       this.statsTexts.speed.setText(displayStats.speed);
     };
 
-
-
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
 
@@ -524,6 +523,11 @@ const GameScene = {
       trailContainer: this.trailContainer,
       scale: 1,
       spriteKey: 'player'
+    });
+
+    // Listen for player death event
+    this.events.on('playerDeath', () => {
+      this.showWastedScreen();
     });
 
     // Initialize weapon system - this is needed for selectable weapons grid
@@ -674,6 +678,135 @@ const GameScene = {
     this.input.keyboard.on('keydown-ESC', () => {
       this.scene.start('MenuScene');
     });
+
+    // Create WASTED overlay container (hidden by default)
+    this.wastedOverlay = this.add.container(0, 0);
+    this.wastedOverlay.setDepth(1000); // Ensure it's above everything
+    this.wastedOverlay.setScrollFactor(0); // Fix entire container to camera
+    
+    // Black overlay with fade (make it cover the entire game world)
+    const blackOverlay = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000000);
+    blackOverlay.setAlpha(0);
+    this.wastedOverlay.add(blackOverlay);
+    
+    // WASTED text (positioned at camera center)
+    const wastedText = this.add.text(this.scale.width / 2, this.scale.height / 2, 'WASTED', {
+      fontFamily: 'Arial Black',
+      fontSize: '128px',
+      color: '#FF0000',
+      stroke: '#000000',
+      strokeThickness: 8,
+      align: 'center'
+    });
+    wastedText.setOrigin(0.5);
+    wastedText.setAlpha(0);
+    this.wastedOverlay.add(wastedText);
+    
+    // Hide overlay initially
+    this.wastedOverlay.setVisible(false);
+
+    // Create function to show WASTED screen
+    this.showWastedScreen = () => {
+      if (this.gameState.isGameOver) return;
+      
+      this.gameState.isGameOver = true;
+      this.wastedOverlay.setVisible(true);
+      
+      // Slow down time
+      this.time.timeScale = 0.5;
+      
+      // Fade in black overlay
+      this.tweens.add({
+        targets: this.wastedOverlay.getAt(0),
+        alpha: 0.5,
+        duration: 1000,
+        ease: 'Power2'
+      });
+      
+      // Fade in and scale up WASTED text
+      const wastedText = this.wastedOverlay.getAt(1);
+      wastedText.setScale(0.5);
+      this.tweens.add({
+        targets: wastedText,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 1000,
+        ease: 'Power2'
+      });
+
+      // Add "Click anywhere or press WASD/Arrow keys to restart" text
+      const restartText = this.add.text(this.scale.width / 2, this.scale.height / 2 + 100, 'Click anywhere or press WASD/Arrow keys to restart', {
+        fontFamily: 'VT323',
+        fontSize: '24px',
+        color: '#FFFFFF',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center'
+      });
+      restartText.setOrigin(0.5);
+      restartText.setAlpha(0);
+      restartText.setScrollFactor(0);
+      this.wastedOverlay.add(restartText);
+
+      // Make text pulse slightly
+      this.tweens.add({
+        targets: restartText,
+        alpha: { from: 0, to: 1 },
+        duration: 1000,
+        delay: 500,
+        ease: 'Power2',
+        onComplete: () => {
+          this.tweens.add({
+            targets: restartText,
+            scale: 1.1,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.inOut'
+          });
+        }
+      });
+      
+      // Function to restart the game
+      const restartGame = () => {
+        // Remove all event listeners
+        this.input.keyboard.off('keydown', keyHandler);
+        this.input.off('pointerdown', restartGame);
+        
+        // Reset time scale
+        this.time.timeScale = 1;
+        
+        // Stop all tweens
+        this.tweens.killAll();
+        
+        // Restart the scene
+        this.scene.restart();
+      };
+
+      // Keyboard handler for WASD and Arrow keys
+      const keyHandler = (event) => {
+        const key = event.key.toUpperCase();
+        // Check for WASD or Arrow keys
+        if (['W', 'A', 'S', 'D', 'ARROWUP', 'ARROWLEFT', 'ARROWDOWN', 'ARROWRIGHT'].includes(key)) {
+          restartGame();
+        }
+      };
+      
+      // Add input listeners after a short delay to prevent accidental restarts
+      this.time.delayedCall(500, () => {
+        // Add keyboard listener
+        this.input.keyboard.on('keydown', keyHandler);
+        
+        // Add mouse click listener for the entire game window
+        this.input.on('pointerdown', restartGame);
+      });
+    };
+
+    // Listen for player death event
+    this.events.on('playerDeath', () => {
+      this.showWastedScreen();
+    });
   },
 
   update: function(time, delta) {
@@ -790,6 +923,11 @@ const GameScene = {
     // Update player with movement input
     if (this.player) {
       this.player.update();
+    }
+
+    // Check if player is dead
+    if (this.player && this.player.isDead) {
+      this.showWastedScreen();
     }
   }
 };
