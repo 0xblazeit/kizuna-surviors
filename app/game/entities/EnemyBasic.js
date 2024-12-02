@@ -171,7 +171,7 @@ class EnemyBasic extends BasePlayer {
 
         // Ensure amount is a valid number
         const damage = Number(amount) || 0;
-        console.log(`Enemy taking ${damage} damage`);
+        // console.log(`Enemy taking ${damage} damage`);
 
         // Apply base damage calculation
         const damageDealt = super.takeDamage(damage);
@@ -209,11 +209,11 @@ class EnemyBasic extends BasePlayer {
             this.playHitEffects(sourceX, sourceY);
         }
         
-        console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
+        // console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
         
         // Check for death
         if (this.stats.currentHealth <= 0) {
-            console.log('Enemy health depleted, triggering death');
+            // console.log('Enemy health depleted, triggering death');
             this.isDead = true;   // Only set isDead, remove isDying
             this.onDeath();
         }
@@ -335,7 +335,7 @@ class EnemyBasic extends BasePlayer {
 
     playDeathAnimation() {
         return new Promise((resolve) => {
-            console.log('Setting up death animation');
+            // console.log('Setting up death animation');
             // Create a flash effect
             this.sprite.setTint(0xff0000);  // Red flash
             
@@ -347,7 +347,7 @@ class EnemyBasic extends BasePlayer {
                 duration: 300,
                 ease: 'Power2',
                 onComplete: () => {
-                    console.log('Tween complete, creating particles');
+                    //console.log('Tween complete, creating particles');
                     try {
                         // Create custom particle effects
                         const numParticles = 12;

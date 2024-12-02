@@ -311,11 +311,11 @@ export class MagicWandWeapon extends BaseWeapon {
         proj.active = true;
         this.lastFiredTime = time;
 
-        console.log('Firing projectile:', {
-            from: { x: this.player.x, y: this.player.y },
-            angle: proj.angle,
-            pierce: proj.pierceCount
-        });
+        // console.log('Firing projectile:', {
+        //     from: { x: this.player.x, y: this.player.y },
+        //     angle: proj.angle,
+        //     pierce: proj.pierceCount
+        // });
     }
 
     getTargetPosition() {
