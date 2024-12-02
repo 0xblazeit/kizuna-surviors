@@ -21,23 +21,17 @@ export default class GameScene extends Phaser.Scene {
   preload() {
     console.log('GameScene preload called');
     
-    // Create debug text
-    this.debugText = this.add.text(10, 10, 'Loading...', { fontSize: '16px', fill: '#fff' });
-
     // Debug loading process
     this.load.on('start', () => {
       console.log('Loading started');
-      this.debugText.setText('Loading started...');
     });
 
     this.load.on('complete', () => {
       console.log('All assets loaded');
-      this.debugText.setText('All assets loaded');
     });
 
     this.load.on('loaderror', (file) => {
       console.error('Error loading file:', file.key, file.src);
-      this.debugText.setText(`Error loading: ${file.key}`);
     });
 
     // Create a particle texture
@@ -77,12 +71,6 @@ export default class GameScene extends Phaser.Scene {
     // Initialize enemy list
     this.enemies = [];
 
-    // Add debug text
-    this.debugText = this.add.text(16, 16, 'Debug Info', {
-      color: '#ffffff',
-      fontSize: '14px'
-    });
-    
     // Add kills text
     this.killsText = this.add.text(16, height - 40, 'Kills: 0', {
       color: '#ffffff',
@@ -147,29 +135,6 @@ export default class GameScene extends Phaser.Scene {
     // Keep player within bounds
     this.player.x = Phaser.Math.Clamp(this.player.x, 20, this.scale.width - 20);
     this.player.y = Phaser.Math.Clamp(this.player.y, 20, this.scale.height - 20);
-
-    // Update debug text
-    if (this.debugText) {
-      this.debugText.setText([
-        `Player: ${Math.round(this.player.x)}, ${Math.round(this.player.y)}`,
-        `Weapon Initialized: ${this.weaponInitialized}`,
-        `Active Weapons: ${this.weapons.length}`,
-        `Active Enemies: ${this.enemies.filter(e => !e.isDead).length}`,
-        `Time: ${Math.round(time)}`,
-        `Delta: ${Math.round(delta)}`
-      ]);
-    }
-
-    // Update all weapons with explicit debug
-    if (this.weapons && this.weapons.length > 0) {
-      this.weapons.forEach((weapon, index) => {
-        if (weapon && typeof weapon.update === 'function') {
-          weapon.update(time, delta);
-        } else {
-          console.error(`Invalid weapon at index ${index}:`, weapon);
-        }
-      });
-    }
 
     // Update all enemies
     if (this.enemies) {
