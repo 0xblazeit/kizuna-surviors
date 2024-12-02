@@ -307,7 +307,10 @@ export class MilkWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
-        super.update(time, delta);
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
 
         // Check each puddle for enemies
         this.activePuddles.forEach(puddle => {

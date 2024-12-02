@@ -226,22 +226,50 @@ class MainPlayer extends BasePlayer {
             this.sprite.body.setVelocity(randomVelocityX, randomVelocityY);
             this.sprite.body.setDrag(0.1);
 
+            // Clean up all weapons and projectiles
+            if (this.scene.weapons) {
+                this.scene.weapons.forEach(weapon => {
+                    if (weapon && typeof weapon.destroy === 'function') {
+                        weapon.destroy();
+                    }
+                });
+            }
+
             // Emit death event
             this.scene.events.emit('playerDeath', {
                 level: this.experience.level,
                 gold: this.inventory.gold
             });
+            
+            // Call onDeath to ensure all cleanup is done
+            this.onDeath();
         }
         
         this.updateHealthBar();
     }
 
     heal(amount) {
+        // Don't allow healing if dead
+        if (this.isDead) return;
+        
         super.heal(amount);
         this.updateHealthBar();
     }
 
     onDeath() {
+        if (!this.isDead) {
+            this.isDead = true;
+            
+            // Clean up all weapons and projectiles
+            if (this.scene.weapons) {
+                this.scene.weapons.forEach(weapon => {
+                    if (weapon && typeof weapon.destroy === 'function') {
+                        weapon.destroy();
+                    }
+                });
+            }
+        }
+
         // Clean up health bar before death
         if (this.healthBar) {
             this.healthBar.container.destroy();
@@ -254,19 +282,6 @@ class MainPlayer extends BasePlayer {
         });
 
         super.onDeath();
-    }
-
-    // XP related getters
-    get xp() {
-        return this.experience.current;
-    }
-
-    get level() {
-        return this.experience.level;
-    }
-
-    get xpToNextLevel() {
-        return this.experience.toNextLevel;
     }
 
     gainXP(amount) {

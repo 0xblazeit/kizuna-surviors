@@ -367,6 +367,11 @@ export class SonicBoomHammer extends BaseWeapon {
     }
 
     update(time, delta) {
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
+
         // Check cooldown and attack if ready
         if (time - this.lastFiredTime >= this.stats.cooldown) {
             this.attack(time);

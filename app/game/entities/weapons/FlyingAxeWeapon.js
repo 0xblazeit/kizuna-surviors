@@ -215,6 +215,11 @@ class FlyingAxeWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
+
         // Auto-fire if cooldown has passed
         if (time - this.lastFiredTime >= this.stats.cooldown) {
             this.attack(time);

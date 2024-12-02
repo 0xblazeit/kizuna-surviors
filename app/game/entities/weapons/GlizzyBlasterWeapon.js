@@ -102,7 +102,10 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
-        super.update(time, delta);
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
         
         // Update active projectiles
         this.activeProjectiles.forEach(proj => {

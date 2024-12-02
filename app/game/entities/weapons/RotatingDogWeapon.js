@@ -177,6 +177,11 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
+
         if (!this.player) return;
 
         // Get active enemies if they exist

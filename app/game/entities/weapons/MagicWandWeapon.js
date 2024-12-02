@@ -170,6 +170,11 @@ export class MagicWandWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
+        // Call base class update which includes death check
+        if (!super.update(time, delta)) {
+            return;
+        }
+
         if (!this.player) return;
 
         // Update last movement direction if player is moving
