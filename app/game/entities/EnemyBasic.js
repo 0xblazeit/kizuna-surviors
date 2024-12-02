@@ -5,7 +5,7 @@ class EnemyBasic extends BasePlayer {
         // Set enemy specific defaults
         const enemyConfig = {
             maxHealth: 100,
-            moveSpeed: Phaser.Math.FloatBetween(2.0, 3.0),  // Increased base speed range
+            moveSpeed: Phaser.Math.FloatBetween(2.8, 3.2),  // Match player speed (3) with slight variation
             defense: 0,
             attackSpeed: 1,
             attackDamage: 8,
@@ -143,7 +143,7 @@ class EnemyBasic extends BasePlayer {
                 const normalizedDy = dy / distance;
                 
                 // Calculate movement step
-                const step = this.moveSpeed * (this.moveUpdateInterval / 1000);
+                const step = this.moveSpeed;  // Remove the time scaling since we're already using fixed intervals
                 
                 // Move towards player
                 this.sprite.x += normalizedDx * step;
