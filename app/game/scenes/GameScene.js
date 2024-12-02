@@ -40,9 +40,6 @@ export default class GameScene extends Phaser.Scene {
       this.debugText.setText(`Error loading: ${file.key}`);
     });
 
-    // Load weapon sprites
-    this.load.svg('weapon-leche-projectile', 'assets/game/weapons/weapon-leche.svg');
-
     // Create a particle texture
     const particleCanvas = document.createElement('canvas');
     particleCanvas.width = 4;
