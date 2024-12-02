@@ -9,7 +9,7 @@ class EnemyAdvanced extends EnemyBasic {
             defense: 2,  // Added defense
             attackSpeed: 1.2,  // 20% faster attacks
             attackDamage: 12,  // 50% more damage
-            scale: 0.5,  // Slightly larger than basic enemies (0.4)
+            scale: 0.42,  // Just slightly larger than basic enemies (0.4)
             trailTint: 0xff0000,  // Red trail for advanced enemies
             clickDamage: 40,  // Higher click damage
             ...config
@@ -19,11 +19,6 @@ class EnemyAdvanced extends EnemyBasic {
 
         // Advanced enemy specific properties
         this.type = 'advanced';
-        
-        // Make sprite slightly larger and tinted red
-        if (this.sprite) {
-            this.sprite.setTint(0xff3333);
-        }
     }
 }
 
