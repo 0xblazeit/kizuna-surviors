@@ -1,6 +1,7 @@
 class Coin {
   constructor(scene, x, y) {
     this.scene = scene;
+    this.isCollected = false;
 
     // Create coin sprite
     this.sprite = scene.add.image(x, y, "coin");
@@ -28,24 +29,54 @@ class Coin {
   }
 
   update(player) {
-    if (!this.sprite) return;
+    if (this.isCollected || !this.sprite || !player) return;
 
     const distance = Phaser.Math.Distance.Between(
       this.sprite.x,
       this.sprite.y,
-      player.sprite.x,
-      player.sprite.y
+      player.x,
+      player.y
     );
 
     if (distance <= 50) {
-      if (this.scene.gameState) {
-        this.scene.gameState.coins++;
-        if (this.scene.coinText) {
-          this.scene.coinText.setText(`Coins: ${this.scene.gameState.coins}`);
-        }
-      }
-      this.sprite.destroy();
-      this.sprite = null;
+      // Mark as collected
+      this.isCollected = true;
+
+      // Update gold count
+      this.scene.gameState.gold += 1;
+      this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
+
+      // Add collection animation
+      this.scene.tweens.add({
+        targets: this.sprite,
+        scale: 0,
+        alpha: 0,
+        y: this.sprite.y - 20,
+        duration: 200,
+        ease: "Power2",
+        onComplete: () => {
+          this.sprite.destroy();
+          this.sprite = null;
+        },
+      });
+
+      // Add floating text effect
+      const floatingText = this.scene.add
+        .text(this.sprite.x, this.sprite.y, "+1", {
+          fontFamily: "VT323",
+          fontSize: "20px",
+          color: "#FFD700",
+        })
+        .setOrigin(0.5);
+
+      this.scene.tweens.add({
+        targets: floatingText,
+        y: floatingText.y - 40,
+        alpha: 0,
+        duration: 1000,
+        ease: "Power2",
+        onComplete: () => floatingText.destroy(),
+      });
     }
   }
 }
