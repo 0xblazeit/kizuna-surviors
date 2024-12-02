@@ -19,9 +19,10 @@ export class SonicBoomHammer extends BaseWeapon {
 
         // Effect colors for sonic boom
         this.effectColors = {
-            primary: 0xff6b00,    // Orange
-            secondary: 0xffd700,  // Gold
-            energy: 0xffe4b5     // Moccasin
+            primary: 0xd4d4d4,    // Bright silver for regular hits
+            secondary: 0xffd700,  // Bright gold for critical hits
+            energy: 0x87ceeb,     // Sky blue for energy effects
+            maxLevel: 0xff4d4d    // Bright red for max level
         };
 
         // Initialize projectile pool
@@ -32,14 +33,14 @@ export class SonicBoomHammer extends BaseWeapon {
         this.currentLevel = 0;
         this.maxLevel = 8;
         this.levelConfigs = {
-            1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.85 },  // Reduced scales
-            2: { damage: 80,  pierce: 2, cooldown: 1800, knockback: 170, accuracy: 0.34, scale: 0.9 },
-            3: { damage: 95,  pierce: 3, cooldown: 1700, knockback: 180, accuracy: 0.36, scale: 0.95 },
-            4: { damage: 110, pierce: 3, cooldown: 1600, knockback: 190, accuracy: 0.38, scale: 1.0 },
-            5: { damage: 130, pierce: 3, cooldown: 1500, knockback: 200, accuracy: 0.40, scale: 1.05 },
-            6: { damage: 150, pierce: 4, cooldown: 1400, knockback: 220, accuracy: 0.42, scale: 1.1 },
-            7: { damage: 175, pierce: 4, cooldown: 1300, knockback: 240, accuracy: 0.44, scale: 1.15 },
-            8: { damage: 200, pierce: 5, cooldown: 1200, knockback: 260, accuracy: 0.46, scale: 1.2 }
+            1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.82 },
+            2: { damage: 80,  pierce: 2, cooldown: 1800, knockback: 170, accuracy: 0.34, scale: 0.84 },
+            3: { damage: 95,  pierce: 3, cooldown: 1700, knockback: 180, accuracy: 0.36, scale: 0.86 },
+            4: { damage: 110, pierce: 3, cooldown: 1600, knockback: 190, accuracy: 0.38, scale: 0.88 },
+            5: { damage: 130, pierce: 3, cooldown: 1500, knockback: 200, accuracy: 0.40, scale: 0.90 },
+            6: { damage: 150, pierce: 4, cooldown: 1400, knockback: 220, accuracy: 0.42, scale: 0.92 },
+            7: { damage: 175, pierce: 4, cooldown: 1300, knockback: 240, accuracy: 0.44, scale: 0.94 },
+            8: { damage: 200, pierce: 5, cooldown: 1200, knockback: 260, accuracy: 0.46, scale: 1.1 }
         };
 
         console.log('Sonic Boom Hammer initialized with stats:', this.stats);
@@ -275,25 +276,58 @@ export class SonicBoomHammer extends BaseWeapon {
     }
 
     createHitEffect(enemy, proj, isCritical) {
+        const isMaxLevel = this.currentLevel === this.maxLevel;
+        
         // Create impact effect
         const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
-        impact.setScale(0.3); // Reduced from 0.5
-        impact.setTint(isCritical ? this.effectColors.secondary : this.effectColors.primary);
+        impact.setScale(0.3);
+        impact.setTint(isMaxLevel ? this.effectColors.maxLevel : (isCritical ? this.effectColors.secondary : this.effectColors.primary));
         impact.setAlpha(0.8);
 
         // Create ground crack effect
         const crack = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
-        crack.setScale(0.2); // Reduced from 0.3
-        crack.setTint(this.effectColors.energy);
+        crack.setScale(0.2);
+        crack.setTint(isMaxLevel ? this.effectColors.maxLevel : this.effectColors.energy);
         crack.setAlpha(0.5);
-        crack.setAngle(Math.random() * 360); // Random rotation for variety
+        crack.setAngle(Math.random() * 360);
+
+        // Special max level effects
+        if (isMaxLevel) {
+            // Add additional energy rings for max level
+            const energyRing = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile');
+            energyRing.setScale(0.1);
+            energyRing.setTint(this.effectColors.maxLevel);
+            energyRing.setAlpha(0.7);
+
+            this.scene.tweens.add({
+                targets: energyRing,
+                scale: 2.0,
+                alpha: 0,
+                duration: 300,
+                ease: 'Power1',
+                onComplete: () => energyRing.destroy()
+            });
+
+            // Add particle burst for max level
+            if (this.scene.add.particles) {
+                const particles = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile', {
+                    scale: { start: 0.1, end: 0 },
+                    speed: { min: 50, max: 150 },
+                    quantity: 8,
+                    lifespan: 300,
+                    tint: this.effectColors.maxLevel
+                });
+                
+                setTimeout(() => particles.destroy(), 300);
+            }
+        }
 
         // Animate impact
         this.scene.tweens.add({
             targets: impact,
-            scale: isCritical ? 1.5 : 1.2, // Reduced from 2.5/2.0
+            scale: isMaxLevel ? (isCritical ? 1.8 : 1.5) : (isCritical ? 1.3 : 1.0),
             alpha: 0,
-            duration: 200,
+            duration: isMaxLevel ? 250 : 200,
             ease: 'Power2',
             onComplete: () => impact.destroy()
         });
@@ -301,17 +335,12 @@ export class SonicBoomHammer extends BaseWeapon {
         // Animate ground crack
         this.scene.tweens.add({
             targets: crack,
-            scale: isCritical ? 1.0 : 0.8, // Reduced from 1.5/1.0
+            scale: isMaxLevel ? (isCritical ? 1.2 : 0.9) : (isCritical ? 0.8 : 0.6),
             alpha: 0,
-            duration: 400,
+            duration: isMaxLevel ? 500 : 400,
             ease: 'Power1',
             onComplete: () => crack.destroy()
         });
-
-        // Add subtle screen shake on critical hits only
-        if (isCritical && this.scene.cameras && this.scene.cameras.main) {
-            this.scene.cameras.main.shake(150, 0.003);
-        }
     }
 
     levelUp() {
