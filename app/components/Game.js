@@ -5,6 +5,7 @@ import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
 import EnemyAdvanced from '../game/entities/EnemyAdvanced';
 import EnemyEpic from '../game/entities/EnemyEpic';
+import Coin from '../game/entities/Coin';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
@@ -84,7 +85,8 @@ const GameScene = {
       gold: 0,
       kills: 0,
       selectedWeaponIndex: 0,
-      isGameOver: false
+      isGameOver: false,
+      coins: 0  // Add coin counter
     };
 
     // Bind methods to this scene
@@ -108,11 +110,27 @@ const GameScene = {
     this.weaponInitialized = false;
     this.enemies = [];
     this.projectiles = [];
+    this.coins = [];  // Add coins array
     this.score = 0;
     this.gameOver = false;
   },
 
   preload: function() {
+    // Load coin sprite first to ensure it's available
+    console.log('Loading coin sprite...');
+    this.load.svg('coin', '/assets/game/powerups/coin.svg', {
+      scale: 0.5
+    });
+    
+    // Verify coin sprite loaded
+    this.load.on('filecomplete-svg-coin', () => {
+      console.log('Coin sprite loaded successfully!');
+    });
+    
+    this.load.on('loaderror', (file) => {
+      console.error('Error loading file:', file.key);
+    });
+
     // Load player sprite
     this.load.svg('player', '/assets/game/characters/player.svg', {
       scale: 0.1
@@ -879,6 +897,27 @@ const GameScene = {
     this.events.on('playerDeath', () => {
       this.showWastedScreen();
     });
+
+    // Initialize coin array if it doesn't exist
+    this.coins = this.coins || [];
+    
+    // Initialize coin count in game state
+    this.gameState.coins = 0;
+    
+    // Add coin text to UI
+    this.coinText = this.add.text(16, 16, 'Coins: 0', {
+      fontSize: '32px',
+      fill: '#fff'
+    });
+    this.coinText.setScrollFactor(0);
+    this.coinText.setDepth(30);
+
+    // Debug logging for coin events
+    this.events.on('coinCollected', (data) => {
+      console.log('Coin collected! Value:', data.value);
+      this.gameState.coins += data.value;
+      this.coinText.setText(`Coins: ${this.gameState.coins}`);
+    });
   },
 
   update: function(time, delta) {
@@ -923,6 +962,17 @@ const GameScene = {
       } catch (error) {
         console.error('Error updating debug text:', error);
       }
+    }
+
+    // Update coins
+    if (this.coins) {
+      this.coins.forEach((coin, index) => {
+        if (coin && coin.update) {
+          coin.update(this.player);
+        }
+      });
+      // Clean up collected coins
+      this.coins = this.coins.filter(coin => coin && !coin.isCollected);
     }
 
     // Update all enemies

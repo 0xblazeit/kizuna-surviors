@@ -1,4 +1,5 @@
 import EnemyAdvanced from './EnemyAdvanced';
+import Coin from '../entities/Coin';
 
 class EnemyEpic extends EnemyAdvanced {
     constructor(scene, x, y, texture, config = {}) {
@@ -56,6 +57,18 @@ class EnemyEpic extends EnemyAdvanced {
             this.aura.destroy();
         }
         super.destroy();
+    }
+
+    die() {
+        // Epic enemies always drop coins during testing
+        const coin = new Coin(this.scene, this.x, this.y, 5);
+        if (!this.scene.coins) {
+            console.error('Coins array not initialized!');
+            this.scene.coins = [];
+        }
+        this.scene.coins.push(coin);
+        
+        super.die();
     }
 }
 

@@ -1,4 +1,5 @@
 import EnemyBasic from './EnemyBasic';
+import Coin from '../entities/Coin';
 
 class EnemyAdvanced extends EnemyBasic {
     constructor(scene, x, y, texture, config = {}) {
@@ -19,6 +20,20 @@ class EnemyAdvanced extends EnemyBasic {
 
         // Advanced enemy specific properties
         this.type = 'advanced';
+    }
+
+    die() {
+        // Chance to drop a coin (90% for advanced enemies during testing)
+        if (Math.random() < 0.90) {
+            const coin = new Coin(this.scene, this.x, this.y, 3);
+            if (!this.scene.coins) {
+                console.error('Coins array not initialized!');
+                this.scene.coins = [];
+            }
+            this.scene.coins.push(coin);
+        }
+        
+        super.die();
     }
 }
 

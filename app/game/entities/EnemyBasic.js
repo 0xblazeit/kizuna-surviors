@@ -1,4 +1,5 @@
 import BasePlayer from './BasePlayer';
+import Coin from '../entities/Coin';
 
 class EnemyBasic extends BasePlayer {
     constructor(scene, x, y, texture, config = {}) {
@@ -174,59 +175,27 @@ class EnemyBasic extends BasePlayer {
     }
 
     takeDamage(amount, sourceX, sourceY) {
+        console.log('Enemy taking damage:', amount);
         // Only check isDead for damage, not isDying
         if (this.isDead) {
             console.log('Enemy already dead, ignoring damage');
             return 0;
         }
 
-        // Ensure amount is a valid number
-        const damage = Number(amount) || 0;
-        // console.log(`Enemy taking ${damage} damage`);
-
-        // Apply base damage calculation
-        const damageDealt = super.takeDamage(damage);
+        let damageDealt = amount;
         
-        // Update health bar
-        this.updateHealthBar();
-
-        // Create hit marker text
-        const hitMarker = this.scene.add.text(
-            this.sprite.x,
-            this.sprite.y - 20,
-            `-${damageDealt}`,
-            {
-                fontSize: '16px',
-                fill: '#ff0000',
-                fontStyle: 'bold'
-            }
-        );
-        hitMarker.setDepth(100);
-
-        // Animate the hit marker
-        this.scene.tweens.add({
-            targets: hitMarker,
-            y: hitMarker.y - 30,
-            alpha: 0,
-            duration: 800,
-            ease: 'Power2',
-            onComplete: () => {
-                hitMarker.destroy();
-            }
-        });
-
-        // Play hit effects if not already staggered
-        if (!this.isStaggered) {
-            this.playHitEffects(sourceX, sourceY);
+        // Apply defense reduction
+        if (this.stats.defense > 0) {
+            damageDealt = Math.max(1, amount - this.stats.defense);
         }
         
-        // console.log(`Enemy health after damage: ${this.stats.currentHealth}/${this.stats.maxHealth}`);
+        this.stats.currentHealth -= damageDealt;
+        console.log('Enemy health after damage:', this.stats.currentHealth);
         
         // Check for death
         if (this.stats.currentHealth <= 0) {
-            // console.log('Enemy health depleted, triggering death');
-            this.isDead = true;   // Only set isDead, remove isDying
-            this.onDeath();
+            console.log('Enemy health depleted, calling die()');
+            this.die();
         }
         
         return damageDealt;
@@ -470,6 +439,48 @@ class EnemyBasic extends BasePlayer {
             }
             // Emit any necessary events or handle additional cleanup
             this.scene.events.emit('enemyDefeated', this);
+        });
+    }
+
+    die() {
+        console.log('Enemy die() method called');
+        if (this.isDead) {
+            console.log('Enemy already dead, skipping die()');
+            return;
+        }
+        
+        this.isDead = true;
+        console.log('Enemy marked as dead');
+
+        // Always drop a coin for testing
+        console.log('Basic enemy dropping coin at:', this.x, this.y);
+        try {
+            const coin = new Coin(this.scene, this.x, this.y, 1);
+            if (!this.scene.coins) {
+                console.error('Coins array not initialized!');
+                this.scene.coins = [];
+            }
+            this.scene.coins.push(coin);
+            console.log('Coin created and added to scene');
+        } catch (error) {
+            console.error('Error creating coin:', error);
+        }
+
+        // Add death animation
+        const self = this;  // Store reference to this
+        this.scene.tweens.add({
+            targets: this.sprite,
+            alpha: 0,
+            scale: 0.8,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: function() {
+                console.log('Death animation complete, destroying enemy');
+                if (self.sprite) {
+                    self.sprite.destroy();
+                }
+                self.scene.events.emit('enemyDefeated', self);
+            }
         });
     }
 
