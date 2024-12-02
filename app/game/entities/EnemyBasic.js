@@ -5,7 +5,7 @@ class EnemyBasic extends BasePlayer {
         // Set enemy specific defaults
         const enemyConfig = {
             maxHealth: 100,
-            moveSpeed: Phaser.Math.FloatBetween(2.2, 2.4),  // ~75% of player speed (3) with slight variation
+            moveSpeed: Phaser.Math.FloatBetween(1.6, 1.8),  // ~55% of player speed (3) with slight variation
             defense: 0,
             attackSpeed: 1,
             attackDamage: 8,
