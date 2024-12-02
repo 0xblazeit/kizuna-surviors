@@ -453,9 +453,9 @@ class EnemyBasic extends BasePlayer {
         console.log('Enemy marked as dead');
 
         // Always drop a coin for testing
-        console.log('Basic enemy dropping coin at:', this.x, this.y);
+        console.log('Basic enemy dropping coin at:', this.sprite.x, this.sprite.y);
         try {
-            const coin = new Coin(this.scene, this.x, this.y, 1);
+            const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, 1);
             if (!this.scene.coins) {
                 console.error('Coins array not initialized!');
                 this.scene.coins = [];

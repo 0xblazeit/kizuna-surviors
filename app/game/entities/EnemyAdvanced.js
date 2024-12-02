@@ -25,7 +25,7 @@ class EnemyAdvanced extends EnemyBasic {
     die() {
         // Chance to drop a coin (90% for advanced enemies during testing)
         if (Math.random() < 0.90) {
-            const coin = new Coin(this.scene, this.x, this.y, 3);
+            const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, 3);
             if (!this.scene.coins) {
                 console.error('Coins array not initialized!');
                 this.scene.coins = [];

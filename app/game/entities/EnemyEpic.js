@@ -61,7 +61,7 @@ class EnemyEpic extends EnemyAdvanced {
 
     die() {
         // Epic enemies always drop coins during testing
-        const coin = new Coin(this.scene, this.x, this.y, 5);
+        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, 5);
         if (!this.scene.coins) {
             console.error('Coins array not initialized!');
             this.scene.coins = [];
