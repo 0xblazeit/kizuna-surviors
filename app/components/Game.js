@@ -141,6 +141,9 @@ const GameScene = {
     this.load.svg('weapon-hammer-projectile', '/assets/game/weapons/weapon-hammer-projectile.svg', {
       scale: 0.5
     });
+    this.load.svg('weapon-leche-icon', '/assets/game/weapons/weapon-leche.svg', {
+      scale: 0.5
+    });
   },
 
   create: function() {
@@ -280,6 +283,7 @@ const GameScene = {
     let glizzyIcon = null;  // Store glizzy icon reference
     let axeIcon = null;     // Store axe icon reference
     let hammerIcon = null;  // Store hammer icon reference
+    let lecheIcon = null;   // Store leche icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -303,7 +307,7 @@ const GameScene = {
         // Make cell interactive
         cell.on('pointerdown', () => {
           // Only process clicks for cells with weapons
-          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2 || cellIndex === 3 || cellIndex === 4) {
+          if (cellIndex === 0 || cellIndex === 1 || cellIndex === 2 || cellIndex === 3 || cellIndex === 4 || cellIndex === 5) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
             
@@ -371,6 +375,17 @@ const GameScene = {
             uiRowY + row * gridCellSize,
             'weapon-hammer-projectile',
             4,
+            gridCells
+          );
+        }
+
+        // Add leche icon to sixth cell
+        if (row === 0 && col === 5) {
+          lecheIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            'weapon-leche-icon',
+            5,
             gridCells
           );
         }

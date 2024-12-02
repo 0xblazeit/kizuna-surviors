@@ -1,6 +1,7 @@
 import { RotatingDogWeapon } from '../weapons/RotatingDogWeapon';
 import EnemyBasic from '../enemies/EnemyBasic';
 import FlyingAxeWeapon from '../entities/weapons/FlyingAxeWeapon';
+import LecheWeapon from '../entities/weapons/LecheWeapon';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -38,6 +39,9 @@ export default class GameScene extends Phaser.Scene {
       console.error('Error loading file:', file.key, file.src);
       this.debugText.setText(`Error loading: ${file.key}`);
     });
+
+    // Load weapon sprites
+    this.load.svg('weapon-leche-projectile', 'assets/game/weapons/weapon-leche.svg');
 
     // Create a particle texture
     const particleCanvas = document.createElement('canvas');
@@ -77,7 +81,8 @@ export default class GameScene extends Phaser.Scene {
     this.weapons = [];
     const dogWeapon = new RotatingDogWeapon(this, this.player);
     const axeWeapon = new FlyingAxeWeapon(this, this.player);
-    this.weapons.push(dogWeapon, axeWeapon);
+    const lecheWeapon = new LecheWeapon(this, this.player);
+    this.weapons.push(dogWeapon, axeWeapon, lecheWeapon);
     this.weaponInitialized = true;
     console.log('Weapon system initialized');
 
