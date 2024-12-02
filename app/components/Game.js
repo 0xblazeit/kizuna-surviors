@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
 import EnemyAdvanced from '../game/entities/EnemyAdvanced';
+import EnemyEpic from '../game/entities/EnemyEpic';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
@@ -129,6 +130,11 @@ const GameScene = {
     this.load.svg('enemy-advanced-one', '/assets/game/characters/enemies-advanced/advanced-one.svg');
     this.load.svg('enemy-advanced-two', '/assets/game/characters/enemies-advanced/advanced-two.svg');
     this.load.svg('enemy-advanced-three', '/assets/game/characters/enemies-advanced/advanced-three.svg');
+
+    // Load epic enemy sprites
+    this.load.svg('enemy-epic-one', '/assets/game/characters/enemies-epic/epic-one.svg');
+    this.load.svg('enemy-epic-two', '/assets/game/characters/enemies-epic/epic-two.svg');
+    this.load.svg('enemy-epic-three', '/assets/game/characters/enemies-epic/epic-three.svg');
 
     // Load weapon sprites
     this.load.svg('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg', {
@@ -660,11 +666,18 @@ const GameScene = {
             y < camera.scrollY + camera.height + padding
           );
 
-          // Chance to spawn advanced enemy increases with level
-          const spawnAdvanced = Math.random() < (this.gameState.level * 0.05);  // 5% per level
+          // Calculate spawn chances based on level
+          const epicChance = Math.min(this.gameState.level * 0.02, 0.2);  // 2% per level, max 20%
+          const advancedChance = Math.min(this.gameState.level * 0.05, 0.3);  // 5% per level, max 30%
+          const roll = Math.random();
           
           let enemy;
-          if (spawnAdvanced) {
+          if (roll < epicChance) {
+            // Spawn epic enemy
+            const epicTypes = ['one', 'two', 'three'];
+            const randomType = Phaser.Utils.Array.GetRandom(epicTypes);
+            enemy = new EnemyEpic(this, x, y, `enemy-epic-${randomType}`);
+          } else if (roll < epicChance + advancedChance) {
             // Spawn advanced enemy
             const advancedTypes = ['one', 'two', 'three'];
             const randomType = Phaser.Utils.Array.GetRandom(advancedTypes);
