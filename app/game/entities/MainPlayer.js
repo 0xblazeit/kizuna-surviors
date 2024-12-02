@@ -226,22 +226,7 @@ class MainPlayer extends BasePlayer {
             this.sprite.body.setVelocity(randomVelocityX, randomVelocityY);
             this.sprite.body.setDrag(0.1);
 
-            // Clean up all weapons and projectiles
-            if (this.scene.weapons) {
-                this.scene.weapons.forEach(weapon => {
-                    if (weapon && typeof weapon.destroy === 'function') {
-                        weapon.destroy();
-                    }
-                });
-            }
-
-            // Emit death event
-            this.scene.events.emit('playerDeath', {
-                level: this.experience.level,
-                gold: this.inventory.gold
-            });
-            
-            // Call onDeath to ensure all cleanup is done
+            // Call onDeath to handle cleanup and event emission
             this.onDeath();
         }
         
@@ -257,25 +242,21 @@ class MainPlayer extends BasePlayer {
     }
 
     onDeath() {
-        if (!this.isDead) {
-            this.isDead = true;
-            
-            // Clean up all weapons and projectiles
-            if (this.scene.weapons) {
-                this.scene.weapons.forEach(weapon => {
-                    if (weapon && typeof weapon.destroy === 'function') {
-                        weapon.destroy();
-                    }
-                });
-            }
+        // Clean up all weapons and projectiles
+        if (this.scene.weapons) {
+            this.scene.weapons.forEach(weapon => {
+                if (weapon && typeof weapon.destroy === 'function') {
+                    weapon.destroy();
+                }
+            });
         }
 
-        // Clean up health bar before death
+        // Clean up health bar
         if (this.healthBar) {
             this.healthBar.container.destroy();
         }
         
-        // Emit death event before cleanup
+        // Emit death event
         this.scene.events.emit('playerDeath', {
             level: this.experience.level,
             gold: this.inventory.gold
