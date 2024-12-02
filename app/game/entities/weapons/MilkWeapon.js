@@ -3,88 +3,107 @@ import { BaseWeapon } from './BaseWeapon.js';
 export class MilkWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
+        this.name = 'Milk Rain';
+        this.description = 'Creates pools of damaging milk that fall from the sky';
+        this.type = 'magic';
         
         // Level-up configurations
         this.levelConfigs = {
             1: {
                 damage: 20,
                 pierce: 2,
-                cooldown: 1500,    // Time between shots
-                range: 350,        // Attack range
-                speed: 300,        // Projectile speed
+                cooldown: 1500,
+                range: 350,
+                speed: 0,
                 scale: 0.5,
-                criticalChance: 0.1,  // 10% crit chance
-                splashRadius: 50    // Area of effect radius
+                criticalChance: 0.1,
+                splashRadius: 50,
+                puddleCount: 3,
+                puddleDuration: 3000
             },
             2: {
                 damage: 30,
                 pierce: 2,
                 cooldown: 1400,
                 range: 375,
-                speed: 320,
+                speed: 0,
                 scale: 0.55,
                 criticalChance: 0.12,
-                splashRadius: 60
+                splashRadius: 60,
+                puddleCount: 4,
+                puddleDuration: 3500
             },
             3: {
                 damage: 45,
                 pierce: 3,
                 cooldown: 1300,
                 range: 400,
-                speed: 340,
+                speed: 0,
                 scale: 0.6,
                 criticalChance: 0.14,
-                splashRadius: 70
+                splashRadius: 70,
+                puddleCount: 5,
+                puddleDuration: 4000
             },
             4: {
                 damage: 65,
                 pierce: 3,
                 cooldown: 1200,
                 range: 425,
-                speed: 360,
+                speed: 0,
                 scale: 0.65,
                 criticalChance: 0.16,
-                splashRadius: 80
+                splashRadius: 80,
+                puddleCount: 6,
+                puddleDuration: 4500
             },
             5: {
                 damage: 90,
                 pierce: 4,
                 cooldown: 1100,
                 range: 450,
-                speed: 380,
+                speed: 0,
                 scale: 0.7,
                 criticalChance: 0.18,
-                splashRadius: 90
+                splashRadius: 90,
+                puddleCount: 7,
+                puddleDuration: 5000
             },
             6: {
                 damage: 120,
                 pierce: 4,
                 cooldown: 1000,
                 range: 475,
-                speed: 400,
+                speed: 0,
                 scale: 0.75,
                 criticalChance: 0.20,
-                splashRadius: 100
+                splashRadius: 100,
+                puddleCount: 8,
+                puddleDuration: 5500
             },
             7: {
                 damage: 160,
                 pierce: 5,
                 cooldown: 900,
                 range: 500,
-                speed: 420,
+                speed: 0,
                 scale: 0.8,
                 criticalChance: 0.22,
-                splashRadius: 110
+                splashRadius: 110,
+                puddleCount: 9,
+                puddleDuration: 6000
             },
             8: {
                 damage: 200,
                 pierce: 6,
                 cooldown: 800,
                 range: 525,
-                speed: 440,
+                speed: 0,
                 scale: 0.85,
                 criticalChance: 0.25,
                 splashRadius: 120,
+                puddleCount: 10,
+                puddleDuration: 6500,
                 isMaxLevel: true
             }
         };
@@ -94,239 +113,254 @@ export class MilkWeapon extends BaseWeapon {
         this.maxLevel = 8;
         this.stats = { ...this.levelConfigs[1] };
         
-        // Effect colors for milk weapon
+        this.activePuddles = [];
+        this.lastAttackTime = 0;
+        
         this.effectColors = {
-            primary: 0xffffff,    // White
-            secondary: 0xe0e0e0,  // Light gray
-            energy: 0xf0f0f0,     // Very light gray
+            primary: 0xff69b4,    // Hot pink
+            glow: 0xff1493,       // Deep pink
             maxLevel: {
-                primary: 0xffffff,    // Pure white
-                secondary: 0xf8f8f8,  // Nearly white
-                energy: 0xe6e6fa      // Light purple
+                energy: 0xff00ff  // Magenta for crits
             }
         };
-        
-        // Initialize projectile pool
-        this.maxProjectiles = 20;
-        this.activeProjectiles = [];
-        this.lastFiredTime = 0;
-        
-        this.createProjectiles();
     }
 
-    createProjectiles() {
-        for (let i = 0; i < this.maxProjectiles; i++) {
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-magic-milk');
-            sprite.setScale(this.stats.scale);
-            sprite.setVisible(false);
-            
-            // Enable physics for the projectile
-            this.scene.physics.world.enable(sprite);
-            sprite.body.setCircle(sprite.width / 4);
-            
-            // Add to active projectiles array
-            this.activeProjectiles.push({
-                sprite,
-                active: false,
-                pierceCount: this.stats.pierce
+    canAttack() {
+        return this.scene.time.now - this.lastAttackTime >= this.stats.cooldown;
+    }
+
+    attack() {
+        if (!this.canAttack()) return;
+        
+        this.lastAttackTime = this.scene.time.now;
+        
+        // Create multiple puddles
+        for (let i = 0; i < this.stats.puddleCount; i++) {
+            this.scene.time.delayedCall(i * 200, () => {
+                this.createMilkPuddle();
             });
         }
     }
 
-    attack(time) {
-        if (time - this.lastFiredTime >= this.stats.cooldown) {
-            this.fireProjectile();
-            this.lastFiredTime = time;
+    createMilkPuddle() {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * this.stats.range;
+        const x = this.player.sprite.x + Math.cos(angle) * distance;
+        const y = this.player.sprite.y + Math.sin(angle) * distance;
+
+        // Create main puddle
+        const puddle = this.scene.add.sprite(x, y, 'weapon-magic-milk');
+        puddle.setScale(0);
+        puddle.setAlpha(0.8);
+        puddle.setTint(this.effectColors.primary);
+        puddle.setBlendMode(Phaser.BlendModes.ADD);
+
+        // Create glow effect
+        const glow = this.scene.add.sprite(x, y, 'weapon-magic-milk');
+        glow.setScale(0);
+        glow.setAlpha(0.4);
+        glow.setTint(this.effectColors.glow);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+
+        // Animate puddles appearing
+        this.scene.tweens.add({
+            targets: [puddle, glow],
+            scaleX: this.stats.splashRadius / 200,
+            scaleY: this.stats.splashRadius / 200,
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+
+        // Enhanced effects for max level
+        if (this.currentLevel === 8) {
+            // Intense pulsating effect
+            this.scene.tweens.add({
+                targets: puddle,
+                scaleX: this.stats.splashRadius / 180,
+                scaleY: this.stats.splashRadius / 180,
+                alpha: 1,
+                duration: 500,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+
+            // Rotating glow effect
+            this.scene.tweens.add({
+                targets: glow,
+                angle: 360,
+                duration: 3000,
+                repeat: -1
+            });
+
+            // Enhanced glow pulsing
+            this.scene.tweens.add({
+                targets: glow,
+                alpha: 0.6,
+                scaleX: this.stats.splashRadius / 150,
+                scaleY: this.stats.splashRadius / 150,
+                duration: 800,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        } else {
+            // Normal pulsing for non-max levels
+            this.scene.tweens.add({
+                targets: glow,
+                alpha: 0.2,
+                duration: 1000,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
         }
-    }
 
-    fireProjectile() {
-        const proj = this.getInactiveProjectile();
-        if (!proj) return;
-
-        // Reset projectile state
-        proj.active = true;
-        proj.pierceCount = this.stats.pierce;
-
-        // Set initial position at player
-        const startX = this.player.x;
-        const startY = this.player.y;
-
-        // Find closest enemy for targeting
-        const target = this.findClosestEnemy(startX, startY);
+        const puddleData = {
+            sprite: puddle,
+            glowSprite: glow,
+            x: x,
+            y: y,
+            createdAt: this.scene.time.now,
+            lastDamageTime: {},
+            lastExplosionTime: 0  // Track last explosion time
+        };
         
-        if (target) {
-            // Calculate angle to target
-            const angle = Math.atan2(
-                target.sprite.y - startY,
-                target.sprite.x - startX
-            );
+        this.activePuddles.push(puddleData);
 
-            // Set velocity towards target
-            const velocity = {
-                x: Math.cos(angle) * this.stats.speed,
-                y: Math.sin(angle) * this.stats.speed
-            };
-
-            // Position and activate projectile
-            proj.sprite.setPosition(startX, startY);
-            proj.sprite.setVisible(true);
-            proj.sprite.setActive(true);
-            proj.sprite.body.setVelocity(velocity.x, velocity.y);
+        // Cleanup after duration
+        this.scene.time.delayedCall(this.stats.puddleDuration, () => {
+            if (this.currentLevel === 8) {
+                // Create final explosion effect
+                this.createExplosion(x, y);
+            }
             
-            // Add white glow effect
-            proj.sprite.setTint(this.effectColors.primary);
-        }
+            this.scene.tweens.add({
+                targets: [puddle, glow],
+                alpha: 0,
+                duration: 300,
+                onComplete: () => {
+                    puddle.destroy();
+                    glow.destroy();
+                    this.activePuddles = this.activePuddles.filter(p => p !== puddleData);
+                }
+            });
+        });
     }
 
-    update(time, delta) {
-        // Update active projectiles
-        this.activeProjectiles.forEach(proj => {
-            if (proj.active && proj.sprite) {
-                // Check if projectile is out of range
-                const distance = Phaser.Math.Distance.Between(
-                    this.player.x,
-                    this.player.y,
-                    proj.sprite.x,
-                    proj.sprite.y
-                );
+    createExplosion(x, y) {
+        // Create explosion sprite
+        const explosion = this.scene.add.sprite(x, y, 'weapon-magic-milk');
+        explosion.setScale(0.1);
+        explosion.setAlpha(0.8);
+        explosion.setTint(0xff00ff);  // Bright magenta
+        explosion.setBlendMode(Phaser.BlendModes.ADD);
 
-                if (distance > this.stats.range) {
-                    this.deactivateProjectile(proj);
-                    return;
-                }
-
-                // Check for enemy collisions
-                const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-                    return e && e.sprite && e.sprite.active && !e.isDead;
-                }) : [];
-
-                enemies.forEach(enemy => {
-                    if (proj.active && proj.pierceCount > 0) {
-                        const dist = Phaser.Math.Distance.Between(
-                            proj.sprite.x,
-                            proj.sprite.y,
-                            enemy.sprite.x,
-                            enemy.sprite.y
-                        );
-
-                        if (dist < this.stats.splashRadius) {
-                            this.handleHit(enemy, proj);
-                        }
-                    }
-                });
+        // Explosion animation
+        this.scene.tweens.add({
+            targets: explosion,
+            scaleX: this.stats.splashRadius / 50,  // Larger scale for explosion
+            scaleY: this.stats.splashRadius / 50,
+            alpha: 0,
+            duration: 500,
+            ease: 'Cubic.Out',
+            onComplete: () => {
+                explosion.destroy();
             }
         });
 
-        // Auto-fire if cooldown has passed
-        if (time - this.lastFiredTime >= this.stats.cooldown) {
-            this.attack(time);
-        }
-    }
+        // Deal explosion damage to nearby enemies
+        this.scene.enemies.forEach(enemy => {
+            if (!enemy.active) return;
 
-    handleHit(enemy, proj) {
-        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
-            return;
-        }
-
-        // Calculate damage with critical chance
-        let damage = this.stats.damage;
-        const isCritical = Math.random() < this.stats.criticalChance;
-        if (isCritical) {
-            damage *= 1.5; // 50% more damage on critical hits
-        }
-
-        // Apply damage
-        enemy.takeDamage(damage, proj.sprite.x, proj.sprite.y);
-
-        // Create hit effect
-        this.createHitEffect(enemy, proj, isCritical);
-
-        // Reduce pierce count
-        proj.pierceCount--;
-        
-        // Deactivate if no more pierce
-        if (proj.pierceCount <= 0) {
-            this.deactivateProjectile(proj);
-        }
-    }
-
-    createHitEffect(enemy, proj, isCritical) {
-        // Create splash effect
-        const splash = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-magic-milk');
-        splash.setScale(0.1);
-        splash.setAlpha(0.7);
-        splash.setTint(isCritical ? this.effectColors.maxLevel.energy : this.effectColors.primary);
-
-        // Animate splash effect
-        this.scene.tweens.add({
-            targets: splash,
-            scaleX: this.stats.splashRadius / 50,
-            scaleY: this.stats.splashRadius / 50,
-            alpha: 0,
-            duration: 300,
-            ease: 'Quad.easeOut',
-            onComplete: () => splash.destroy()
-        });
-
-        // Add damage text
-        if (isCritical) {
-            const critText = this.scene.add.text(
-                enemy.sprite.x,
-                enemy.sprite.y - 20,
-                `CRIT! ${Math.floor(this.stats.damage * 1.5)}`,
-                {
-                    fontSize: '20px',
-                    fontFamily: 'VT323',
-                    fill: '#ffffff',
-                    stroke: '#000000',
-                    strokeThickness: 3
-                }
-            ).setOrigin(0.5);
-
-            this.scene.tweens.add({
-                targets: critText,
-                y: critText.y - 30,
-                alpha: 0,
-                duration: 800,
-                ease: 'Cubic.Out',
-                onComplete: () => critText.destroy()
-            });
-        }
-    }
-
-    deactivateProjectile(proj) {
-        proj.active = false;
-        proj.sprite.setVisible(false);
-        proj.sprite.setActive(false);
-        proj.sprite.body.setVelocity(0, 0);
-    }
-
-    getInactiveProjectile() {
-        return this.activeProjectiles.find(p => !p.active);
-    }
-
-    findClosestEnemy(x, y) {
-        const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-            return e && e.sprite && e.sprite.active && !e.isDead;
-        }) : [];
-
-        let closestEnemy = null;
-        let closestDistance = Infinity;
-
-        enemies.forEach(enemy => {
             const distance = Phaser.Math.Distance.Between(
                 x, y,
                 enemy.sprite.x, enemy.sprite.y
             );
 
-            if (distance < closestDistance && distance <= this.stats.range) {
-                closestDistance = distance;
-                closestEnemy = enemy;
+            if (distance <= this.stats.splashRadius) {
+                const explosionDamage = this.stats.damage * 2;  // Double damage for explosion
+                const isCritical = Math.random() < this.stats.criticalChance;
+                const finalDamage = isCritical ? explosionDamage * 1.5 : explosionDamage;
+                
+                enemy.takeDamage(finalDamage);
+                
+                if (isCritical) {
+                    this.showDamageText(enemy.sprite.x, enemy.sprite.y, finalDamage, true);
+                }
+
+                // Knockback effect
+                const angle = Math.atan2(enemy.sprite.y - y, enemy.sprite.x - x);
+                const knockbackDistance = 100;
+                const targetX = enemy.sprite.x + Math.cos(angle) * knockbackDistance;
+                const targetY = enemy.sprite.y + Math.sin(angle) * knockbackDistance;
+
+                this.scene.tweens.add({
+                    targets: enemy.sprite,
+                    x: targetX,
+                    y: targetY,
+                    duration: 200,
+                    ease: 'Cubic.Out'
+                });
             }
         });
+    }
 
-        return closestEnemy;
+    update(time, delta) {
+        super.update(time, delta);
+
+        // Check each puddle for enemies
+        this.activePuddles.forEach(puddle => {
+            const damageInterval = 500; // Damage every 0.5 seconds
+
+            this.scene.enemies.forEach(enemy => {
+                if (!enemy.active) return;
+
+                const distance = Phaser.Math.Distance.Between(
+                    puddle.x, puddle.y,
+                    enemy.sprite.x, enemy.sprite.y
+                );
+
+                if (distance <= this.stats.splashRadius / 2) {
+                    if (!puddle.lastDamageTime[enemy.id] || 
+                        time - puddle.lastDamageTime[enemy.id] >= damageInterval) {
+                        
+                        const isCritical = Math.random() < this.stats.criticalChance;
+                        const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
+                        
+                        enemy.takeDamage(damage);
+                        puddle.lastDamageTime[enemy.id] = time;
+
+                        if (isCritical) {
+                            this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, true);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    showDamageText(x, y, damage, isCritical) {
+        const text = this.scene.add.text(
+            x, y - 20,
+            isCritical ? `CRIT! ${Math.floor(damage)}` : Math.floor(damage).toString(),
+            {
+                fontSize: isCritical ? '20px' : '16px',
+                fontFamily: 'VT323',
+                fill: isCritical ? '#ff0000' : '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: text,
+            y: text.y - 30,
+            alpha: 0,
+            duration: 800,
+            ease: 'Cubic.Out',
+            onComplete: () => text.destroy()
+        });
     }
 }
 
