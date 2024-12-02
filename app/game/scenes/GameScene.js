@@ -57,15 +57,6 @@ export default class GameScene extends Phaser.Scene {
     console.log('GameScene create called');
     const { width, height } = this.scale;
 
-    // Verify if the dog sprite loaded correctly
-    if (this.textures.exists('weapon-dog-projectile')) {
-      console.log('Dog sprite loaded successfully');
-      this.debugText.setText('Dog sprite loaded successfully');
-    } else {
-      console.error('Dog sprite failed to load');
-      this.debugText.setText('Dog sprite failed to load');
-    }
-
     // Add background for better visibility
     this.add.rectangle(width/2, height/2, width, height, 0x222222);
 

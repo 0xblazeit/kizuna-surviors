@@ -28,7 +28,7 @@ class LecheWeapon extends BaseWeapon {
         this.activeProjectiles = [];
         
         // Initialize level configuration
-        this.currentLevel = 0;
+        this.currentLevel = 1;
         this.maxLevel = 8;
         this.levelConfigs = {
             1: { damage: 40,  pierce: 2, cooldown: 1400, scale: 0.82 },
@@ -39,6 +39,12 @@ class LecheWeapon extends BaseWeapon {
             6: { damage: 125, pierce: 4, cooldown: 900,  scale: 0.92 },
             7: { damage: 155, pierce: 4, cooldown: 800,  scale: 0.94 },
             8: { damage: 190, pierce: 5, cooldown: 700,  scale: 1.1 }
+        };
+
+        // Set initial stats from level 1 config
+        this.stats = {
+            ...this.stats,
+            ...this.levelConfigs[1]
         };
 
         console.log('Leche Weapon initialized with stats:', this.stats);

@@ -239,7 +239,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                     dog.targetEnemy = bestTarget;
                     dog.state = 'chasing';
                     availableEnemies.delete(bestTarget);
-                    console.log(`Dog ${dog.index} found new target at distance ${bestDistance}`);
+                    // console.log(`Dog ${dog.index} found new target at distance ${bestDistance}`);
                 }
             }
         });
@@ -264,7 +264,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                         dog.targetEnemy = enemy;
                         dog.state = 'chasing';
                         foundCloserTarget = true;
-                        console.log(`Dog ${dog.index} switched to closer target`);
+                        // console.log(`Dog ${dog.index} switched to closer target`);
                         break;
                     }
                 }
@@ -303,7 +303,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                         if (nearestEnemy) {
                             dog.targetEnemy = nearestEnemy;
                             dog.state = 'chasing';
-                            console.log(`Dog ${dog.index} found target while ${dog.state}`);
+                            // console.log(`Dog ${dog.index} found target while ${dog.state}`);
                         }
                     }
                     break;
@@ -327,7 +327,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                             this.handleHit(dog.targetEnemy, dog);
                             dog.lastAttackTime = time;
                             this.createAttackEffect(dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y);
-                            console.log(`Dog ${dog.index} attacking enemy`);
+                            // console.log(`Dog ${dog.index} attacking enemy`);
                         }
                     } else {
                         dog.state = 'seeking';
@@ -561,7 +561,7 @@ export class RotatingDogWeapon extends BaseWeapon {
 
         // If count increased, respawn dogs
         if (newStats.count > oldCount) {
-            console.log(`Increasing dog count from ${oldCount} to ${newStats.count}`);
+            // console.log(`Increasing dog count from ${oldCount} to ${newStats.count}`);
             this.spawnDogs();
         }
 
