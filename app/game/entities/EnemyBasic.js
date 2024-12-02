@@ -463,6 +463,14 @@ class EnemyBasic extends BasePlayer {
   }
 
   die() {
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
+
+    // Increment kill counter
+    this.scene.gameState.kills++;
+    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
     // Initialize coins array if it doesn't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
