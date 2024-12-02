@@ -8,6 +8,7 @@ import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
 import FlyingAxeWeapon from '../game/entities/weapons/FlyingAxeWeapon';
 import SonicBoomHammer from '../game/entities/weapons/SonicBoomHammer';
+import { MilkWeapon } from '../game/entities/weapons/MilkWeapon';
 
 const MenuScene = {
   key: 'MenuScene',
@@ -141,7 +142,7 @@ const GameScene = {
     this.load.svg('weapon-hammer-projectile', '/assets/game/weapons/weapon-hammer-projectile.svg', {
       scale: 0.5
     });
-    this.load.svg('weapon-leche-icon', '/assets/game/weapons/weapon-leche.svg', {
+    this.load.svg('weapon-magic-milk', '/assets/game/weapons/weapon-magic-milk.svg', {
       scale: 0.5
     });
   },
@@ -283,7 +284,7 @@ const GameScene = {
     let glizzyIcon = null;  // Store glizzy icon reference
     let axeIcon = null;     // Store axe icon reference
     let hammerIcon = null;  // Store hammer icon reference
-    let lecheIcon = null;   // Store leche icon reference
+    let milkIcon = null;   // Store milk icon reference
     for(let row = 0; row < gridRows; row++) {
       for(let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -379,15 +380,28 @@ const GameScene = {
           );
         }
 
-        // Add leche icon to sixth cell
+        // Add milk icon to sixth cell
         if (row === 0 && col === 5) {
-          lecheIcon = createWeaponIcon(
+          milkIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            'weapon-leche-icon',
+            'weapon-magic-milk',
             5,
             gridCells
           );
+          // Initialize milk weapon when icon is clicked
+          milkIcon.setInteractive();
+          milkIcon.on('pointerdown', () => {
+            // Just select the milk weapon (index 5)
+            this.gameState.selectedWeaponIndex = 5;
+            
+            // Update all cell borders
+            gridCells.forEach((c, i) => {
+              c.setStrokeStyle(2, i === 5 ? 0xffffff : 0x666666);
+            });
+            
+            this.updateStatsDisplay();
+          });
         }
       }
     }
@@ -453,7 +467,12 @@ const GameScene = {
       if (!this.player) return;
       
       const stats = this.player.stats;
+      console.log('Current selectedWeaponIndex:', this.gameState.selectedWeaponIndex);
+      console.log('Available weapons:', this.weapons.length);
+      console.log('Weapons array:', this.weapons.map(w => w.constructor.name));
+      
       const selectedWeapon = this.weapons[this.gameState.selectedWeaponIndex];
+      console.log('Selected weapon:', selectedWeapon);
       
       // Base stats
       let displayStats = {
@@ -516,17 +535,19 @@ const GameScene = {
       spriteKey: 'player'
     });
 
-    // Initialize weapon system
+    // Initialize weapon system - this is needed for selectable weapons grid
     console.log('Initializing weapon system...');
     this.weapons = [
       new RotatingDogWeapon(this, this.player),
       new MagicWandWeapon(this, this.player),
       new GlizzyBlasterWeapon(this, this.player),
       new FlyingAxeWeapon(this, this.player),
-      new SonicBoomHammer(this, this.player)
+      new SonicBoomHammer(this, this.player),
+      new MilkWeapon(this, this.player)
     ];
+    
     this.weaponInitialized = true;
-    console.log('Weapon system initialized');
+    console.log('Weapon system initialized with weapons:', this.weapons.map(w => w.constructor.name));
 
     // Create new debug text with smaller font and transparent background
     const debugConfig = {
