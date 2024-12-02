@@ -130,11 +130,17 @@ const GameScene = {
     this.load.svg('enemy-advanced-one', '/assets/game/characters/enemies-advanced/advanced-one.svg');
     this.load.svg('enemy-advanced-two', '/assets/game/characters/enemies-advanced/advanced-two.svg');
     this.load.svg('enemy-advanced-three', '/assets/game/characters/enemies-advanced/advanced-three.svg');
+    this.load.svg('enemy-advanced-four', '/assets/game/characters/enemies-advanced/advanced-four.svg');
+    this.load.svg('enemy-advanced-five', '/assets/game/characters/enemies-advanced/advanced-five.svg');
+    this.load.svg('enemy-advanced-six', '/assets/game/characters/enemies-advanced/advanced-six.svg');
 
     // Load epic enemy sprites
     this.load.svg('enemy-epic-one', '/assets/game/characters/enemies-epic/epic-one.svg');
     this.load.svg('enemy-epic-two', '/assets/game/characters/enemies-epic/epic-two.svg');
     this.load.svg('enemy-epic-three', '/assets/game/characters/enemies-epic/epic-three.svg');
+    this.load.svg('enemy-epic-four', '/assets/game/characters/enemies-epic/epic-four.svg');
+    this.load.svg('enemy-epic-five', '/assets/game/characters/enemies-epic/epic-five.svg');
+    this.load.svg('enemy-epic-six', '/assets/game/characters/enemies-epic/epic-six.svg');
 
     // Load weapon sprites
     this.load.svg('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg', {
@@ -674,12 +680,12 @@ const GameScene = {
           let enemy;
           if (roll < epicChance) {
             // Spawn epic enemy
-            const epicTypes = ['one', 'two', 'three'];
+            const epicTypes = ['one', 'two', 'three', 'four', 'five', 'six'];
             const randomType = Phaser.Utils.Array.GetRandom(epicTypes);
             enemy = new EnemyEpic(this, x, y, `enemy-epic-${randomType}`);
           } else if (roll < epicChance + advancedChance) {
             // Spawn advanced enemy
-            const advancedTypes = ['one', 'two', 'three'];
+            const advancedTypes = ['one', 'two', 'three', 'four', 'five', 'six'];
             const randomType = Phaser.Utils.Array.GetRandom(advancedTypes);
             enemy = new EnemyAdvanced(this, x, y, `enemy-advanced-${randomType}`);
           } else {
