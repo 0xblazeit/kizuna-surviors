@@ -56,30 +56,30 @@ class EnemyBasic extends BasePlayer {
     const healthBarSpacing = spriteHeight * 0.4;
 
     // Create a container for the health bar to keep components together
-    this.healthBar = {
-      width: healthBarWidth,
-      height: healthBarHeight,
-      spacing: healthBarSpacing,
-      container: scene.add.container(x, y + healthBarSpacing),
-      background: scene.add.rectangle(
-        0,
-        0,
-        healthBarWidth,
-        healthBarHeight,
-        0x000000
-      ),
-      bar: scene.add.rectangle(0, 0, healthBarWidth, healthBarHeight, 0xff4444),
-    };
+    // this.healthBar = {
+    //   width: healthBarWidth,
+    //   height: healthBarHeight,
+    //   spacing: healthBarSpacing,
+    //   container: scene.add.container(x, y + healthBarSpacing),
+    //   background: scene.add.rectangle(
+    //     0,
+    //     0,
+    //     healthBarWidth,
+    //     healthBarHeight,
+    //     0x000000
+    //   ),
+    //   bar: scene.add.rectangle(0, 0, healthBarWidth, healthBarHeight, 0xff4444),
+    // };
 
     // Add components to container
-    this.healthBar.container.add([
-      this.healthBar.background,
-      this.healthBar.bar,
-    ]);
-    this.healthBar.container.setDepth(1);
+    // this.healthBar.container.add([
+    //   this.healthBar.background,
+    //   this.healthBar.bar,
+    // ]);
+    // this.healthBar.container.setDepth(1);
 
-    // Add a black border to make the health bar more visible
-    this.healthBar.background.setStrokeStyle(1, 0x000000);
+    // // Add a black border to make the health bar more visible
+    // this.healthBar.background.setStrokeStyle(1, 0x000000);
 
     // Set target player
     this.targetPlayer = scene.player;
@@ -95,7 +95,7 @@ class EnemyBasic extends BasePlayer {
 
   initEnemy() {
     // Add any enemy specific initialization
-    this.sprite.setTint(0xff9999); // Give enemies a slight red tint
+    // this.sprite.setTint(0x008080); // Give enemies a slight teal tint
 
     // Make the enemy interactive
     this.sprite.setInteractive();

@@ -11,7 +11,7 @@ class EnemyEpic extends EnemyAdvanced {
       attackSpeed: 1.4, // 40% faster attacks
       attackDamage: 18, // 50% more damage than advanced
       scale: 0.44, // Slightly larger than advanced (0.42)
-      trailTint: 0x990000, // Dark red trail
+      trailTint: 0xffa500, // Orange trail
       clickDamage: 60, // Higher click damage
       ...config,
     };
@@ -27,7 +27,7 @@ class EnemyEpic extends EnemyAdvanced {
 
   createAura() {
     // Create a circle for the aura
-    this.aura = this.scene.add.circle(this.x, this.y, 20, 0x660000, 0.3);
+    this.aura = this.scene.add.circle(this.x, this.y, 20, 0xc0c0c0, 0.3);
     this.aura.setDepth(this.sprite.depth - 1); // Place behind the enemy
 
     // Add pulsing animation
