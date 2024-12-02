@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import MainPlayer from '../game/entities/MainPlayer';
 import EnemyBasic from '../game/entities/EnemyBasic';
+import EnemyAdvanced from '../game/entities/EnemyAdvanced';
 import { RotatingDogWeapon } from '../game/entities/weapons/RotatingDogWeapon';
 import { MagicWandWeapon } from '../game/entities/weapons/MagicWandWeapon';
 import { GlizzyBlasterWeapon } from '../game/entities/weapons/GlizzyBlasterWeapon';
@@ -104,8 +105,8 @@ const GameScene = {
     };
 
     this.weaponInitialized = false;
-    this.enemies = this.add.group();
-    this.projectiles = this.add.group();
+    this.enemies = [];
+    this.projectiles = [];
     this.score = 0;
     this.gameOver = false;
   },
@@ -123,6 +124,11 @@ const GameScene = {
     this.load.svg('enemy-basic-four', '/assets/game/characters/enemies-basic/basic-four.svg');
     this.load.svg('enemy-basic-five', '/assets/game/characters/enemies-basic/basic-five.svg');
     this.load.svg('enemy-basic-six', '/assets/game/characters/enemies-basic/basic-six.svg');
+
+    // Load advanced enemy sprites
+    this.load.svg('enemy-advanced-one', '/assets/game/characters/enemies-advanced/advanced-one.svg');
+    this.load.svg('enemy-advanced-two', '/assets/game/characters/enemies-advanced/advanced-two.svg');
+    this.load.svg('enemy-advanced-three', '/assets/game/characters/enemies-advanced/advanced-three.svg');
 
     // Load weapon sprites
     this.load.svg('weapon-dog-projectile', '/assets/game/weapons/weapon-dog-projectile.svg', {
@@ -629,6 +635,53 @@ const GameScene = {
       
       this.enemies.push(enemy);
     }
+
+    // Enemy spawn timer
+    this.time.addEvent({
+      delay: 1000,  // Spawn every second
+      callback: () => {
+        if (this.gameState.isGameOver) return;
+
+        const spawnCount = Math.min(3 + Math.floor(this.gameState.level / 2), 8);
+        
+        for (let i = 0; i < spawnCount; i++) {
+          // Determine spawn position (outside camera view)
+          const camera = this.cameras.main;
+          const padding = 100;
+          let x, y;
+          
+          do {
+            x = Phaser.Math.Between(padding, this.physics.world.bounds.width - padding);
+            y = Phaser.Math.Between(padding, this.physics.world.bounds.height - padding);
+          } while (
+            x > camera.scrollX - padding && 
+            x < camera.scrollX + camera.width + padding &&
+            y > camera.scrollY - padding && 
+            y < camera.scrollY + camera.height + padding
+          );
+
+          // Chance to spawn advanced enemy increases with level
+          const spawnAdvanced = Math.random() < (this.gameState.level * 0.05);  // 5% per level
+          
+          let enemy;
+          if (spawnAdvanced) {
+            // Spawn advanced enemy
+            const advancedTypes = ['one', 'two', 'three'];
+            const randomType = Phaser.Utils.Array.GetRandom(advancedTypes);
+            enemy = new EnemyAdvanced(this, x, y, `enemy-advanced-${randomType}`);
+          } else {
+            // Spawn basic enemy
+            const basicTypes = ['one', 'two', 'three', 'four', 'five', 'six'];
+            const randomType = Phaser.Utils.Array.GetRandom(basicTypes);
+            enemy = new EnemyBasic(this, x, y, `enemy-basic-${randomType}`);
+          }
+          
+          // Add to enemies array
+          this.enemies.push(enemy);
+        }
+      },
+      loop: true
+    });
 
     // Listen for XP events
     this.events.on('playerXPGained', (data) => {
