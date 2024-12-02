@@ -388,6 +388,15 @@ const GameScene = {
             5,
             gridCells
           );
+          // Initialize with leche weapon stats
+          lecheIcon.setData('weaponStats', {
+            damage: 30,
+            pierce: 2,
+            cooldown: 1500,
+            range: 400,
+            speed: 300,
+            criticalChance: 0.15
+          });
         }
       }
     }
@@ -466,9 +475,24 @@ const GameScene = {
       // Add weapon-specific stats if a weapon is selected
       if (selectedWeapon) {
         if (selectedWeapon.stats) {
-          displayStats.attack = `ATK: ${(stats.damage + (selectedWeapon.stats.damage || 0)).toFixed(1)}`;
-          if (selectedWeapon.stats.attackSpeed) {
-            displayStats.attack += ` (${selectedWeapon.stats.attackSpeed}/s)`;
+          const weaponStats = selectedWeapon.stats;
+          const levelConfig = selectedWeapon.levelConfigs ? 
+            selectedWeapon.levelConfigs[selectedWeapon.currentLevel] : null;
+          
+          // Use level-specific stats if available, otherwise use base stats
+          const currentDamage = levelConfig ? levelConfig.damage : weaponStats.damage;
+          const currentPierce = levelConfig ? levelConfig.pierce : weaponStats.pierce;
+          const currentCooldown = levelConfig ? levelConfig.cooldown : weaponStats.cooldown;
+          
+          displayStats.attack = `ATK: ${(stats.damage + currentDamage).toFixed(1)}`;
+          displayStats.attack += ` Pierce: ${currentPierce}`;
+          if (currentCooldown) {
+            displayStats.attack += ` (${(1000/currentCooldown).toFixed(1)}/s)`;
+          }
+          
+          // Add additional weapon stats if available
+          if (weaponStats.criticalChance) {
+            displayStats.attack += ` Crit: ${(weaponStats.criticalChance * 100).toFixed(0)}%`;
           }
         }
       }
