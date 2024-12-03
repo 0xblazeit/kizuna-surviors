@@ -14,8 +14,8 @@ class XPGem {
     this.isCollected = false;
     this.xpValue = xpValue;
 
-    // Create gem sprite
-    this.sprite = scene.add.image(x, y, "xp-gem");
+    // Create gem sprite with correct texture key
+    this.sprite = scene.add.image(x, y, "powerup-xp-gem");
     this.sprite.setScale(scale);
     this.sprite.setDepth(5); // Set above ground items but below players
 
@@ -38,8 +38,8 @@ class XPGem {
       ease: "Linear",
     });
 
-    // Add glow effect
-    this.glow = scene.add.image(x, y, "xp-gem");
+    // Add glow effect with correct texture key
+    this.glow = scene.add.image(x, y, "powerup-xp-gem");
     this.glow.setScale(scale * 1.2);  // Slightly larger than the gem
     this.glow.setAlpha(0.3);
     this.glow.setBlendMode(Phaser.BlendModes.ADD);

@@ -272,8 +272,8 @@ const GameScene = {
       }
     );
 
-    // Load XP gem
-    this.load.image("xp-gem", "/assets/game/powerups/xp-gem.svg");
+    // Load XP gem with correct path
+    this.load.image('powerup-xp-gem', '/assets/game/powerups/xp-gem.svg');
   },
 
   create: function () {
