@@ -91,6 +91,9 @@ const GameScene = {
       selectedWeaponIndex: 0,
       isGameOver: false,
       coins: 0, // Add coin counter
+      maxEnemies: 30,  // Maximum enemies allowed at once
+      spawnRate: 1000, // Base spawn rate in milliseconds
+      minSpawnRate: 500, // Minimum spawn rate (fastest spawn rate allowed)
     };
 
     // Bind methods to this scene
@@ -761,31 +764,6 @@ const GameScene = {
     // Create array to store enemies
     this.enemies = [];
 
-    // Function to show damage numbers
-    this.showDamageNumber = (x, y, amount) => {
-      const damageText = this.add
-        .text(x, y, amount, {
-          fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#ff4444",
-          stroke: "#000000",
-          strokeThickness: 4,
-        })
-        .setOrigin(0.5, 0.5);
-
-      // Animate the damage number
-      this.tweens.add({
-        targets: damageText,
-        y: y - 50, // Float upward
-        alpha: 0, // Fade out
-        duration: 1000,
-        ease: "Cubic.out",
-        onComplete: () => {
-          damageText.destroy();
-        },
-      });
-    };
-
     // Enemy sprite keys
     const enemySprites = [
       "enemy-basic-one",
@@ -796,8 +774,8 @@ const GameScene = {
       "enemy-basic-six",
     ];
 
-    // Spawn 50 random enemies at random positions
-    for (let i = 0; i < 50; i++) {
+    // Initial spawn of fewer enemies
+    for (let i = 0; i < 15; i++) {
       // Get random position within world bounds
       const randomX = Phaser.Math.Between(100, worldWidth - 100);
       const randomY = Phaser.Math.Between(100, worldHeight - 100);
@@ -823,80 +801,81 @@ const GameScene = {
       this.enemies.push(enemy);
     }
 
-    // Enemy spawn timer
-    this.time.addEvent({
-      delay: 1000, // Spawn every second
+    // Create enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+      delay: this.gameState.spawnRate,
       callback: () => {
-        if (this.gameState.isGameOver) return;
+        if (this.enemies.length >= this.gameState.maxEnemies) return;
 
-        const spawnCount = Math.min(
-          3 + Math.floor(this.gameState.level / 2),
-          8
-        );
-
-        for (let i = 0; i < spawnCount; i++) {
-          // Determine spawn position (outside camera view)
-          const camera = this.cameras.main;
-          const padding = 100;
-          let x, y;
-
-          do {
-            x = Phaser.Math.Between(
-              padding,
-              this.physics.world.bounds.width - padding
-            );
-            y = Phaser.Math.Between(
-              padding,
-              this.physics.world.bounds.height - padding
-            );
-          } while (
-            x > camera.scrollX - padding &&
-            x < camera.scrollX + camera.width + padding &&
-            y > camera.scrollY - padding &&
-            y < camera.scrollY + camera.height + padding
+        // Increase max enemies and decrease spawn rate based on game time
+        if (this.gameState.gameTimer > 0 && this.gameState.gameTimer % 60 === 0) {
+          this.gameState.maxEnemies = Math.min(50, this.gameState.maxEnemies + 2);
+          this.gameState.spawnRate = Math.max(
+            this.gameState.minSpawnRate,
+            this.gameState.spawnRate - 50
           );
-
-          // Calculate spawn chances based on level
-          const epicChance = Math.min(this.gameState.level * 0.02, 0.2); // 2% per level, max 20%
-          const advancedChance = Math.min(this.gameState.level * 0.05, 0.3); // 5% per level, max 30%
-          const roll = Math.random();
-
-          let enemy;
-          if (roll < epicChance) {
-            // Spawn epic enemy
-            const epicTypes = ["one", "two", "three", "four", "five", "six"];
-            const randomType = Phaser.Utils.Array.GetRandom(epicTypes);
-            enemy = new EnemyEpic(this, x, y, `enemy-epic-${randomType}`);
-          } else if (roll < epicChance + advancedChance) {
-            // Spawn advanced enemy
-            const advancedTypes = [
-              "one",
-              "two",
-              "three",
-              "four",
-              "five",
-              "six",
-            ];
-            const randomType = Phaser.Utils.Array.GetRandom(advancedTypes);
-            enemy = new EnemyAdvanced(
-              this,
-              x,
-              y,
-              `enemy-advanced-${randomType}`
-            );
-          } else {
-            // Spawn basic enemy
-            const basicTypes = ["one", "two", "three", "four", "five", "six"];
-            const randomType = Phaser.Utils.Array.GetRandom(basicTypes);
-            enemy = new EnemyBasic(this, x, y, `enemy-basic-${randomType}`);
-          }
-
-          // Add to enemies array
-          this.enemies.push(enemy);
+          this.enemySpawnTimer.delay = this.gameState.spawnRate;
         }
+
+        // Get random position within world bounds but not too close to player
+        let x, y, distanceToPlayer;
+        do {
+          x = Phaser.Math.Between(
+            100,
+            this.physics.world.bounds.width - 100
+          );
+          y = Phaser.Math.Between(
+            100,
+            this.physics.world.bounds.height - 100
+          );
+          distanceToPlayer = Phaser.Math.Distance.Between(
+            x,
+            y,
+            this.player.x,
+            this.player.y
+          );
+        } while (distanceToPlayer < 200); // Minimum spawn distance from player
+
+        // Random enemy sprite
+        const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
+
+        // Spawn enemy
+        const enemy = new EnemyBasic(this, x, y, spriteKey);
+        this.enemies.push(enemy);
       },
+      callbackScope: this,
       loop: true,
     });
+
+    // Listen for player death event
+    this.events.on("playerDeath", () => {
+      this.showWastedScreen();
+    });
+
+    // Function to show damage numbers
+    this.showDamageNumber = (x, y, amount) => {
+      const damageText = this.add
+        .text(x, y, amount, {
+          fontFamily: "VT323",
+          fontSize: "24px",
+          color: "#ff4444",
+          stroke: "#000000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5, 0.5);
+
+      // Animate the damage number
+      this.tweens.add({
+        targets: damageText,
+        y: y - 50, // Float upward
+        alpha: 0, // Fade out
+        duration: 1000,
+        ease: "Cubic.out",
+        onComplete: () => {
+          damageText.destroy();
+        },
+      });
+    };
 
     // Listen for XP events
     this.events.on("playerXPGained", (data) => {
