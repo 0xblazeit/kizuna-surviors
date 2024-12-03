@@ -490,7 +490,7 @@ class EnemyBasic extends BasePlayer {
           this.scene.coins.push(coin);
         }
       } else {
-        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.3);
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
         if (gem) {
           this.scene.xpGems.push(gem);
         }

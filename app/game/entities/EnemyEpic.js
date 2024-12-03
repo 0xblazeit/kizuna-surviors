@@ -78,7 +78,7 @@ class EnemyEpic extends EnemyAdvanced {
         this.scene.coins.push(coin);
       }
     } else {
-      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.4);
+      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.18);
       if (gem) {
         this.scene.xpGems.push(gem);
       }
