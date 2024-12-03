@@ -1107,13 +1107,22 @@ const GameScene = {
       try {
         const weapon = this.weapons[this.gameState.selectedWeaponIndex];
         const stats = weapon?.stats || {};
+
+        // Create level progress bar
+        const maxBoxes = 8;
+        const filledBoxes = (weapon?.currentLevel || 1) - 1;
+        const progressBar = Array(maxBoxes)
+          .fill('▒') // Empty box
+          .fill('█', 0, filledBoxes) // Fill with dark boxes up to current level
+          .join('');
+
         const text = [
           `Position: (${Math.round(this.player.x)}, ${Math.round(
             this.player.y
           )})`,
           `Active Weapons: ${this.weapons.length}`,
           `Weapon Stats:`,
-          `  Level: ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
+          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
           `  Damage: ${stats.damage || 0}`,
           `  Pierce: ${stats.pierce || 0}`,
           `  Range: ${stats.range || 0}`,
