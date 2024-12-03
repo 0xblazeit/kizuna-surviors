@@ -1,5 +1,6 @@
 import EnemyAdvanced from "./EnemyAdvanced";
 import Coin from "../entities/Coin";
+import XPGem from "../entities/XPGem";
 
 class EnemyEpic extends EnemyAdvanced {
   constructor(scene, x, y, texture, config = {}) {
@@ -60,16 +61,27 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
-    // Initialize coins array if it doesn't exist
+    // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
     }
+    if (!this.scene.xpGems) {
+      this.scene.xpGems = [];
+    }
 
-    // 60% chance to drop a coin for epic enemies
+    // 60% chance to drop a coin
     if (Math.random() < 0.6) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) { // Only add if coin was created (not at limit)
+      if (coin) {
         this.scene.coins.push(coin);
+      }
+    }
+
+    // 40% chance to drop an XP gem (200 XP for epic enemies)
+    if (Math.random() < 0.40) {
+      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.4);
+      if (gem) {
+        this.scene.xpGems.push(gem);
       }
     }
 

@@ -1,5 +1,6 @@
 import BasePlayer from "./BasePlayer";
 import Coin from "../entities/Coin";
+import XPGem from "../entities/XPGem";
 
 class EnemyBasic extends BasePlayer {
   constructor(scene, x, y, texture, config = {}) {
@@ -471,16 +472,27 @@ class EnemyBasic extends BasePlayer {
     this.scene.gameState.kills++;
     this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
 
-    // Initialize coins array if it doesn't exist
+    // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
     }
+    if (!this.scene.xpGems) {
+      this.scene.xpGems = [];
+    }
 
-    // 15% chance to drop a coin for basic enemies
+    // 15% chance to drop a coin
     if (Math.random() < 0.15) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) { // Only add if coin was created (not at limit)
+      if (coin) {
         this.scene.coins.push(coin);
+      }
+    }
+
+    // 10% chance to drop an XP gem (50 XP for basic enemies)
+    if (Math.random() < 0.10) {
+      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.3);
+      if (gem) {
+        this.scene.xpGems.push(gem);
       }
     }
 

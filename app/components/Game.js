@@ -117,6 +117,7 @@ const GameScene = {
     this.enemies = [];
     this.projectiles = [];
     this.coins = []; // Add coins array
+    this.xpGems = []; // Add XP gems array
     this.score = 0;
     this.gameOver = false;
   },
@@ -270,6 +271,9 @@ const GameScene = {
         scale: 0.5,
       }
     );
+
+    // Load XP gem
+    this.load.image("xp-gem", "/assets/game/powerups/xp-gem.svg");
   },
 
   create: function () {
@@ -1154,13 +1158,12 @@ const GameScene = {
 
     // Update coins
     if (this.coins) {
-      this.coins.forEach((coin, index) => {
-        if (coin && coin.update) {
-          coin.update(this.player);
-        }
-      });
-      // Clean up collected coins
-      this.coins = this.coins.filter((coin) => coin && !coin.isCollected);
+      this.coins.forEach((coin) => coin.update(this.player));
+    }
+
+    // Update XP gems
+    if (this.xpGems) {
+      this.xpGems.forEach((gem) => gem.update(this.player));
     }
 
     // Update all enemies
