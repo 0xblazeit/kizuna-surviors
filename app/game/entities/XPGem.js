@@ -19,23 +19,14 @@ class XPGem {
     this.sprite.setScale(scale);
     this.sprite.setDepth(5); // Set above ground items but below players
 
-    // Add floating animation
+    // Add floating animation with larger range and smoother motion
     scene.tweens.add({
-      targets: this.sprite,
-      y: y - 10,
-      duration: 1500,
+      targets: [this.sprite, this.glow],  // Apply to both sprite and glow
+      y: y - 15,  // Increased float height
+      duration: 2000,  // Slower, smoother motion
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
-    });
-
-    // Add rotation animation
-    scene.tweens.add({
-      targets: this.sprite,
-      angle: 360,
-      duration: 4000,
-      repeat: -1,
-      ease: "Linear",
     });
 
     // Add glow effect with correct texture key

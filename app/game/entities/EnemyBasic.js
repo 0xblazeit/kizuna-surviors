@@ -480,19 +480,20 @@ class EnemyBasic extends BasePlayer {
       this.scene.xpGems = [];
     }
 
-    // 15% chance to drop a coin
-    if (Math.random() < 0.15) {
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) {
-        this.scene.coins.push(coin);
-      }
-    }
-
-    // 10% chance to drop an XP gem (50 XP for basic enemies)
-    if (Math.random() < 0.10) {
-      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.3);
-      if (gem) {
-        this.scene.xpGems.push(gem);
+    // Determine drop type - 25% chance for any drop
+    const dropChance = Math.random();
+    if (dropChance < 0.25) {  // 25% chance for a drop
+      // 40% chance for coin (10% total), 60% chance for XP gem (15% total)
+      if (dropChance < 0.10) {
+        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
+      } else {
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.3);
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
       }
     }
 

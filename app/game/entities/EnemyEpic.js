@@ -69,16 +69,15 @@ class EnemyEpic extends EnemyAdvanced {
       this.scene.xpGems = [];
     }
 
-    // 60% chance to drop a coin
-    if (Math.random() < 0.6) {
+    // Determine drop type - 100% chance for any drop
+    const dropChance = Math.random();
+    // 40% chance for coin, 60% chance for XP gem
+    if (dropChance < 0.40) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
       if (coin) {
         this.scene.coins.push(coin);
       }
-    }
-
-    // 40% chance to drop an XP gem (200 XP for epic enemies)
-    if (Math.random() < 0.40) {
+    } else {
       const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.4);
       if (gem) {
         this.scene.xpGems.push(gem);

@@ -32,19 +32,20 @@ class EnemyAdvanced extends EnemyBasic {
       this.scene.xpGems = [];
     }
 
-    // 30% chance to drop a coin
-    if (Math.random() < 0.3) {
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) {
-        this.scene.coins.push(coin);
-      }
-    }
-
-    // 20% chance to drop an XP gem (100 XP for advanced enemies)
-    if (Math.random() < 0.20) {
-      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 100, 0.35);
-      if (gem) {
-        this.scene.xpGems.push(gem);
+    // Determine drop type - 50% chance for any drop
+    const dropChance = Math.random();
+    if (dropChance < 0.50) {  // 50% chance for a drop
+      // 40% chance for coin (20% total), 60% chance for XP gem (30% total)
+      if (dropChance < 0.20) {
+        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
+      } else {
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 100, 0.35);
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
       }
     }
 
