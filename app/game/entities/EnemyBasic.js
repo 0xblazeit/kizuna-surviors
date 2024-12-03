@@ -476,9 +476,13 @@ class EnemyBasic extends BasePlayer {
       this.scene.coins = [];
     }
 
-    // Create coin at enemy's position and add it to the scene's coins array
-    const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-    this.scene.coins.push(coin);
+    // 15% chance to drop a coin for basic enemies
+    if (Math.random() < 0.15) {
+      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+      if (coin) { // Only add if coin was created (not at limit)
+        this.scene.coins.push(coin);
+      }
+    }
 
     // Play death animation and cleanup
     this.playDeathAnimation().then(() => {

@@ -1,5 +1,15 @@
 class Coin {
+  // Static property to track total coins
+  static totalCoins = 0;
+  static MAX_COINS = 75;
+
   constructor(scene, x, y) {
+    // Check if we're at the coin limit
+    if (Coin.totalCoins >= Coin.MAX_COINS) {
+      return null;
+    }
+    
+    Coin.totalCoins++;
     this.scene = scene;
     this.isCollected = false;
 
@@ -41,6 +51,7 @@ class Coin {
     if (distance <= 50) {
       // Mark as collected
       this.isCollected = true;
+      Coin.totalCoins--; // Decrease total coins when collected
 
       // Update gold count
       this.scene.gameState.gold += 1;

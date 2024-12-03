@@ -65,9 +65,13 @@ class EnemyEpic extends EnemyAdvanced {
       this.scene.coins = [];
     }
 
-    // Epic enemies always drop a coin
-    const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-    this.scene.coins.push(coin);
+    // 60% chance to drop a coin for epic enemies
+    if (Math.random() < 0.6) {
+      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+      if (coin) { // Only add if coin was created (not at limit)
+        this.scene.coins.push(coin);
+      }
+    }
 
     super.playDeathAnimation().then(() => {
       // Rest of cleanup handled by parent class

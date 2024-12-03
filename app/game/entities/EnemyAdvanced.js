@@ -28,10 +28,12 @@ class EnemyAdvanced extends EnemyBasic {
       this.scene.coins = [];
     }
 
-    // 90% chance to drop a coin for advanced enemies
-    if (Math.random() < 0.9) {
+    // 30% chance to drop a coin for advanced enemies
+    if (Math.random() < 0.3) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      this.scene.coins.push(coin);
+      if (coin) { // Only add if coin was created (not at limit)
+        this.scene.coins.push(coin);
+      }
     }
 
     super.playDeathAnimation().then(() => {
