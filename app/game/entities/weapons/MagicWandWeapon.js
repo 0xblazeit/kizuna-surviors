@@ -43,6 +43,9 @@ export class MagicWandWeapon extends BaseWeapon {
         
         // Track last movement direction
         this.lastDirection = { x: 1, y: 0 }; // Default right direction
+        
+        // Initialize lastFiredTime
+        this.lastFiredTime = 0;
 
         console.log('Magic Wand initialized with stats:', this.stats);
 
@@ -541,6 +544,25 @@ export class MagicWandWeapon extends BaseWeapon {
 
             this.scene.time.delayedCall(500, () => particles.destroy());
         }
+    }
+
+    attack(time) {
+        // Find an inactive projectile or one that's ready to be recycled
+        const availableProj = this.activeProjectiles.find(proj => 
+            !proj.active || 
+            !proj.sprite.visible || 
+            proj.pierceCount <= 0
+        );
+        
+        if (availableProj) {
+            // Reset the projectile state before firing
+            availableProj.active = false;
+            availableProj.pierceCount = this.stats.pierce;
+            this.fireProjectile(availableProj, time);
+        }
+
+        // Call super to update lastFiredTime
+        super.attack(time);
     }
 }
 
