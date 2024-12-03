@@ -1110,10 +1110,10 @@ const GameScene = {
 
         // Create level progress bar
         const maxBoxes = 8;
-        const filledBoxes = (weapon?.currentLevel || 1) - 1;
+        const filledBoxes = (weapon?.currentLevel || 1);  
         const progressBar = Array(maxBoxes)
-          .fill('▒') // Empty box
-          .fill('█', 0, filledBoxes) // Fill with dark boxes up to current level
+          .fill('░') 
+          .fill('█', 0, filledBoxes) 
           .join('');
 
         const text = [
