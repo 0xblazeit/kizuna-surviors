@@ -18,9 +18,6 @@ class Coin {
     this.sprite.setScale(0.15);
     this.value = value; // Store the coin's value
 
-    // Add a glow effect
-    this.sprite.setTint(0xffd700); // Golden tint
-
     // Initial spawn animation
     this.sprite.setAlpha(0);
     this.sprite.setScale(0.13);
@@ -32,14 +29,13 @@ class Coin {
       ease: "Back.easeOut",
     });
 
-    // Add floating animation
+    // Replace floating with rotation animation
     scene.tweens.add({
       targets: this.sprite,
-      y: y - 10,
-      duration: 1000,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
+      angle: 360, // Full rotation
+      duration: 1500,
+      repeat: -1, // Infinite repeat
+      ease: "Linear", // Linear for smooth constant rotation
     });
   }
 
