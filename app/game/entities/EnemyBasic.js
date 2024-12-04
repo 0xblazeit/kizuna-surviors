@@ -32,8 +32,7 @@ class EnemyBasic extends BasePlayer {
     this.targetPlayer = null;
     this.moveSpeed = enemyConfig.moveSpeed;
     this.movementEnabled = true;
-    this.movementRange = 500; // Fixed larger movement range
-    this.minDistance = 20; // Reduced minimum distance
+    this.minDistance = 20; // Minimum distance to keep from player
     this.lastMoveTime = 0; // Add timestamp for movement updates
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
 
@@ -146,37 +145,17 @@ class EnemyBasic extends BasePlayer {
       const dy = this.targetPlayer.sprite.y - this.sprite.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Check if within attack range and cooldown is ready
-      if (
-        distance <= this.attackRange &&
-        currentTime - this.lastAttackTime >= this.attackCooldown
-      ) {
-        this.attackPlayer();
-        this.lastAttackTime = currentTime;
-      }
-
-      // Move if within range and not too close
-      if (distance <= this.movementRange && distance > this.minDistance) {
+      // Always move towards player if not too close
+      if (distance > this.minDistance) {
         // Normalize direction
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
 
-        // Calculate movement step
-        const step = this.moveSpeed; // Remove the time scaling since we're already using fixed intervals
+        // Apply movement
+        this.sprite.x += normalizedDx * this.moveSpeed;
+        this.sprite.y += normalizedDy * this.moveSpeed;
 
-        // Move towards player
-        this.sprite.x += normalizedDx * step;
-        this.sprite.y += normalizedDy * step;
-
-        // Update health bar position
-        if (this.healthBar) {
-          this.healthBar.container.setPosition(
-            this.sprite.x,
-            this.sprite.y + this.healthBar.spacing
-          );
-        }
-
-        // Flip sprite based on movement direction
+        // Update sprite direction
         if (dx < 0) {
           this.sprite.setFlipX(true);
         } else {
@@ -184,13 +163,16 @@ class EnemyBasic extends BasePlayer {
         }
 
         // Add trail effect if moving
-        if (
-          currentTime - this.lastTrailTime >=
-          this.trailConfig.spawnInterval
-        ) {
+        if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
           super.createTrailEffect();
           this.lastTrailTime = currentTime;
         }
+      }
+
+      // Check if within attack range and cooldown is ready
+      if (distance <= this.attackRange && 
+          currentTime - this.lastAttackTime >= this.attackCooldown) {
+        this.attackPlayer();
       }
     }
   }
