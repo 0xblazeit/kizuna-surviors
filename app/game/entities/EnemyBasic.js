@@ -228,7 +228,7 @@ class EnemyBasic extends BasePlayer {
     this.isStaggered = true;
     this.movementEnabled = false; // Stop movement during stagger
 
-    // Flash effect
+    // Flash effect - already flashing white
     const originalTint = this.sprite.tintTopLeft;
     this.sprite.setTint(0xffffff);
 
@@ -338,7 +338,7 @@ class EnemyBasic extends BasePlayer {
     return new Promise((resolve) => {
       // console.log('Setting up death animation');
       // Create a flash effect
-      this.sprite.setTint(0xff0000); // Red flash
+      this.sprite.setTint(0xffffff); // White flash
 
       // Create a fade out and scale down effect
       this.scene.tweens.add({
@@ -352,7 +352,7 @@ class EnemyBasic extends BasePlayer {
           try {
             // Create custom particle effects
             const numParticles = 12;
-            const colors = [0xff0000, 0xff4444, 0xff8888]; // Different shades of red
+            const colors = [0xffffff, 0xeeeeee, 0xdddddd]; // Different shades of white
 
             for (let i = 0; i < numParticles; i++) {
               const angle = ((Math.PI * 2) / numParticles) * i;

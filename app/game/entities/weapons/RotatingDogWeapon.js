@@ -197,6 +197,22 @@ export class RotatingDogWeapon extends BaseWeapon {
                     dog.state = 'seeking';
                 }
             }
+
+            // Add a timeout check to prevent getting stuck in attack state
+            if (dog.state === 'attacking' && time - dog.attackStartTime > 1000) {
+                dog.state = 'seeking';
+                dog.targetEnemy = null;
+            }
+
+            // Add a distance check to prevent dogs from getting too far from player
+            const distanceToPlayer = this.getDistance(
+                dog.sprite.x, dog.sprite.y,
+                this.player.x, this.player.y
+            );
+            if (distanceToPlayer > this.stats.guardDistance * 2) {
+                dog.state = 'seeking';
+                dog.targetEnemy = null;
+            }
         });
 
         // Update each dog
@@ -235,10 +251,9 @@ export class RotatingDogWeapon extends BaseWeapon {
 
                     // Check if it's time to change facing direction
                     if (time > dog.nextRotationTime) {
-                        // Random new facing direction with some constraints
-                        const rotationChange = (Math.random() - 0.5) * Math.PI; // ±90 degrees
+                        const rotationChange = (Math.random() - 0.5) * Math.PI;
                         dog.targetFacingAngle = dog.facingAngle + rotationChange;
-                        dog.nextRotationTime = time + 1000 + Math.random() * 1500; // Change direction every 1-2.5 seconds
+                        dog.nextRotationTime = time + 1000 + Math.random() * 1500;
                     }
 
                     // Smoothly move towards target position
@@ -277,7 +292,6 @@ export class RotatingDogWeapon extends BaseWeapon {
                         dog.sprite.particles.setPosition(dog.sprite.x, dog.sprite.y);
                     }
 
-                    // Set the sprite's rotation to the facing angle
                     dog.sprite.rotation = dog.facingAngle;
                     break;
                 }
@@ -289,6 +303,13 @@ export class RotatingDogWeapon extends BaseWeapon {
                             dog.targetEnemy.sprite.x,
                             dog.targetEnemy.sprite.y
                         );
+
+                        // Return to guarding if enemy is too far
+                        if (distanceToEnemy > this.stats.detectionRange * 1.5) {
+                            dog.state = 'seeking';
+                            dog.targetEnemy = null;
+                            break;
+                        }
 
                         // Move towards enemy with increased speed when far away
                         const speedMultiplier = distanceToEnemy > 100 ? 2.0 : 1.5;
@@ -315,7 +336,15 @@ export class RotatingDogWeapon extends BaseWeapon {
                     }
                     break;
                 }
-                // ... rest of the code remains the same ...
+
+                case 'attacking': {
+                    const attackDuration = 200;
+                    if (time - dog.attackStartTime >= attackDuration) {
+                        dog.state = 'seeking';
+                        dog.targetEnemy = null;
+                    }
+                    break;
+                }
             }
         });
     }
