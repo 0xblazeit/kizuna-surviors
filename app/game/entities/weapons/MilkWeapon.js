@@ -3,7 +3,7 @@ import { BaseWeapon } from './BaseWeapon.js';
 export class MilkWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
-        this.name = 'Milk Rain';
+        this.name = 'Magical Goo';
         this.description = 'Creates pools of damaging milk that fall from the sky';
         this.type = 'magic';
         
