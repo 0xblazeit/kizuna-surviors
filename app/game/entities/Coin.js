@@ -28,7 +28,7 @@ class Coin {
     scene.tweens.add({
       targets: this.sprite,
       alpha: 1,
-      scale: 0.5,
+      scale: 0.15,
       duration: 200,
       ease: "Back.easeOut",
     });
