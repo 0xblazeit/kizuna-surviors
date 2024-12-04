@@ -247,7 +247,6 @@ export class SonicBoomHammer extends BaseWeapon {
 
         if (isCritical) {
             finalDamage *= 2;
-            console.log('Critical hit! Damage:', finalDamage);
         }
 
         // Apply damage and show damage number
