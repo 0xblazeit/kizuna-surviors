@@ -19,7 +19,6 @@ class Coin {
     this.value = value; // Store the coin's value
 
     // Add a glow effect
-    this.sprite.setBlendMode(Phaser.BlendModes.ADD);
     this.sprite.setTint(0xffd700); // Golden tint
 
     // Initial spawn animation
