@@ -5,7 +5,6 @@ import MainPlayer from "../game/entities/MainPlayer";
 import EnemyBasic from "../game/entities/EnemyBasic";
 import EnemyAdvanced from "../game/entities/EnemyAdvanced";
 import EnemyEpic from "../game/entities/EnemyEpic";
-import Coin from "../game/entities/Coin";
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
@@ -236,10 +235,20 @@ const GameScene = {
       selectedWeaponIndex: 0,
       isGameOver: false,
       coins: 0, // Add coin counter
-      maxEnemies: 30, // Maximum enemies allowed at once
+      maxEnemies: 15, // Maximum enemies allowed at once
       spawnRate: 1000, // Base spawn rate in milliseconds
-      minSpawnRate: 500, // Minimum spawn rate (fastest spawn rate allowed)
+      minSpawnRate: 300, // Minimum spawn rate (fastest spawn rate allowed)
       goldMilestoneReached: false, // Add gold milestone flag
+      enemyWaveTimer: 0,
+      waveNumber: 1,
+      bossSpawned: false,
+      difficultyMultiplier: 1,
+      // Enemy spawn thresholds (in seconds)
+      spawnThresholds: {
+        advanced: 120,  // Advanced enemies start appearing after 2 minutes
+        epic: 300,     // Epic enemies start appearing after 5 minutes
+        boss: 600      // Boss waves start appearing after 10 minutes
+      }
     };
 
     // Bind methods to this scene
@@ -975,40 +984,202 @@ const GameScene = {
       callback: () => {
         if (this.enemies.length >= this.gameState.maxEnemies) return;
 
-        // Increase max enemies and decrease spawn rate based on game time
-        if (
-          this.gameState.gameTimer > 0 &&
-          this.gameState.gameTimer % 60 === 0
-        ) {
-          this.gameState.maxEnemies = Math.min(
-            50,
-            this.gameState.maxEnemies + 2
-          );
-          this.gameState.spawnRate = Math.max(
-            this.gameState.minSpawnRate,
-            this.gameState.spawnRate - 50
-          );
-          this.enemySpawnTimer.delay = this.gameState.spawnRate;
+        // Calculate game progress (0 to 1) based on 30-minute max time
+        const maxGameTime = 30 * 60; // 30 minutes in seconds
+        const gameProgress = Math.min(this.gameState.gameTimer / maxGameTime, 1);
+
+        // Update wave timer and check for new wave
+        this.gameState.enemyWaveTimer += this.gameState.spawnRate / 1000;
+        if (this.gameState.enemyWaveTimer >= 60) { // New wave every minute
+          this.gameState.enemyWaveTimer = 0;
+          this.gameState.waveNumber++;
+          this.gameState.difficultyMultiplier += 0.1;
+
+          // Announce new wave
+          const waveText = this.add.text(
+            this.cameras.main.centerX,
+            100,
+            `Wave ${this.gameState.waveNumber}`,
+            {
+              fontFamily: 'VT323',
+              fontSize: '48px',
+              color: '#ff0000',
+              stroke: '#000000',
+              strokeThickness: 4
+            }
+          ).setOrigin(0.5);
+          waveText.setScrollFactor(0);
+          
+          // Fade out and destroy
+          this.tweens.add({
+            targets: waveText,
+            alpha: 0,
+            y: 50,
+            duration: 2000,
+            ease: 'Power2',
+            onComplete: () => waveText.destroy()
+          });
         }
 
-        // Get random position within world bounds but not too close to player
-        let x, y, distanceToPlayer;
-        do {
-          x = Phaser.Math.Between(100, this.physics.world.bounds.width - 100);
-          y = Phaser.Math.Between(100, this.physics.world.bounds.height - 100);
-          distanceToPlayer = Phaser.Math.Distance.Between(
-            x,
-            y,
-            this.player.x,
-            this.player.y
-          );
-        } while (distanceToPlayer < 200); // Minimum spawn distance from player
+        // Adjust spawn probabilities based on game progress and thresholds
+        let spawnRates = {
+          basic: 1,
+          advanced: 0,
+          epic: 0
+        };
+
+        // Unlock advanced enemies
+        if (this.gameState.gameTimer >= this.gameState.spawnThresholds.advanced) {
+          spawnRates.basic = Math.max(0.4, 1 - gameProgress);
+          spawnRates.advanced = Math.min(0.4, gameProgress * 0.6);
+        }
+
+        // Unlock epic enemies
+        if (this.gameState.gameTimer >= this.gameState.spawnThresholds.epic) {
+          spawnRates.basic = Math.max(0.3, 0.8 - gameProgress);
+          spawnRates.advanced = Math.min(0.4, gameProgress * 0.5);
+          spawnRates.epic = Math.min(0.3, gameProgress * 0.4);
+        }
+
+        // Normalize probabilities
+        const total = spawnRates.basic + spawnRates.advanced + spawnRates.epic;
+        spawnRates.basic /= total;
+        spawnRates.advanced /= total;
+        spawnRates.epic /= total;
+
+        // Increase max enemies and decrease spawn rate based on wave number
+        this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
+        this.gameState.spawnRate = Math.max(
+          this.gameState.minSpawnRate,
+          1000 - (this.gameState.waveNumber * 50)
+        );
+        this.enemySpawnTimer.delay = this.gameState.spawnRate;
+
+        // Get spawn position using golden ratio distribution around player
+        const getSpawnPosition = () => {
+          const minSpawnDistance = 300; // Minimum distance from player
+          const maxSpawnDistance = 500; // Maximum distance from player
+          const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // Golden angle in radians
+          
+          // Use wave number to rotate spawn points for variety
+          const baseAngle = this.gameState.waveNumber * goldenAngle;
+          
+          // Get random distance between min and max
+          const distance = Phaser.Math.Between(minSpawnDistance, maxSpawnDistance);
+          
+          // Calculate angle using golden ratio for better distribution
+          const angle = baseAngle + (Math.random() * Math.PI * 2);
+          
+          // Calculate position relative to player
+          const spawnX = this.player.x + Math.cos(angle) * distance;
+          const spawnY = this.player.y + Math.sin(angle) * distance;
+          
+          // Clamp to world bounds with padding
+          const padding = 50;
+          return {
+            x: Phaser.Math.Clamp(spawnX, padding, this.physics.world.bounds.width - padding),
+            y: Phaser.Math.Clamp(spawnY, padding, this.physics.world.bounds.height - padding)
+          };
+        };
+
+        // Get spawn position
+        const spawnPos = getSpawnPosition();
+        const x = spawnPos.x;
+        const y = spawnPos.y;
 
         // Random enemy sprite
         const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
 
-        // Spawn enemy
-        const enemy = new EnemyBasic(this, x, y, spriteKey);
+        // Determine enemy type based on probabilities
+        const roll = Math.random();
+        let enemy;
+        
+        if (roll < spawnRates.basic) {
+          // Basic enemy
+          enemy = new EnemyBasic(this, x, y, spriteKey);
+          enemy.stats.maxHealth *= this.gameState.difficultyMultiplier;
+          enemy.stats.currentHealth = enemy.stats.maxHealth;
+          enemy.stats.damage *= this.gameState.difficultyMultiplier;
+        } else if (roll < spawnRates.basic + spawnRates.advanced) {
+          // Advanced enemy - stronger and faster
+          enemy = new EnemyAdvanced(this, x, y, spriteKey);
+          enemy.stats.maxHealth *= (1 + gameProgress) * this.gameState.difficultyMultiplier;
+          enemy.stats.currentHealth = enemy.stats.maxHealth;
+          enemy.stats.moveSpeed *= (1 + gameProgress * 0.5);
+          enemy.stats.damage *= (1 + gameProgress * 0.7) * this.gameState.difficultyMultiplier;
+          enemy.stats.defense *= (1 + gameProgress * 0.3);
+          enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress));
+        } else {
+          // Epic enemy - much stronger and has special abilities
+          enemy = new EnemyEpic(this, x, y, spriteKey);
+          enemy.stats.maxHealth *= (1 + gameProgress * 2) * this.gameState.difficultyMultiplier;
+          enemy.stats.currentHealth = enemy.stats.maxHealth;
+          enemy.stats.moveSpeed *= (1 + gameProgress * 0.7);
+          enemy.stats.damage *= (1 + gameProgress * 1.2) * this.gameState.difficultyMultiplier;
+          enemy.stats.defense *= (1 + gameProgress * 0.5);
+          enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress * 1.5));
+        }
+
+        // Scale enemy size based on their health to give visual feedback of strength
+        const baseScale = 1;
+        const healthScale = Math.min(2, Math.max(1, enemy.stats.maxHealth / 100));
+        enemy.sprite.setScale(baseScale * healthScale);
+
+        // Enhanced enemy movement behavior
+        enemy.updateMovement = function(time, delta) {
+          if (!this.scene.player || !this.sprite) return;
+
+          // Calculate direction to player
+          const dx = this.scene.player.x - this.sprite.x;
+          const dy = this.scene.player.y - this.sprite.y;
+          const angle = Math.atan2(dy, dx);
+
+          // Add slight randomization to movement for more organic feel
+          const randomAngle = angle + (Math.random() - 0.5) * 0.2;
+          
+          // Calculate velocity components
+          const speed = this.stats.moveSpeed;
+          this.sprite.body.velocity.x = Math.cos(randomAngle) * speed;
+          this.sprite.body.velocity.y = Math.sin(randomAngle) * speed;
+
+          // Rotate sprite to face movement direction
+          this.sprite.rotation = angle + Math.PI / 2;
+
+          // Epic enemies get special movement patterns
+          if (this instanceof EnemyEpic) {
+            // Periodic speed bursts
+            const burstInterval = 3000; // 3 seconds
+            if (time % burstInterval < 500) { // 0.5 second burst
+              this.sprite.body.velocity.x *= 1.5;
+              this.sprite.body.velocity.y *= 1.5;
+            }
+
+            // Periodic sidestep movement
+            const sideStepInterval = 2000; // 2 seconds
+            if (time % sideStepInterval < 1000) { // 1 second sidestep
+              const perpAngle = angle + Math.PI / 2;
+              const sideStepSpeed = speed * 0.5;
+              this.sprite.body.velocity.x += Math.cos(perpAngle) * sideStepSpeed;
+              this.sprite.body.velocity.y += Math.sin(perpAngle) * sideStepSpeed;
+            }
+          }
+
+          // Advanced enemies get simpler but effective patterns
+          if (this instanceof EnemyAdvanced) {
+            // Periodic speed adjustments
+            const speedInterval = 2000; // 2 seconds
+            if (time % speedInterval < 1000) { // 1 second faster
+              this.sprite.body.velocity.x *= 1.3;
+              this.sprite.body.velocity.y *= 1.3;
+            }
+          }
+        };
+
+        // Set up movement update
+        enemy.sprite.update = function(time, delta) {
+          enemy.updateMovement(time, delta);
+        };
+
         this.enemies.push(enemy);
       },
       callbackScope: this,
@@ -1484,7 +1655,7 @@ export default function Game() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900">
+    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
       <div
         ref={gameRef}
         className="w-[800px] h-[600px] bg-black border-2 border-white"
