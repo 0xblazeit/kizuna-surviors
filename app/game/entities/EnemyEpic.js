@@ -61,6 +61,8 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
+    // Set higher coin value for epic enemies
+    const coinValue = 50;
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -72,13 +74,19 @@ class EnemyEpic extends EnemyAdvanced {
     // Determine drop type - 100% chance for any drop
     const dropChance = Math.random();
     // 40% chance for coin, 60% chance for XP gem
-    if (dropChance < 0.40) {
+    if (dropChance < 0.4) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
       if (coin) {
         this.scene.coins.push(coin);
       }
     } else {
-      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.18);
+      const gem = new XPGem(
+        this.scene,
+        this.sprite.x,
+        this.sprite.y,
+        200,
+        0.18
+      );
       if (gem) {
         this.scene.xpGems.push(gem);
       }

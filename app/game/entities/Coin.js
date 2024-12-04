@@ -3,38 +3,44 @@ class Coin {
   static totalCoins = 0;
   static MAX_COINS = 75;
 
-  constructor(scene, x, y) {
+  constructor(scene, x, y, value = 10) {
     // Check if we're at the coin limit
     if (Coin.totalCoins >= Coin.MAX_COINS) {
       return null;
     }
-    
+
     Coin.totalCoins++;
     this.scene = scene;
     this.isCollected = false;
 
     // Create coin sprite
-    this.sprite = scene.add.image(x, y, "coin");
+    this.sprite = scene.add.sprite(x, y, "coin");
     this.sprite.setScale(0.15);
-    this.sprite.setDepth(5); // Set above ground items but below players
+    this.value = value; // Store the coin's value
+
+    // Add a glow effect
+    this.sprite.setBlendMode(Phaser.BlendModes.ADD);
+    this.sprite.setTint(0xffd700); // Golden tint
+
+    // Initial spawn animation
+    this.sprite.setAlpha(0);
+    this.sprite.setScale(0.13);
+    scene.tweens.add({
+      targets: this.sprite,
+      alpha: 1,
+      scale: 0.5,
+      duration: 200,
+      ease: "Back.easeOut",
+    });
 
     // Add floating animation
     scene.tweens.add({
       targets: this.sprite,
       y: y - 10,
-      duration: 1500,
+      duration: 1000,
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
-    });
-
-    // Add rotation animation
-    scene.tweens.add({
-      targets: this.sprite,
-      angle: 360,
-      duration: 4000,
-      repeat: -1,
-      ease: "Linear",
     });
   }
 
@@ -54,7 +60,7 @@ class Coin {
       Coin.totalCoins--; // Decrease total coins when collected
 
       // Update gold count
-      this.scene.gameState.gold += 1;
+      this.scene.gameState.gold += this.value;
       this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
 
       // Add collection animation
@@ -73,7 +79,7 @@ class Coin {
 
       // Add floating text effect
       const floatingText = this.scene.add
-        .text(this.sprite.x, this.sprite.y, "+1", {
+        .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
           fontFamily: "VT323",
           fontSize: "20px",
           color: "#FFD700",
