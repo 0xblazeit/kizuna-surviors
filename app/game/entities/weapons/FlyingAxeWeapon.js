@@ -13,7 +13,7 @@ class FlyingAxeWeapon extends BaseWeapon {
         // Level-up configurations
         this.levelConfigs = {
             1: {
-                damage: 15,
+                damage: 8,
                 pierce: 1,
                 cooldown: 2500,
                 range: 350,
@@ -24,88 +24,88 @@ class FlyingAxeWeapon extends BaseWeapon {
                 orbitSpeed: 2.5
             },
             2: {
-                damage: 35,
-                pierce: 2,
-                cooldown: 1100,
-                range: 450,
-                speed: 270,
-                rotationSpeed: 5.5,
-                scale: 0.55,
-                orbitRadius: 110,
-                orbitSpeed: 3.2
+                damage: 13,
+                pierce: 1,
+                cooldown: 2200,
+                range: 380,
+                speed: 220,
+                rotationSpeed: 4.5,
+                scale: 0.53,
+                orbitRadius: 90,
+                orbitSpeed: 2.7
             },
             3: {
-                damage: 45,
+                damage: 21,
                 pierce: 2,
-                cooldown: 1000,
-                range: 500,
-                speed: 290,
-                rotationSpeed: 6,
-                scale: 0.6,
-                orbitRadius: 120,
-                orbitSpeed: 3.4
+                cooldown: 1900,
+                range: 410,
+                speed: 240,
+                rotationSpeed: 5,
+                scale: 0.56,
+                orbitRadius: 100,
+                orbitSpeed: 2.9
             },
             4: {
-                damage: 60,
+                damage: 34,
+                pierce: 2,
+                cooldown: 1600,
+                range: 440,
+                speed: 260,
+                rotationSpeed: 5.5,
+                scale: 0.59,
+                orbitRadius: 110,
+                orbitSpeed: 3.1
+            },
+            5: {
+                damage: 55,
                 pierce: 3,
-                cooldown: 900,
-                range: 550,
-                speed: 310,
+                cooldown: 1300,
+                range: 470,
+                speed: 280,
+                rotationSpeed: 6,
+                scale: 0.62,
+                orbitRadius: 120,
+                orbitSpeed: 3.3
+            },
+            6: {
+                damage: 89,
+                pierce: 3,
+                cooldown: 1000,
+                range: 500,
+                speed: 300,
                 rotationSpeed: 6.5,
                 scale: 0.65,
                 orbitRadius: 130,
-                orbitSpeed: 3.6
-            },
-            5: {
-                damage: 80,
-                pierce: 3,
-                cooldown: 800,
-                range: 600,
-                speed: 330,
-                rotationSpeed: 7,
-                scale: 0.7,
-                orbitRadius: 140,
-                orbitSpeed: 3.8
-            },
-            6: {
-                damage: 105,
-                pierce: 4,
-                cooldown: 700,
-                range: 650,
-                speed: 350,
-                rotationSpeed: 7.5,
-                scale: 0.75,
-                orbitRadius: 150,
-                orbitSpeed: 4
+                orbitSpeed: 3.5
             },
             7: {
-                damage: 135,
+                damage: 144,
                 pierce: 4,
-                cooldown: 600,
-                range: 700,
-                speed: 370,
-                rotationSpeed: 8,
-                scale: 0.8,
-                orbitRadius: 160,
-                orbitSpeed: 4.2
+                cooldown: 800,
+                range: 530,
+                speed: 320,
+                rotationSpeed: 7,
+                scale: 0.68,
+                orbitRadius: 140,
+                orbitSpeed: 3.7
             },
             8: {
-                damage: 175,
-                pierce: 5,
-                cooldown: 500,
-                range: 600,
-                speed: 400,
-                rotationSpeed: 8.5,
-                scale: 0.85,
-                orbitRadius: 170,
-                orbitSpeed: 4.4,
+                damage: 233,
+                pierce: 4,
+                cooldown: 600,
+                range: 560,
+                speed: 340,
+                rotationSpeed: 7.5,
+                scale: 0.71,
+                orbitRadius: 150,
+                orbitSpeed: 3.9,
                 orbitCount: 3,
                 orbitSpread: 120,
                 maxOrbitTime: 2.0,
-                trailAlpha: 0.6,     // Alpha for trail images
-                trailScale: 0.95,    // Scale multiplier for each trail image
-                trailSpacing: 0.05,  // Time spacing between trail images
-                glowTint: 0xffff99,  // Yellow-white glow tint
+                trailAlpha: 0.6,
+                trailScale: 0.95,
+                trailSpacing: 0.05,
+                glowTint: 0xffff99,
                 isMaxLevel: true
             }
         };
