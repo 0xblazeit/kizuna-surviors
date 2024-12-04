@@ -1,5 +1,6 @@
 import BasePlayer from "./BasePlayer";
 import Coin from "../entities/Coin";
+import XPGem from "../entities/XPGem";
 
 class EnemyBasic extends BasePlayer {
   constructor(scene, x, y, texture, config = {}) {
@@ -212,6 +213,9 @@ class EnemyBasic extends BasePlayer {
     this.stats.currentHealth -= damageDealt;
     console.log("Enemy health after damage:", this.stats.currentHealth);
 
+    // Play hit effects with source position
+    this.playHitEffects(sourceX, sourceY);
+
     // Check for death
     if (this.stats.currentHealth <= 0) {
       console.log("Enemy health depleted, calling die()");
@@ -227,7 +231,7 @@ class EnemyBasic extends BasePlayer {
     this.isStaggered = true;
     this.movementEnabled = false; // Stop movement during stagger
 
-    // Flash effect
+    // Flash effect - already flashing white
     const originalTint = this.sprite.tintTopLeft;
     this.sprite.setTint(0xffffff);
 
@@ -250,9 +254,16 @@ class EnemyBasic extends BasePlayer {
     const staggerX = Math.cos(angle) * staggerDistance;
     const staggerY = Math.sin(angle) * staggerDistance;
 
-    // Create stagger animation that includes both sprite and health bar
+    // Create stagger animation for the sprite
+    const targets = [this.sprite];
+    // Only include healthBar if it exists
+    if (this.healthBar && this.healthBar.container) {
+      targets.push(this.healthBar.container);
+    }
+
+    // Create stagger animation
     this.scene.tweens.add({
-      targets: [this.sprite, this.healthBar.container],
+      targets: targets,
       x: "+=" + staggerX,
       y: "+=" + staggerY,
       duration: staggerDuration / 2,
@@ -262,10 +273,12 @@ class EnemyBasic extends BasePlayer {
         // Reset position exactly to avoid drift
         this.sprite.x -= staggerX;
         this.sprite.y -= staggerY;
-        this.healthBar.container.setPosition(
-          this.sprite.x,
-          this.sprite.y + this.healthBar.spacing
-        );
+        if (this.healthBar && this.healthBar.container) {
+          this.healthBar.container.setPosition(
+            this.sprite.x,
+            this.sprite.y + this.healthBar.spacing
+          );
+        }
       },
     });
 
@@ -337,7 +350,7 @@ class EnemyBasic extends BasePlayer {
     return new Promise((resolve) => {
       // console.log('Setting up death animation');
       // Create a flash effect
-      this.sprite.setTint(0xff0000); // Red flash
+      this.sprite.setTint(0xffffff); // White flash
 
       // Create a fade out and scale down effect
       this.scene.tweens.add({
@@ -351,7 +364,7 @@ class EnemyBasic extends BasePlayer {
           try {
             // Create custom particle effects
             const numParticles = 12;
-            const colors = [0xff0000, 0xff4444, 0xff8888]; // Different shades of red
+            const colors = [0xffffff, 0xeeeeee, 0xdddddd]; // Different shades of white
 
             for (let i = 0; i < numParticles; i++) {
               const angle = ((Math.PI * 2) / numParticles) * i;
@@ -471,14 +484,30 @@ class EnemyBasic extends BasePlayer {
     this.scene.gameState.kills++;
     this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
 
-    // Initialize coins array if it doesn't exist
+    // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
     }
+    if (!this.scene.xpGems) {
+      this.scene.xpGems = [];
+    }
 
-    // Create coin at enemy's position and add it to the scene's coins array
-    const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-    this.scene.coins.push(coin);
+    // Determine drop type - 25% chance for any drop
+    const dropChance = Math.random();
+    if (dropChance < 0.25) {  // 25% chance for a drop
+      // 40% chance for coin (10% total), 60% chance for XP gem (15% total)
+      if (dropChance < 0.10) {
+        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
+      } else {
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
+      }
+    }
 
     // Play death animation and cleanup
     this.playDeathAnimation().then(() => {

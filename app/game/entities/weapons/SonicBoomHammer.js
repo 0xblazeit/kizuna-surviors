@@ -3,6 +3,9 @@ import { BaseWeapon } from './BaseWeapon.js';
 export class SonicBoomHammer extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
+
+        // Set weapon name
+        this.name = 'Sonic Hammer';
         
         // Set weapon stats - slow but powerful
         this.stats = {
@@ -30,7 +33,7 @@ export class SonicBoomHammer extends BaseWeapon {
         this.activeProjectiles = [];
         
         // Initialize level configuration
-        this.currentLevel = 0;
+        this.currentLevel = 1;  // Start at level 1 to match levelConfigs
         this.maxLevel = 8;
         this.levelConfigs = {
             1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.82 },

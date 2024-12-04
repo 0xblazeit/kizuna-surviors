@@ -3,6 +3,8 @@ export class MagicWandWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
+        this.name = 'Shamir\'s Shard';
+
         // Set weapon stats
         this.stats = {
             damage: 6,
@@ -43,6 +45,9 @@ export class MagicWandWeapon extends BaseWeapon {
         
         // Track last movement direction
         this.lastDirection = { x: 1, y: 0 }; // Default right direction
+        
+        // Initialize lastFiredTime
+        this.lastFiredTime = 0;
 
         console.log('Magic Wand initialized with stats:', this.stats);
 
@@ -63,28 +68,35 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Create new projectiles
         for (let i = 0; i < this.maxProjectiles; i++) {
-            const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
+            const sprite = this.scene.physics.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
             sprite.setScale(this.stats.scale);
             sprite.setActive(true);
             sprite.setVisible(false);
             sprite.setTint(this.effectColors.primary);
+            
+            // Set up physics body for better collision detection
+            sprite.body.setSize(30, 30);    // Slightly larger hitbox
+            sprite.body.setCircle(15);      // Circular collision area
+            sprite.body.setCollideWorldBounds(false);  // Allow projectiles to go off-screen
+            sprite.body.setAllowGravity(false);        // Projectiles don't use gravity
+            sprite.body.setImmovable(true);            // Projectiles don't get pushed by collisions
 
             // Add a simple glow effect using a second sprite
             const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
-            glowSprite.setScale(this.stats.scale * 1.4); // Glow is 40% larger than the projectile
+            glowSprite.setScale(this.stats.scale * 1.4);
             glowSprite.setAlpha(0.3);
             glowSprite.setVisible(false);
             glowSprite.setTint(this.effectColors.secondary);
             glowSprite.setBlendMode(Phaser.BlendModes.ADD);
             
-            // Make the glow sprite follow the main sprite
             sprite.glow = glowSprite;
 
             this.activeProjectiles.push({
                 sprite: sprite,
                 active: false,
                 angle: 0,
-                pierceCount: this.stats.pierce
+                pierceCount: this.stats.pierce,
+                hitEnemies: new Set() // Track which enemies this projectile has hit
             });
         }
     }
@@ -109,14 +121,13 @@ export class MagicWandWeapon extends BaseWeapon {
         // Convert delta to seconds for consistent speed
         const deltaSeconds = delta / 1000;
         
-        // Calculate movement based on angle and speed
+        // Calculate velocity based on angle and speed
         const speed = this.stats.speed;
-        const moveX = Math.cos(proj.angle) * speed * deltaSeconds;
-        const moveY = Math.sin(proj.angle) * speed * deltaSeconds;
+        const velocityX = Math.cos(proj.angle) * speed;
+        const velocityY = Math.sin(proj.angle) * speed;
 
-        // Update position
-        proj.sprite.x += moveX;
-        proj.sprite.y += moveY;
+        // Set velocity directly on physics body
+        proj.sprite.setVelocity(velocityX, velocityY);
 
         // Update glow position
         if (proj.sprite.glow) {
@@ -137,9 +148,8 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Get the camera viewport bounds
         const camera = this.scene.cameras.main;
-        const margin = 100; // Increased margin for better visibility
+        const margin = 100;
         
-        // Calculate viewport bounds
         const bounds = {
             left: camera.scrollX - margin,
             right: camera.scrollX + camera.width + margin,
@@ -147,24 +157,11 @@ export class MagicWandWeapon extends BaseWeapon {
             bottom: camera.scrollY + camera.height + margin
         };
 
-        // Check if projectile is outside camera view (with margin)
+        // Check if projectile is outside camera view
         if (proj.sprite.x < bounds.left || 
             proj.sprite.x > bounds.right || 
             proj.sprite.y < bounds.top || 
             proj.sprite.y > bounds.bottom) {
-            
-            this.deactivateProjectile(proj);
-            return;
-        }
-
-        // Check world bounds if they exist
-        const worldBounds = this.scene.physics.world.bounds;
-        if (worldBounds && (
-            proj.sprite.x < worldBounds.x || 
-            proj.sprite.x > worldBounds.x + worldBounds.width ||
-            proj.sprite.y < worldBounds.y || 
-            proj.sprite.y > worldBounds.y + worldBounds.height
-        )) {
             this.deactivateProjectile(proj);
         }
     }
@@ -206,37 +203,25 @@ export class MagicWandWeapon extends BaseWeapon {
             }
         }
 
-        // Update active projectiles
+        // Update active projectiles and check collisions
         this.activeProjectiles.forEach(proj => {
             if (proj.active) {
                 this.updateProjectile(proj, delta);
                 
-                // Get active enemies
-                const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-                    return e && e.sprite && e.sprite.active && !e.isDead;
-                }) : [];
-
                 // Check for collisions with enemies
-                enemies.forEach(enemy => {
-                    if (proj.active && proj.pierceCount > 0 && proj.sprite.visible) {
-                        const projX = proj.sprite.x;
-                        const projY = proj.sprite.y;
-                        const enemyX = enemy.sprite.x;
-                        const enemyY = enemy.sprite.y;
-
-                        const dx = projX - enemyX;
-                        const dy = projY - enemyY;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-
-                        const projRadius = 20;
-                        const enemyRadius = 25;
-                        const collisionThreshold = projRadius + enemyRadius;
-
-                        if (distance < collisionThreshold) {
-                            this.handleHit(enemy, proj);
+                if (this.scene.enemies && proj.pierceCount > 0) {
+                    this.scene.enemies.forEach(enemy => {
+                        if (enemy && enemy.sprite && enemy.sprite.active && !enemy.isDead && !proj.hitEnemies.has(enemy)) {
+                            const bounds1 = proj.sprite.getBounds();
+                            const bounds2 = enemy.sprite.getBounds();
+                            
+                            if (Phaser.Geom.Intersects.RectangleToRectangle(bounds1, bounds2)) {
+                                this.handleHit(enemy, proj);
+                                proj.hitEnemies.add(enemy);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
     }
@@ -289,8 +274,10 @@ export class MagicWandWeapon extends BaseWeapon {
     fireProjectile(proj, time) {
         if (!proj.sprite || !proj.sprite.active) return;
 
-        // Reset pierce count and make visible
+        // Reset pierce count and hit enemies set
         proj.pierceCount = this.stats.pierce;
+        proj.hitEnemies.clear();
+        
         proj.sprite.setVisible(true);
         if (proj.sprite.glow) {
             proj.sprite.glow.setVisible(true);
@@ -305,7 +292,7 @@ export class MagicWandWeapon extends BaseWeapon {
         const dy = target.y - this.player.y;
         proj.angle = Math.atan2(dy, dx);
 
-        // Set initial position
+        // Set initial position and rotation
         proj.sprite.setPosition(this.player.x, this.player.y);
         proj.sprite.rotation = proj.angle;
         if (proj.sprite.glow) {
@@ -315,12 +302,6 @@ export class MagicWandWeapon extends BaseWeapon {
         
         proj.active = true;
         this.lastFiredTime = time;
-
-        // console.log('Firing projectile:', {
-        //     from: { x: this.player.x, y: this.player.y },
-        //     angle: proj.angle,
-        //     pierce: proj.pierceCount
-        // });
     }
 
     getTargetPosition() {
@@ -421,90 +402,35 @@ export class MagicWandWeapon extends BaseWeapon {
 
         console.log(`Magic Wand leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
-        // Recreate projectiles with new scale
-        this.createMagicProjectiles();
+        // Create level up effect around the player
+        const burst = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-magic-wand');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(0x00ffff);
 
-        // Create level up effects
-        this.activeProjectiles.forEach(proj => {
-            if (proj.sprite && proj.sprite.active) {
-                // Create a magical burst effect
-                const burst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
-                burst.setScale(0.2);
-                burst.setAlpha(0.7);
-                burst.setTint(0xffff00);
-
-                // Special max level animation
-                if (this.currentLevel === this.maxLevel) {
-                    // Create multiple orbiting particles
-                    for (let i = 0; i < 8; i++) {
-                        const particle = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-projectile');
-                        particle.setScale(0.3);
-                        particle.setAlpha(0.8);
-                        particle.setTint(0xff00ff);
-
-                        // Create an orbit animation
-                        this.scene.tweens.add({
-                            targets: particle,
-                            x: {
-                                getStart: () => proj.sprite.x + Math.cos(i * Math.PI / 4) * 30,
-                                getEnd: () => proj.sprite.x + Math.cos((i * Math.PI / 4) + Math.PI * 2) * 30
-                            },
-                            y: {
-                                getStart: () => proj.sprite.y + Math.sin(i * Math.PI / 4) * 30,
-                                getEnd: () => proj.sprite.y + Math.sin((i * Math.PI / 4) + Math.PI * 2) * 30
-                            },
-                            scaleX: { from: 0.3, to: 0 },
-                            scaleY: { from: 0.3, to: 0 },
-                            alpha: { from: 0.8, to: 0 },
-                            duration: 1000,
-                            ease: 'Quad.easeOut',
-                            onComplete: () => particle.destroy()
-                        });
-                    }
-
-                    // Create a larger burst for max level
-                    const maxLevelBurst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
-                    maxLevelBurst.setScale(0.4);
-                    maxLevelBurst.setAlpha(0.9);
-                    maxLevelBurst.setTint(0xff00ff);
-
-                    this.scene.tweens.add({
-                        targets: maxLevelBurst,
-                        scaleX: 3,
-                        scaleY: 3,
-                        alpha: 0,
-                        duration: 800,
-                        ease: 'Quad.easeOut',
-                        onComplete: () => maxLevelBurst.destroy()
-                    });
-                }
-
-                this.scene.tweens.add({
-                    targets: burst,
-                    scaleX: 2,
-                    scaleY: 2,
-                    alpha: 0,
-                    duration: 500,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => burst.destroy()
-                });
-
-                // Scale animation on projectile
-                this.scene.tweens.add({
-                    targets: proj.sprite,
-                    scaleX: 0.6,
-                    scaleY: 0.6,
-                    duration: 200,
-                    yoyo: true,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => {
-                        if (proj.sprite && proj.sprite.active) {
-                            proj.sprite.setScale(0.4);
-                        }
-                    }
-                });
-            }
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
         });
+
+        // Recreate projectiles with new stats
+        if (this.activeProjectiles) {
+            this.activeProjectiles.forEach(proj => {
+                if (proj.sprite) {
+                    if (proj.sprite.glow) {
+                        proj.sprite.glow.destroy();
+                    }
+                    proj.sprite.destroy();
+                }
+            });
+            this.activeProjectiles = [];
+            this.createMagicProjectiles();
+        }
 
         return true;
     }
@@ -541,6 +467,25 @@ export class MagicWandWeapon extends BaseWeapon {
 
             this.scene.time.delayedCall(500, () => particles.destroy());
         }
+    }
+
+    attack(time) {
+        // Find an inactive projectile or one that's ready to be recycled
+        const availableProj = this.activeProjectiles.find(proj => 
+            !proj.active || 
+            !proj.sprite.visible || 
+            proj.pierceCount <= 0
+        );
+        
+        if (availableProj) {
+            // Reset the projectile state before firing
+            availableProj.active = false;
+            availableProj.pierceCount = this.stats.pierce;
+            this.fireProjectile(availableProj, time);
+        }
+
+        // Call super to update lastFiredTime
+        super.attack(time);
     }
 }
 

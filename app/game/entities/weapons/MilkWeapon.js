@@ -19,7 +19,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.05,
                 splashRadius: 40,
                 puddleCount: 2,
-                puddleDuration: 2500
+                puddleDuration: 2500,
+                slowAmount: 0.7  // Slow to 70% of original speed
             },
             2: {
                 damage: 30,
@@ -31,7 +32,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.12,
                 splashRadius: 60,
                 puddleCount: 4,
-                puddleDuration: 3500
+                puddleDuration: 3500,
+                slowAmount: 0.65
             },
             3: {
                 damage: 45,
@@ -43,7 +45,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.14,
                 splashRadius: 70,
                 puddleCount: 5,
-                puddleDuration: 4000
+                puddleDuration: 4000,
+                slowAmount: 0.6
             },
             4: {
                 damage: 65,
@@ -55,7 +58,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.16,
                 splashRadius: 80,
                 puddleCount: 6,
-                puddleDuration: 4500
+                puddleDuration: 4500,
+                slowAmount: 0.55
             },
             5: {
                 damage: 90,
@@ -67,7 +71,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.18,
                 splashRadius: 90,
                 puddleCount: 7,
-                puddleDuration: 5000
+                puddleDuration: 5000,
+                slowAmount: 0.5
             },
             6: {
                 damage: 120,
@@ -79,7 +84,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.20,
                 splashRadius: 100,
                 puddleCount: 8,
-                puddleDuration: 5500
+                puddleDuration: 5500,
+                slowAmount: 0.45
             },
             7: {
                 damage: 160,
@@ -91,7 +97,8 @@ export class MilkWeapon extends BaseWeapon {
                 criticalChance: 0.22,
                 splashRadius: 110,
                 puddleCount: 9,
-                puddleDuration: 6000
+                puddleDuration: 6000,
+                slowAmount: 0.4
             },
             8: {
                 damage: 200,
@@ -104,6 +111,7 @@ export class MilkWeapon extends BaseWeapon {
                 splashRadius: 120,
                 puddleCount: 10,
                 puddleDuration: 6500,
+                slowAmount: 0.35,
                 isMaxLevel: true
             }
         };
@@ -148,23 +156,30 @@ export class MilkWeapon extends BaseWeapon {
         const x = this.player.sprite.x + Math.cos(angle) * distance;
         const y = this.player.sprite.y + Math.sin(angle) * distance;
 
-        // Create main puddle
+        // Create main puddle with physics
         const puddle = this.scene.add.sprite(x, y, 'weapon-magic-milk');
+        this.scene.physics.add.existing(puddle, true); // true means static physics body
+        puddle.body.setCircle(this.stats.splashRadius);
         puddle.setScale(0);
         puddle.setAlpha(0.8);
-        puddle.setTint(this.effectColors.primary);
         puddle.setBlendMode(Phaser.BlendModes.ADD);
 
         // Create glow effect
         const glow = this.scene.add.sprite(x, y, 'weapon-magic-milk');
         glow.setScale(0);
         glow.setAlpha(0.4);
-        glow.setTint(this.effectColors.glow);
         glow.setBlendMode(Phaser.BlendModes.ADD);
+
+        // Create slow effect indicator
+        const slowIndicator = this.scene.add.sprite(x, y, 'weapon-magic-milk');
+        slowIndicator.setScale(0);
+        slowIndicator.setAlpha(0.3);
+        slowIndicator.setTint(0x00ffff); // Cyan color for slow effect
+        slowIndicator.setBlendMode(Phaser.BlendModes.ADD);
 
         // Animate puddles appearing
         this.scene.tweens.add({
-            targets: [puddle, glow],
+            targets: [puddle, glow, slowIndicator],
             scaleX: this.stats.splashRadius / 200,
             scaleY: this.stats.splashRadius / 200,
             duration: 200,
@@ -175,10 +190,10 @@ export class MilkWeapon extends BaseWeapon {
         if (this.currentLevel === 8) {
             // Intense pulsating effect
             this.scene.tweens.add({
-                targets: puddle,
+                targets: [puddle, slowIndicator],
                 scaleX: this.stats.splashRadius / 180,
                 scaleY: this.stats.splashRadius / 180,
-                alpha: 1,
+                alpha: { from: 0.8, to: 1 },
                 duration: 500,
                 yoyo: true,
                 repeat: -1,
@@ -187,7 +202,7 @@ export class MilkWeapon extends BaseWeapon {
 
             // Rotating glow effect
             this.scene.tweens.add({
-                targets: glow,
+                targets: [glow, slowIndicator],
                 angle: 360,
                 duration: 3000,
                 repeat: -1
@@ -207,7 +222,7 @@ export class MilkWeapon extends BaseWeapon {
         } else {
             // Normal pulsing for non-max levels
             this.scene.tweens.add({
-                targets: glow,
+                targets: [glow, slowIndicator],
                 alpha: 0.2,
                 duration: 1000,
                 yoyo: true,
@@ -219,29 +234,66 @@ export class MilkWeapon extends BaseWeapon {
         const puddleData = {
             sprite: puddle,
             glowSprite: glow,
+            slowSprite: slowIndicator,
             x: x,
             y: y,
             createdAt: this.scene.time.now,
             lastDamageTime: {},
-            lastExplosionTime: 0  // Track last explosion time
+            affectedEnemies: new Set(),
+            lastExplosionTime: 0
         };
         
         this.activePuddles.push(puddleData);
 
+        // Add overlap detection with enemies
+        this.scene.physics.add.overlap(puddle, this.scene.enemies.map(e => e.sprite), (puddleSprite, enemySprite) => {
+            const enemy = this.scene.enemies.find(e => e.sprite === enemySprite);
+            if (enemy && !enemy.isDead) {
+                const puddle = this.activePuddles.find(p => p.sprite === puddleSprite);
+                if (puddle) {
+                    // Apply slow effect if not already applied
+                    if (!puddle.affectedEnemies.has(enemy.id)) {
+                        this.applySlowEffect(enemy);
+                        puddle.affectedEnemies.add(enemy.id);
+                    }
+
+                    // Apply damage if cooldown has elapsed
+                    const currentTime = this.scene.time.now;
+                    if (!puddle.lastDamageTime[enemy.id] || 
+                        currentTime - puddle.lastDamageTime[enemy.id] >= 500) {
+                        const isCritical = Math.random() < this.stats.criticalChance;
+                        const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
+                        
+                        enemy.takeDamage(damage);
+                        puddle.lastDamageTime[enemy.id] = currentTime;
+                        this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
+                    }
+                }
+            }
+        });
+
         // Cleanup after duration
         this.scene.time.delayedCall(this.stats.puddleDuration, () => {
             if (this.currentLevel === 8) {
-                // Create final explosion effect
                 this.createExplosion(x, y);
             }
             
+            // Remove slow effect from affected enemies
+            puddleData.affectedEnemies.forEach(enemyId => {
+                const enemy = this.scene.enemies.find(e => e.id === enemyId);
+                if (enemy && enemy.active) {
+                    this.removeSlowEffect(enemy);
+                }
+            });
+
             this.scene.tweens.add({
-                targets: [puddle, glow],
+                targets: [puddle, glow, slowIndicator],
                 alpha: 0,
                 duration: 300,
                 onComplete: () => {
                     puddle.destroy();
                     glow.destroy();
+                    slowIndicator.destroy();
                     this.activePuddles = this.activePuddles.filter(p => p !== puddleData);
                 }
             });
@@ -306,41 +358,112 @@ export class MilkWeapon extends BaseWeapon {
         });
     }
 
+    levelUp() {
+        if (this.currentLevel >= this.maxLevel) {
+            console.log('Weapon already at max level!');
+            return false;
+        }
+
+        this.currentLevel++;
+        const newStats = this.levelConfigs[this.currentLevel];
+        
+        // Update stats
+        this.stats = {
+            ...this.stats,
+            ...newStats
+        };
+
+        console.log(`Milk Weapon leveled up to ${this.currentLevel}! New stats:`, this.stats);
+
+        // Create level up effect around the player
+        const burst = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-magic-milk');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(0xffff00);
+
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
+        });
+
+        return true;
+    }
+
     update(time, delta) {
         // Call base class update which includes death check
         if (!super.update(time, delta)) {
             return;
         }
 
-        // Check each puddle for enemies
+        // Check for enemies that have left puddle areas
         this.activePuddles.forEach(puddle => {
-            const damageInterval = 500; // Damage every 0.5 seconds
+            puddle.affectedEnemies.forEach(enemyId => {
+                const enemy = this.scene.enemies.find(e => e.id === enemyId);
+                if (enemy && !enemy.isDead) {
+                    const distance = Phaser.Math.Distance.Between(
+                        puddle.x, puddle.y,
+                        enemy.sprite.x, enemy.sprite.y
+                    );
 
-            this.scene.enemies.forEach(enemy => {
-                if (!enemy.active) return;
-
-                const distance = Phaser.Math.Distance.Between(
-                    puddle.x, puddle.y,
-                    enemy.sprite.x, enemy.sprite.y
-                );
-
-                if (distance <= this.stats.splashRadius / 2) {
-                    if (!puddle.lastDamageTime[enemy.id] || 
-                        time - puddle.lastDamageTime[enemy.id] >= damageInterval) {
-                        
-                        const isCritical = Math.random() < this.stats.criticalChance;
-                        const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
-                        
-                        enemy.takeDamage(damage);
-                        puddle.lastDamageTime[enemy.id] = time;
-
-                        if (isCritical) {
-                            this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, true);
-                        }
+                    if (distance > this.stats.splashRadius) {
+                        this.removeSlowEffect(enemy);
+                        puddle.affectedEnemies.delete(enemyId);
                     }
                 }
             });
         });
+    }
+
+    applySlowEffect(enemy) {
+        // Store original speed if not already stored
+        if (!enemy.originalMoveSpeed) {
+            enemy.originalMoveSpeed = enemy.moveSpeed;
+            console.log('Storing original speed:', enemy.moveSpeed);
+        }
+        // Apply slow effect
+        enemy.moveSpeed = enemy.originalMoveSpeed * this.stats.slowAmount;
+        console.log('Applied slow effect. New speed:', enemy.moveSpeed);
+
+        // Add visual indicator for slowed state
+        if (!enemy.slowEffect) {
+            enemy.slowEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, 'weapon-magic-milk');
+            enemy.slowEffect.setScale(0.3);
+            enemy.slowEffect.setAlpha(0.3);
+            enemy.slowEffect.setTint(0x00ffff);
+            enemy.slowEffect.setBlendMode(Phaser.BlendModes.ADD);
+
+            // Make the slow effect follow the enemy
+            this.scene.tweens.add({
+                targets: enemy.slowEffect,
+                alpha: 0.1,
+                yoyo: true,
+                repeat: -1,
+                duration: 500
+            });
+        }
+
+        // Update slow effect position to follow enemy
+        if (enemy.slowEffect) {
+            enemy.slowEffect.setPosition(enemy.sprite.x, enemy.sprite.y);
+        }
+    }
+
+    removeSlowEffect(enemy) {
+        if (enemy.originalMoveSpeed) {
+            console.log('Removing slow effect. Restoring speed from:', enemy.moveSpeed, 'to:', enemy.originalMoveSpeed);
+            enemy.moveSpeed = enemy.originalMoveSpeed;
+            delete enemy.originalMoveSpeed;
+        }
+
+        if (enemy.slowEffect) {
+            enemy.slowEffect.destroy();
+            delete enemy.slowEffect;
+        }
     }
 
     showDamageText(x, y, damage, isCritical) {

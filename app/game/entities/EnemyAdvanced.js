@@ -1,5 +1,6 @@
 import EnemyBasic from "./EnemyBasic";
 import Coin from "../entities/Coin";
+import XPGem from "../entities/XPGem";
 
 class EnemyAdvanced extends EnemyBasic {
   constructor(scene, x, y, texture, config = {}) {
@@ -23,15 +24,29 @@ class EnemyAdvanced extends EnemyBasic {
   }
 
   die() {
-    // Initialize coins array if it doesn't exist
+    // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
     }
+    if (!this.scene.xpGems) {
+      this.scene.xpGems = [];
+    }
 
-    // 90% chance to drop a coin for advanced enemies
-    if (Math.random() < 0.9) {
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      this.scene.coins.push(coin);
+    // Determine drop type - 50% chance for any drop
+    const dropChance = Math.random();
+    if (dropChance < 0.50) {  // 50% chance for a drop
+      // 40% chance for coin (20% total), 60% chance for XP gem (30% total)
+      if (dropChance < 0.20) {
+        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
+      } else {
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 100, 0.15);
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
+      }
     }
 
     super.playDeathAnimation().then(() => {
