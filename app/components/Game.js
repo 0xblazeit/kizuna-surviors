@@ -238,6 +238,11 @@ const GameScene = {
       spawnRate: 1000, // Base spawn rate in milliseconds
       minSpawnRate: 500, // Minimum spawn rate (fastest spawn rate allowed)
       goldMilestoneReached: false, // Add gold milestone flag
+      touchInput: {
+        isActive: false,
+        x: 0,
+        y: 0
+      }
     };
 
     // Bind methods to this scene
@@ -851,20 +856,46 @@ const GameScene = {
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
 
-    // Create player with physics and pass trail container
+    // Initialize player
     this.player = new MainPlayer(this, width / 2, height / 2, "player", {
       trailContainer: this.trailContainer,
       scale: 1,
       spriteKey: "player",
     });
 
-    // Listen for player death event
-    this.events.on("playerDeath", () => {
-      this.showWastedScreen();
+    // Add touch input handlers
+    this.input.on('pointerdown', (pointer) => {
+      this.gameState.touchInput.isActive = true;
+      this.gameState.touchInput.x = pointer.x;
+      this.gameState.touchInput.y = pointer.y;
     });
 
-    // Initialize weapon system - this is needed for selectable weapons grid
-    console.log("Initializing weapon system...");
+    this.input.on('pointermove', (pointer) => {
+      if (this.gameState.touchInput.isActive) {
+        this.gameState.touchInput.x = pointer.x;
+        this.gameState.touchInput.y = pointer.y;
+      }
+    });
+
+    this.input.on('pointerup', () => {
+      this.gameState.touchInput.isActive = false;
+    });
+
+    // Add touch control overlay for mobile
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      const touchOverlay = this.add.circle(100, height - 100, 80, 0x000000, 0.2);
+      touchOverlay.setScrollFactor(0);
+      touchOverlay.setDepth(1000);
+      touchOverlay.setInteractive();
+      
+      // Add visual indicator
+      const touchIndicator = this.add.circle(100, height - 100, 20, 0xffffff, 0.5);
+      touchIndicator.setScrollFactor(0);
+      touchIndicator.setDepth(1001);
+      this.gameState.touchIndicator = touchIndicator;
+    }
+
+    // Create weapons array
     this.weapons = [
       new RotatingDogWeapon(this, this.player),
       new MagicWandWeapon(this, this.player),
@@ -1252,7 +1283,7 @@ const GameScene = {
   update: function (time, delta) {
     if (!this.gameState) return;
 
-    // Handle player movement using the new system
+    // Handle player movement using both keyboard and touch
     const input = {
       left: this.cursors.left.isDown || this.wasd.left.isDown,
       right: this.cursors.right.isDown || this.wasd.right.isDown,
@@ -1260,68 +1291,38 @@ const GameScene = {
       down: this.cursors.down.isDown || this.wasd.down.isDown,
     };
 
-    if (this.player) {
-      this.player.handleMovement(input);
+    // Add touch input processing
+    if (this.gameState.touchInput.isActive && this.player) {
+      const touchX = this.gameState.touchInput.x;
+      const touchY = this.gameState.touchInput.y;
+      
+      // Calculate direction relative to touch overlay center
+      const centerX = 100;
+      const centerY = this.scale.height - 100;
+      
+      // Calculate differences
+      const dx = touchX - centerX;
+      const dy = touchY - centerY;
+      
+      // Add to input based on touch position
+      input.left = input.left || dx < -20;
+      input.right = input.right || dx > 20;
+      input.up = input.up || dy < -20;
+      input.down = input.down || dy > 20;
+
+      // Update touch indicator position if it exists
+      if (this.gameState.touchIndicator) {
+        const maxDistance = 60; // Maximum distance the indicator can move from center
+        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
+        const angle = Math.atan2(dy, dx);
+        
+        this.gameState.touchIndicator.x = centerX + Math.cos(angle) * distance;
+        this.gameState.touchIndicator.y = centerY + Math.sin(angle) * distance;
+      }
     }
 
-    // Update debug text first
-    if (this.debugText && this.player && this.weapons) {
-      try {
-        const weapon = this.weapons[this.gameState.selectedWeaponIndex];
-        const stats = weapon?.stats || {};
-
-        // Check if gold has reached 5 and send data to endpoint
-        if (this.gameState.gold >= 5 && !this.gameState.goldMilestoneReached) {
-          this.gameState.goldMilestoneReached = true;
-          
-          fetch('/api/game-over', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              gold: this.gameState.gold,
-              kills: this.gameState.kills,
-              timestamp: new Date().toISOString()
-            })
-          })
-          .catch(error => console.error('Error posting game stats:', error));
-        }
-
-        // Create level progress bar
-        const maxBoxes = 8;
-        const filledBoxes = (weapon?.currentLevel || 1);  
-        const progressBar = Array(maxBoxes)
-          .fill('░') 
-          .fill('█', 0, filledBoxes) 
-          .join('');
-
-        const text = [
-          `Position: (${Math.round(this.player.x)}, ${Math.round(
-            this.player.y
-          )})`,
-          `Active Weapons: ${this.weapons.length}`,
-          `Weapon Stats:`,
-          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
-          `  Damage: ${stats.damage || 0}`,
-          `  Pierce: ${stats.pierce || 0}`,
-          `  Range: ${stats.range || 0}`,
-          `  Speed: ${stats.speed || 0}`,
-          ...(stats.magicPower
-            ? [
-                `  Magic Power: ${stats.magicPower}`,
-                `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
-                `  Elemental Damage: ${stats.elementalDamage}`,
-              ]
-            : []),
-          `FPS: ${Math.round(1000 / delta)}`,
-          `Time: ${Math.round(time / 1000)}s`,
-        ].join("\n");
-
-        this.debugText.setText(text);
-      } catch (error) {
-        console.error("Error updating debug text:", error);
-      }
+    if (this.player) {
+      this.player.handleMovement(input);
     }
 
     // Update coins
