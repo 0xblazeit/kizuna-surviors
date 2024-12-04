@@ -1106,6 +1106,12 @@ const GameScene = {
           enemy.stats.maxHealth *= this.gameState.difficultyMultiplier;
           enemy.stats.currentHealth = enemy.stats.maxHealth;
           enemy.stats.damage *= this.gameState.difficultyMultiplier;
+          
+          // Subtle size increase for basic enemies
+          const baseScale = 1;
+          const healthScale = Math.min(1.2, Math.max(1, 1 + (enemy.stats.maxHealth / 500) * 0.2));
+          enemy.sprite.setScale(baseScale * healthScale);
+          
         } else if (roll < spawnRates.basic + spawnRates.advanced) {
           // Advanced enemy - stronger and faster
           enemy = new EnemyAdvanced(this, x, y, spriteKey);
@@ -1115,6 +1121,12 @@ const GameScene = {
           enemy.stats.damage *= (1 + gameProgress * 0.7) * this.gameState.difficultyMultiplier;
           enemy.stats.defense *= (1 + gameProgress * 0.3);
           enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress));
+          
+          // Slightly larger scale for advanced enemies
+          const baseScale = 1.1;
+          const healthScale = Math.min(1.3, Math.max(1, 1 + (enemy.stats.maxHealth / 750) * 0.2));
+          enemy.sprite.setScale(baseScale * healthScale);
+          
         } else {
           // Epic enemy - much stronger and has special abilities
           enemy = new EnemyEpic(this, x, y, spriteKey);
@@ -1124,12 +1136,17 @@ const GameScene = {
           enemy.stats.damage *= (1 + gameProgress * 1.2) * this.gameState.difficultyMultiplier;
           enemy.stats.defense *= (1 + gameProgress * 0.5);
           enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress * 1.5));
+          
+          // Largest base scale for epic enemies, but still subtle scaling
+          const baseScale = 1.2;
+          const healthScale = Math.min(1.4, Math.max(1, 1 + (enemy.stats.maxHealth / 1000) * 0.2));
+          enemy.sprite.setScale(baseScale * healthScale);
         }
 
         // Scale enemy size based on their health to give visual feedback of strength
-        const baseScale = 1;
-        const healthScale = Math.min(2, Math.max(1, enemy.stats.maxHealth / 100));
-        enemy.sprite.setScale(baseScale * healthScale);
+        // const baseScale = 1;
+        // const healthScale = Math.min(2, Math.max(1, enemy.stats.maxHealth / 100));
+        // enemy.sprite.setScale(baseScale * healthScale);
 
         // Enhanced enemy movement behavior
         enemy.updateMovement = function(time, delta) {
