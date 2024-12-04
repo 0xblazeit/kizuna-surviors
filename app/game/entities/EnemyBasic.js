@@ -197,7 +197,6 @@ class EnemyBasic extends BasePlayer {
 
   takeDamage(amount, sourceX, sourceY) {
     console.log("Enemy taking damage:", amount);
-    // Only check isDead for damage, not isDying
     if (this.isDead) {
       console.log("Enemy already dead, ignoring damage");
       return 0;
@@ -212,6 +211,32 @@ class EnemyBasic extends BasePlayer {
 
     this.stats.currentHealth -= damageDealt;
     console.log("Enemy health after damage:", this.stats.currentHealth);
+
+    // Show damage number for every hit
+    const damageText = this.scene.add
+      .text(
+        this.sprite.x,
+        this.sprite.y - 20,
+        Math.floor(damageDealt).toString(),
+        {
+          fontSize: "16px",
+          fontFamily: "VT323",
+          fill: "#ffffff", // White color for normal hits
+          stroke: "#000000",
+          strokeThickness: 3,
+        }
+      )
+      .setOrigin(0.5);
+
+    // Animate the damage text
+    this.scene.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30,
+      alpha: 0,
+      duration: 800,
+      ease: "Cubic.Out",
+      onComplete: () => damageText.destroy(),
+    });
 
     // Play hit effects with source position
     this.playHitEffects(sourceX, sourceY);
@@ -494,15 +519,22 @@ class EnemyBasic extends BasePlayer {
 
     // Determine drop type - 25% chance for any drop
     const dropChance = Math.random();
-    if (dropChance < 0.25) {  // 25% chance for a drop
+    if (dropChance < 0.25) {
+      // 25% chance for a drop
       // 40% chance for coin (10% total), 60% chance for XP gem (15% total)
-      if (dropChance < 0.10) {
+      if (dropChance < 0.1) {
         const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
         if (coin) {
           this.scene.coins.push(coin);
         }
       } else {
-        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
+        const gem = new XPGem(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          50,
+          0.12
+        );
         if (gem) {
           this.scene.xpGems.push(gem);
         }
