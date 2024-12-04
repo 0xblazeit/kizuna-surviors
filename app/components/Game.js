@@ -240,10 +240,8 @@ const GameScene = {
       goldMilestoneReached: false, // Add gold milestone flag
       touchInput: {
         isActive: false,
-        startX: 0,
-        startY: 0,
-        currentX: 0,
-        currentY: 0
+        x: 0,
+        y: 0
       }
     };
 
@@ -868,22 +866,34 @@ const GameScene = {
     // Add touch input handlers
     this.input.on('pointerdown', (pointer) => {
       this.gameState.touchInput.isActive = true;
-      this.gameState.touchInput.startX = pointer.x;
-      this.gameState.touchInput.startY = pointer.y;
-      this.gameState.touchInput.currentX = pointer.x;
-      this.gameState.touchInput.currentY = pointer.y;
+      this.gameState.touchInput.x = pointer.x;
+      this.gameState.touchInput.y = pointer.y;
     });
 
     this.input.on('pointermove', (pointer) => {
       if (this.gameState.touchInput.isActive) {
-        this.gameState.touchInput.currentX = pointer.x;
-        this.gameState.touchInput.currentY = pointer.y;
+        this.gameState.touchInput.x = pointer.x;
+        this.gameState.touchInput.y = pointer.y;
       }
     });
 
     this.input.on('pointerup', () => {
       this.gameState.touchInput.isActive = false;
     });
+
+    // Add touch control overlay for mobile
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      const touchOverlay = this.add.circle(100, height - 100, 80, 0x000000, 0.2);
+      touchOverlay.setScrollFactor(0);
+      touchOverlay.setDepth(1000);
+      touchOverlay.setInteractive();
+      
+      // Add visual indicator
+      const touchIndicator = this.add.circle(100, height - 100, 20, 0xffffff, 0.5);
+      touchIndicator.setScrollFactor(0);
+      touchIndicator.setDepth(1001);
+      this.gameState.touchIndicator = touchIndicator;
+    }
 
     // Create weapons array
     this.weapons = [
@@ -1283,20 +1293,32 @@ const GameScene = {
 
     // Add touch input processing
     if (this.gameState.touchInput.isActive && this.player) {
-      const touchInput = this.gameState.touchInput;
+      const touchX = this.gameState.touchInput.x;
+      const touchY = this.gameState.touchInput.y;
       
-      // Calculate the difference between current and start position
-      const dx = touchInput.currentX - touchInput.startX;
-      const dy = touchInput.currentY - touchInput.startY;
+      // Calculate direction relative to touch overlay center
+      const centerX = 100;
+      const centerY = this.scale.height - 100;
       
-      // Set a threshold for movement to prevent accidental movements
-      const threshold = 20;
+      // Calculate differences
+      const dx = touchX - centerX;
+      const dy = touchY - centerY;
       
-      // Add to input based on sliding direction
-      input.left = input.left || dx < -threshold;
-      input.right = input.right || dx > threshold;
-      input.up = input.up || dy < -threshold;
-      input.down = input.down || dy > threshold;
+      // Add to input based on touch position
+      input.left = input.left || dx < -20;
+      input.right = input.right || dx > 20;
+      input.up = input.up || dy < -20;
+      input.down = input.down || dy > 20;
+
+      // Update touch indicator position if it exists
+      if (this.gameState.touchIndicator) {
+        const maxDistance = 60; // Maximum distance the indicator can move from center
+        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
+        const angle = Math.atan2(dy, dx);
+        
+        this.gameState.touchIndicator.x = centerX + Math.cos(angle) * distance;
+        this.gameState.touchIndicator.y = centerY + Math.sin(angle) * distance;
+      }
     }
 
     if (this.player) {
