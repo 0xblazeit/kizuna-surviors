@@ -11,7 +11,7 @@ class EnemyBasic extends BasePlayer {
       defense: 0,
       attackSpeed: 1,
       attackDamage: 8,
-      scale: 0.4, // Reduced from 0.8
+      scale: 0.4, // Fixed scale for basic enemies
       trailTint: 0x3498db, // Light blue trail
       clickDamage: 25, // Add default click damage
       ...config,

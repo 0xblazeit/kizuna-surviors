@@ -11,7 +11,7 @@ class EnemyEpic extends EnemyAdvanced {
       defense: 4, // Double defense
       attackSpeed: 1.4, // 40% faster attacks
       attackDamage: 18, // 50% more damage than advanced
-      scale: 0.44, // Slightly larger than advanced (0.42)
+      scale: 0.6, // Fixed scale for epic enemies
       trailTint: 0xffa500, // Orange trail
       clickDamage: 60, // Higher click damage
       ...config,
