@@ -535,8 +535,8 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     handleHit(enemy, projectile) {
-        // Apply damage
-        enemy.takeDamage(this.stats.damage);
+        // Apply damage with source position
+        enemy.takeDamage(this.stats.damage, projectile.sprite.x, projectile.sprite.y);
         
         // Create hit effect
         this.createHitEffect(enemy.sprite.x, enemy.sprite.y);
