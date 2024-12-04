@@ -14,6 +14,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 300,
                 detectionRange: 120,
                 guardDistance: 120,
+                scale: 0.2  // Tiny to start
             },
             2: {  // First upgrade
                 damage: 6,
@@ -24,6 +25,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 320,
                 detectionRange: 90,
                 guardDistance: 85,
+                scale: 0.3
             },
             3: {  // Getting stronger
                 damage: 9,
@@ -34,6 +36,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 340,
                 detectionRange: 100,
                 guardDistance: 90,
+                scale: 0.4
             },
             4: {  // Significant boost
                 damage: 12,
@@ -44,6 +47,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 360,
                 detectionRange: 110,
                 guardDistance: 95,
+                scale: 0.5
             },
             5: {  // Major power spike
                 damage: 18,
@@ -54,6 +58,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 380,
                 detectionRange: 120,
                 guardDistance: 100,
+                scale: 0.7
             },
             6: {  // Getting powerful
                 damage: 27,
@@ -64,6 +69,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 400,
                 detectionRange: 130,
                 guardDistance: 105,
+                scale: 0.9
             },
             7: {  // Near maximum power
                 damage: 36,
@@ -74,6 +80,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 420,
                 detectionRange: 140,
                 guardDistance: 110,
+                scale: 1.1
             },
             8: {  // Maximum power - Special effects
                 damage: 45,
@@ -84,6 +91,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 speed: 440,
                 detectionRange: 150,
                 guardDistance: 115,
+                scale: 1.3,  // Largest at max level
                 isMaxLevel: true  // Special flag for max level
             }
         };
@@ -137,7 +145,7 @@ export class RotatingDogWeapon extends BaseWeapon {
             const randomDistance = guardDistance * (0.8 + Math.random() * 0.4);
             
             const sprite = this.scene.add.sprite(0, 0, 'weapon-dog-projectile');
-            sprite.setScale(0.5);
+            sprite.setScale(this.stats.scale);  // Apply the scale from current level
             sprite.setOrigin(0.5, 0.5);
             sprite.setDepth(5);
 
@@ -160,7 +168,7 @@ export class RotatingDogWeapon extends BaseWeapon {
                 state: 'guarding',
                 lastAttackTime: 0,
                 targetEnemy: null,
-                originalScale: 0.5,
+                originalScale: this.stats.scale,
                 index: i,
                 nextPatrolTime: 0,
                 nextRotationTime: 0,
@@ -551,6 +559,13 @@ export class RotatingDogWeapon extends BaseWeapon {
         if (newStats.count > oldCount) {
             this.spawnDogs();
         }
+
+        // Update scale of existing dogs
+        this.activeProjectiles.forEach(dog => {
+            if (dog.sprite) {
+                dog.sprite.setScale(this.stats.scale);
+            }
+        });
 
         // Create level up effect
         if (this.activeProjectiles.length > 0) {
