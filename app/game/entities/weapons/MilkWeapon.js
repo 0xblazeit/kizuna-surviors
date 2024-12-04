@@ -214,6 +214,13 @@ export class MilkWeapon extends BaseWeapon {
   }
 
   handleEnemyOverlap(enemy, puddle) {
+    // Check if enemy is still valid
+    if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+      this.removeSlowEffect(enemy);
+      puddle.affectedEnemies.delete(enemy.id);
+      return;
+    }
+
     if (!puddle.affectedEnemies.has(enemy.id)) {
       this.applySlowEffect(enemy);
       puddle.affectedEnemies.add(enemy.id);
@@ -231,31 +238,40 @@ export class MilkWeapon extends BaseWeapon {
       puddle.lastDamageTime[enemy.id] = currentTime;
       this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
     }
+    // Check if enemy is still in puddle range
+    const distance = Phaser.Math.Distance.Between(
+      enemy.sprite.x,
+      enemy.sprite.y,
+      puddle.sprite.x,
+      puddle.sprite.y
+    );
+
+    if (distance > this.stats.splashRadius) {
+      this.removeSlowEffect(enemy);
+      puddle.affectedEnemies.delete(enemy.id);
+    }
   }
 
   removePuddle(puddleData) {
+    // Clean up all effects for affected enemies
     puddleData.affectedEnemies.forEach((enemyId) => {
       const enemy = this.scene.enemies.find((e) => e.id === enemyId);
-      if (enemy && enemy.active) {
-        this.removeSlowEffect(enemy);
-      }
+      this.removeSlowEffect(enemy);
     });
 
-    this.scene.tweens.add({
-      targets: [
-        puddleData.sprite,
-        puddleData.glowSprite,
-        puddleData.slowSprite,
-      ],
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        puddleData.sprite.destroy();
-        puddleData.glowSprite.destroy();
-        puddleData.slowSprite.destroy();
-        this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
-      },
-    });
+    // Kill any existing tweens
+    this.scene.tweens.killTweensOf([
+      puddleData.sprite,
+      puddleData.glowSprite,
+      puddleData.slowSprite,
+    ]);
+
+    // Immediate cleanup
+    puddleData.sprite.destroy();
+    puddleData.glowSprite.destroy();
+    puddleData.slowSprite.destroy();
+
+    this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
   }
 
   applySlowEffect(enemy) {
@@ -290,12 +306,16 @@ export class MilkWeapon extends BaseWeapon {
   }
 
   removeSlowEffect(enemy) {
+    if (!enemy) return;
+
     if (enemy.originalMoveSpeed) {
       enemy.moveSpeed = enemy.originalMoveSpeed;
       delete enemy.originalMoveSpeed;
     }
 
     if (enemy.slowEffect) {
+      // Stop any existing tweens on the slow effect
+      this.scene.tweens.killTweensOf(enemy.slowEffect);
       enemy.slowEffect.destroy();
       delete enemy.slowEffect;
     }
@@ -326,6 +346,21 @@ export class MilkWeapon extends BaseWeapon {
       duration: 800,
       ease: "Cubic.Out",
       onComplete: () => text.destroy(),
+    });
+  }
+
+  update(time, delta) {
+    super.update(time, delta);
+
+    // Clean up effects for dead or inactive enemies
+    this.activePuddles.forEach((puddle) => {
+      puddle.affectedEnemies.forEach((enemyId) => {
+        const enemy = this.scene.enemies.find((e) => e.id === enemyId);
+        if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+          this.removeSlowEffect(enemy);
+          puddle.affectedEnemies.delete(enemyId);
+        }
+      });
     });
   }
 }
