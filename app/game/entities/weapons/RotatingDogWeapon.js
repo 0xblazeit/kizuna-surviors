@@ -505,11 +505,11 @@ export class RotatingDogWeapon extends BaseWeapon {
             }
         }
         
-        // Apply normal damage
-        enemy.takeDamage(this.stats.damage);
+        // Apply normal damage with source position for hit effect
+        enemy.takeDamage(this.stats.damage, sourceX, sourceY);
         
-        // Visual feedback on enemy
-        enemy.sprite.setTint(0xff0000);
+        // Visual feedback on enemy (white flash)
+        enemy.sprite.setTint(0xffffff);
         this.scene.time.delayedCall(100, () => {
             if (enemy.sprite && enemy.sprite.active && !enemy.isDead) {
                 enemy.sprite.clearTint();
