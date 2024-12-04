@@ -30,7 +30,7 @@ export class MagicWandWeapon extends BaseWeapon {
         this.activeProjectiles = [];
         
         // Initialize level configuration
-        this.currentLevel = 0;
+        this.currentLevel = 1;
         this.maxLevel = 8;
         this.levelConfigs = {
             1: { damage: 15, pierce: 4, cooldown: 950, magicPower: 25, criticalChance: 0.12, range: 450, scale: 0.55 },
