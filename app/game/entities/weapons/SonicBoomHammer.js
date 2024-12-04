@@ -275,7 +275,7 @@ export class SonicBoomHammer extends BaseWeapon {
         }
 
         // Debug log for hit confirmation
-        console.log(`Hammer hit enemy! Damage: ${finalDamage}, Critical: ${isCritical}`);
+        // console.log(`Hammer hit enemy! Damage: ${finalDamage}, Critical: ${isCritical}`);
     }
 
     createHitEffect(enemy, proj, isCritical) {
