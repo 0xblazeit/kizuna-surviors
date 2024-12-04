@@ -245,9 +245,9 @@ const GameScene = {
       difficultyMultiplier: 1,
       // Enemy spawn thresholds (in seconds)
       spawnThresholds: {
-        advanced: 60,    // Advanced enemies start appearing after 1 minute
-        epic: 180,      // Epic enemies start appearing after 3 minutes
-        boss: 600       // Boss waves start appearing after 10 minutes
+        advanced: 5,     // Advanced enemies after 5 seconds
+        epic: 10,       // Epic enemies after 10 seconds
+        boss: 600       // Boss waves still at 10 minutes
       },
       // Track if we've announced each enemy type
       enemyTypeAnnounced: {
@@ -256,6 +256,14 @@ const GameScene = {
         boss: false
       }
     };
+
+    // Debug log initial state
+    console.log("Initial game state:", {
+      timerStarted: this.gameState.timerStarted,
+      gameTimer: this.gameState.gameTimer,
+      spawnThresholds: this.gameState.spawnThresholds,
+      enemyTypeAnnounced: this.gameState.enemyTypeAnnounced
+    });
 
     // Bind methods to this scene
     this.gainXP = (amount) => {
@@ -960,8 +968,8 @@ const GameScene = {
     // Initial spawn of fewer enemies
     for (let i = 0; i < 15; i++) {
       // Get random position within world bounds
-      const randomX = Phaser.Math.Between(100, worldWidth - 100);
-      const randomY = Phaser.Math.Between(100, worldHeight - 100);
+      const randomX = Phaser.Math.Between(100, width * 2 - 100);
+      const randomY = Phaser.Math.Between(100, height * 2 - 100);
 
       // Get random enemy sprite
       const randomSprite =
@@ -1036,32 +1044,26 @@ const GameScene = {
 
         // Unlock advanced enemies
         if (this.gameState.gameTimer >= this.gameState.spawnThresholds.advanced) {
-          spawnRates.basic = Math.max(0.4, 1 - gameProgress);
-          spawnRates.advanced = Math.min(0.4, gameProgress * 0.6);
+          spawnRates.basic = 0.7;    // 70% chance for basic
+          spawnRates.advanced = 0.3;  // 30% chance for advanced
         }
 
         // Unlock epic enemies
         if (this.gameState.gameTimer >= this.gameState.spawnThresholds.epic) {
-          spawnRates.basic = Math.max(0.3, 0.8 - gameProgress);
-          spawnRates.advanced = Math.min(0.4, gameProgress * 0.5);
-          spawnRates.epic = Math.min(0.3, gameProgress * 0.4);
+          spawnRates.basic = 0.5;     // 50% chance for basic
+          spawnRates.advanced = 0.3;  // 30% chance for advanced
+          spawnRates.epic = 0.2;      // 20% chance for epic
         }
 
-        // Normalize probabilities
-        const total = spawnRates.basic + spawnRates.advanced + spawnRates.epic;
-        spawnRates.basic /= total;
-        spawnRates.advanced /= total;
-        spawnRates.epic /= total;
+        // After 1 minute, gradually increase advanced and epic spawn rates
+        if (this.gameState.gameTimer >= 60) {
+          const timeScale = Math.min(1, (this.gameState.gameTimer - 60) / 300); // Scale over 5 minutes
+          spawnRates.basic = Math.max(0.3, 0.5 - timeScale * 0.2);      // Decrease to 30%
+          spawnRates.advanced = 0.3 + timeScale * 0.2;                   // Increase to 50%
+          spawnRates.epic = Math.min(0.4, 0.2 + timeScale * 0.2);       // Increase to 40%
+        }
 
-        // Increase max enemies and decrease spawn rate based on wave number
-        this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
-        this.gameState.spawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          1000 - (this.gameState.waveNumber * 50)
-        );
-        this.enemySpawnTimer.delay = this.gameState.spawnRate;
-
-        // Get spawn position using golden ratio distribution around player
+        // Get random position using golden ratio distribution
         const getSpawnPosition = () => {
           const minSpawnDistance = 300; // Minimum distance from player
           const maxSpawnDistance = 500; // Maximum distance from player
@@ -1099,21 +1101,16 @@ const GameScene = {
         // Determine enemy type based on probabilities
         const roll = Math.random();
         let enemy;
+        let spawnType = '';
         
         if (roll < spawnRates.basic) {
-          // Basic enemy
+          spawnType = 'basic';
           enemy = new EnemyBasic(this, x, y, spriteKey);
           enemy.stats.maxHealth *= this.gameState.difficultyMultiplier;
           enemy.stats.currentHealth = enemy.stats.maxHealth;
           enemy.stats.damage *= this.gameState.difficultyMultiplier;
-          
-          // Subtle size increase for basic enemies
-          const baseScale = 1;
-          const healthScale = Math.min(1.2, Math.max(1, 1 + (enemy.stats.maxHealth / 500) * 0.2));
-          enemy.sprite.setScale(baseScale * healthScale);
-          
         } else if (roll < spawnRates.basic + spawnRates.advanced) {
-          // Advanced enemy - stronger and faster
+          spawnType = 'advanced';
           enemy = new EnemyAdvanced(this, x, y, spriteKey);
           enemy.stats.maxHealth *= (1 + gameProgress) * this.gameState.difficultyMultiplier;
           enemy.stats.currentHealth = enemy.stats.maxHealth;
@@ -1121,14 +1118,8 @@ const GameScene = {
           enemy.stats.damage *= (1 + gameProgress * 0.7) * this.gameState.difficultyMultiplier;
           enemy.stats.defense *= (1 + gameProgress * 0.3);
           enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress));
-          
-          // Slightly larger scale for advanced enemies
-          const baseScale = 1.1;
-          const healthScale = Math.min(1.3, Math.max(1, 1 + (enemy.stats.maxHealth / 750) * 0.2));
-          enemy.sprite.setScale(baseScale * healthScale);
-          
         } else {
-          // Epic enemy - much stronger and has special abilities
+          spawnType = 'epic';
           enemy = new EnemyEpic(this, x, y, spriteKey);
           enemy.stats.maxHealth *= (1 + gameProgress * 2) * this.gameState.difficultyMultiplier;
           enemy.stats.currentHealth = enemy.stats.maxHealth;
@@ -1136,17 +1127,17 @@ const GameScene = {
           enemy.stats.damage *= (1 + gameProgress * 1.2) * this.gameState.difficultyMultiplier;
           enemy.stats.defense *= (1 + gameProgress * 0.5);
           enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress * 1.5));
-          
-          // Largest base scale for epic enemies, but still subtle scaling
-          const baseScale = 1.2;
-          const healthScale = Math.min(1.4, Math.max(1, 1 + (enemy.stats.maxHealth / 1000) * 0.2));
-          enemy.sprite.setScale(baseScale * healthScale);
         }
 
-        // Scale enemy size based on their health to give visual feedback of strength
-        // const baseScale = 1;
-        // const healthScale = Math.min(2, Math.max(1, enemy.stats.maxHealth / 100));
-        // enemy.sprite.setScale(baseScale * healthScale);
+        console.log(`Spawning ${spawnType} enemy at time ${this.gameState.gameTimer}`);
+        
+        // Increase max enemies and decrease spawn rate based on wave number
+        this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
+        this.gameState.spawnRate = Math.max(
+          this.gameState.minSpawnRate,
+          1000 - (this.gameState.waveNumber * 50)
+        );
+        this.enemySpawnTimer.delay = this.gameState.spawnRate;
 
         // Enhanced enemy movement behavior
         enemy.updateMovement = function(time, delta) {
@@ -1466,58 +1457,171 @@ const GameScene = {
       });
     });
 
-    // Check for new enemy type unlocks and announce them
+    // Create new timer
+    const scene = this;  // Store reference to the scene
     this.announceNewEnemyType = (type) => {
-      if (!this.gameState.enemyTypeAnnounced[type] && 
-          this.gameState.gameTimer >= this.gameState.spawnThresholds[type]) {
-        this.gameState.enemyTypeAnnounced[type] = true;
-        
-        const messages = {
-          advanced: "Advanced Enemies Approaching!",
-          epic: "Epic Enemies Have Arrived!",
-          boss: "Prepare for Boss Waves!"
-        };
-        
-        const colors = {
-          advanced: '#00ff00',
-          epic: '#ff00ff',
-          boss: '#ff0000'
-        };
-        
-        // Create the main announcement text
-        const announcementText = this.add.text(
-          this.cameras.main.centerX,
-          this.cameras.main.centerY - 50,
-          messages[type],
-          {
-            fontFamily: 'VT323',
-            fontSize: '64px',
-            color: colors[type],
-            stroke: '#000000',
-            strokeThickness: 6
+      console.log(`Attempting to announce ${type} enemy type`); // Debug log
+      const messages = {
+        advanced: "Advanced Enemies Approaching!",
+        epic: "Epic Enemies Have Arrived!",
+        boss: "Prepare for Boss Waves!"
+      };
+      
+      const colors = {
+        advanced: '#00ff00',
+        epic: '#ff00ff',
+        boss: '#ff0000'
+      };
+
+      // Get camera center coordinates
+      const centerX = this.cameras.main.midPoint.x;
+      const centerY = this.cameras.main.midPoint.y;
+      
+      // Create container for announcement elements
+      const container = this.add.container(centerX, centerY);
+      container.setDepth(1001);
+      
+      // Add flash effect
+      const flash = this.add.rectangle(0, 0, 800, 600, 0xffffff, 0.3);
+      flash.setOrigin(0.5);
+      container.add(flash);
+      
+      // Create the main announcement text
+      const announcementText = this.add.text(
+        0,
+        0,
+        messages[type],
+        {
+          fontFamily: 'VT323',
+          fontSize: '72px',
+          color: colors[type],
+          stroke: '#000000',
+          strokeThickness: 8,
+          align: 'center',
+          shadow: {
+            offsetX: 2,
+            offsetY: 2,
+            color: '#000000',
+            blur: 5,
+            fill: true
           }
-        ).setOrigin(0.5);
-        announcementText.setScrollFactor(0);
-        
-        // Animate the text
-        this.tweens.add({
-          targets: announcementText,
-          scaleX: [0, 1.2, 1],
-          scaleY: [0, 1.2, 1],
-          alpha: [0, 1, 1, 0],
-          duration: 3000,
-          ease: 'Power2',
-          onComplete: () => {
-            announcementText.destroy();
-          }
-        });
-      }
+        }
+      );
+      announcementText.setOrigin(0.5);
+      
+      // Add background for better visibility
+      const padding = 30;
+      const background = this.add.rectangle(
+        0,
+        0,
+        announcementText.width + padding * 2,
+        announcementText.height + padding * 2,
+        0x000000,
+        0.7
+      );
+      background.setOrigin(0.5);
+      
+      // Add elements to container in correct order
+      container.add(background);
+      container.add(announcementText);
+      
+      // Make sure container is fixed to camera
+      container.setScrollFactor(0);
+      
+      // Create multiple animations
+      // Flash effect
+      this.tweens.add({
+        targets: flash,
+        alpha: 0,
+        duration: 500,
+        ease: 'Power2',
+      });
+      
+      // Scale and fade animation for the announcement
+      this.tweens.add({
+        targets: container,
+        scaleX: { from: 0, to: 1 },
+        scaleY: { from: 0, to: 1 },
+        alpha: { from: 0, to: 1 },
+        duration: 1000,
+        ease: 'Back.out',
+        onComplete: () => {
+          // Hold for a moment, then fade out
+          this.time.delayedCall(1500, () => {
+            this.tweens.add({
+              targets: container,
+              alpha: 0,
+              y: centerY - 50,
+              duration: 1000,
+              ease: 'Power2',
+              onComplete: () => {
+                container.destroy();
+              }
+            });
+          });
+        }
+      });
+      
+      // Add screen shake effect
+      this.cameras.main.shake(500, 0.005);
+      
+      console.log(`Announcement complete for ${type}`); // Debug log
     };
 
-    // Check for new enemy types
-    this.announceNewEnemyType('advanced');
-    this.announceNewEnemyType('epic');
-    this.announceNewEnemyType('boss');
+    // Reset announcement flags when starting new game
+    this.gameState.enemyTypeAnnounced = {
+      advanced: false,
+      epic: false,
+      boss: false
+    };
+
+    this.timerEvent = this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        if (!scene.gameState.timerStarted || scene.gameState.gameTimer >= 1800) {
+          console.log("Timer not started or exceeded max time"); // Debug log
+          return; // 30 minutes = 1800 seconds
+        }
+
+        scene.gameState.gameTimer++;
+        const minutes = Math.floor(scene.gameState.gameTimer / 60);
+        const seconds = scene.gameState.gameTimer % 60;
+        scene.timerText.setText(
+          `${minutes}:${seconds.toString().padStart(2, "0")}`
+        );
+
+        console.log(`Current game time: ${scene.gameState.gameTimer} seconds`); // Debug log
+        console.log(`Advanced threshold: ${scene.gameState.spawnThresholds.advanced} seconds`); // Debug log
+        console.log(`Advanced announced: ${scene.gameState.enemyTypeAnnounced.advanced}`); // Debug log
+
+        // Check for new enemy types based on timer
+        if (!scene.gameState.enemyTypeAnnounced.advanced && 
+            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.advanced) {
+          console.log("Triggering advanced enemy announcement"); // Debug log
+          scene.gameState.enemyTypeAnnounced.advanced = true;
+          scene.announceNewEnemyType('advanced');
+          console.log("Advanced enemies unlocked at:", scene.gameState.gameTimer);
+        }
+        
+        if (!scene.gameState.enemyTypeAnnounced.epic && 
+            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.epic) {
+          console.log("Triggering epic enemy announcement"); // Debug log
+          scene.gameState.enemyTypeAnnounced.epic = true;
+          scene.announceNewEnemyType('epic');
+          console.log("Epic enemies unlocked at:", scene.gameState.gameTimer);
+        }
+        
+        if (!scene.gameState.enemyTypeAnnounced.boss && 
+            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.boss) {
+          console.log("Triggering boss announcement"); // Debug log
+          scene.gameState.enemyTypeAnnounced.boss = true;
+          scene.announceNewEnemyType('boss');
+          console.log("Boss waves unlocked at:", scene.gameState.gameTimer);
+        }
+      },
+      callbackScope: this,
+      loop: true,
+    });
   },
 
   update: function (time, delta) {
@@ -1657,31 +1761,6 @@ const GameScene = {
     ) {
       console.log("Starting timer..."); // Debug log
       this.gameState.timerStarted = true;
-
-      // Clear any existing timer
-      if (this.timerEvent) {
-        this.timerEvent.remove();
-      }
-
-      // Create new timer
-      this.timerEvent = this.time.addEvent({
-        delay: 1000,
-        callback: () => {
-          if (!this.gameState.timerStarted || this.gameState.gameTimer >= 1800)
-            return; // 30 minutes = 1800 seconds
-
-          this.gameState.gameTimer++;
-          const minutes = Math.floor(this.gameState.gameTimer / 60);
-          const seconds = this.gameState.gameTimer % 60;
-          this.timerText.setText(
-            `${minutes}:${seconds.toString().padStart(2, "0")}`
-          );
-
-          console.log("Timer updated:", this.gameState.gameTimer); // Debug log
-        },
-        callbackScope: this,
-        loop: true,
-      });
     }
 
     // Update player with movement input
