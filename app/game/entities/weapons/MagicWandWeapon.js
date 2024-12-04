@@ -68,28 +68,35 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Create new projectiles
         for (let i = 0; i < this.maxProjectiles; i++) {
-            const sprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
+            const sprite = this.scene.physics.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
             sprite.setScale(this.stats.scale);
             sprite.setActive(true);
             sprite.setVisible(false);
             sprite.setTint(this.effectColors.primary);
+            
+            // Set up physics body for better collision detection
+            sprite.body.setSize(30, 30);    // Slightly larger hitbox
+            sprite.body.setCircle(15);      // Circular collision area
+            sprite.body.setCollideWorldBounds(false);  // Allow projectiles to go off-screen
+            sprite.body.setAllowGravity(false);        // Projectiles don't use gravity
+            sprite.body.setImmovable(true);            // Projectiles don't get pushed by collisions
 
             // Add a simple glow effect using a second sprite
             const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-wand-projectile');
-            glowSprite.setScale(this.stats.scale * 1.4); // Glow is 40% larger than the projectile
+            glowSprite.setScale(this.stats.scale * 1.4);
             glowSprite.setAlpha(0.3);
             glowSprite.setVisible(false);
             glowSprite.setTint(this.effectColors.secondary);
             glowSprite.setBlendMode(Phaser.BlendModes.ADD);
             
-            // Make the glow sprite follow the main sprite
             sprite.glow = glowSprite;
 
             this.activeProjectiles.push({
                 sprite: sprite,
                 active: false,
                 angle: 0,
-                pierceCount: this.stats.pierce
+                pierceCount: this.stats.pierce,
+                hitEnemies: new Set() // Track which enemies this projectile has hit
             });
         }
     }
@@ -114,14 +121,13 @@ export class MagicWandWeapon extends BaseWeapon {
         // Convert delta to seconds for consistent speed
         const deltaSeconds = delta / 1000;
         
-        // Calculate movement based on angle and speed
+        // Calculate velocity based on angle and speed
         const speed = this.stats.speed;
-        const moveX = Math.cos(proj.angle) * speed * deltaSeconds;
-        const moveY = Math.sin(proj.angle) * speed * deltaSeconds;
+        const velocityX = Math.cos(proj.angle) * speed;
+        const velocityY = Math.sin(proj.angle) * speed;
 
-        // Update position
-        proj.sprite.x += moveX;
-        proj.sprite.y += moveY;
+        // Set velocity directly on physics body
+        proj.sprite.setVelocity(velocityX, velocityY);
 
         // Update glow position
         if (proj.sprite.glow) {
@@ -142,9 +148,8 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Get the camera viewport bounds
         const camera = this.scene.cameras.main;
-        const margin = 100; // Increased margin for better visibility
+        const margin = 100;
         
-        // Calculate viewport bounds
         const bounds = {
             left: camera.scrollX - margin,
             right: camera.scrollX + camera.width + margin,
@@ -152,24 +157,11 @@ export class MagicWandWeapon extends BaseWeapon {
             bottom: camera.scrollY + camera.height + margin
         };
 
-        // Check if projectile is outside camera view (with margin)
+        // Check if projectile is outside camera view
         if (proj.sprite.x < bounds.left || 
             proj.sprite.x > bounds.right || 
             proj.sprite.y < bounds.top || 
             proj.sprite.y > bounds.bottom) {
-            
-            this.deactivateProjectile(proj);
-            return;
-        }
-
-        // Check world bounds if they exist
-        const worldBounds = this.scene.physics.world.bounds;
-        if (worldBounds && (
-            proj.sprite.x < worldBounds.x || 
-            proj.sprite.x > worldBounds.x + worldBounds.width ||
-            proj.sprite.y < worldBounds.y || 
-            proj.sprite.y > worldBounds.y + worldBounds.height
-        )) {
             this.deactivateProjectile(proj);
         }
     }
@@ -211,37 +203,25 @@ export class MagicWandWeapon extends BaseWeapon {
             }
         }
 
-        // Update active projectiles
+        // Update active projectiles and check collisions
         this.activeProjectiles.forEach(proj => {
             if (proj.active) {
                 this.updateProjectile(proj, delta);
                 
-                // Get active enemies
-                const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-                    return e && e.sprite && e.sprite.active && !e.isDead;
-                }) : [];
-
                 // Check for collisions with enemies
-                enemies.forEach(enemy => {
-                    if (proj.active && proj.pierceCount > 0 && proj.sprite.visible) {
-                        const projX = proj.sprite.x;
-                        const projY = proj.sprite.y;
-                        const enemyX = enemy.sprite.x;
-                        const enemyY = enemy.sprite.y;
-
-                        const dx = projX - enemyX;
-                        const dy = projY - enemyY;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-
-                        const projRadius = 20;
-                        const enemyRadius = 25;
-                        const collisionThreshold = projRadius + enemyRadius;
-
-                        if (distance < collisionThreshold) {
-                            this.handleHit(enemy, proj);
+                if (this.scene.enemies && proj.pierceCount > 0) {
+                    this.scene.enemies.forEach(enemy => {
+                        if (enemy && enemy.sprite && enemy.sprite.active && !enemy.isDead && !proj.hitEnemies.has(enemy)) {
+                            const bounds1 = proj.sprite.getBounds();
+                            const bounds2 = enemy.sprite.getBounds();
+                            
+                            if (Phaser.Geom.Intersects.RectangleToRectangle(bounds1, bounds2)) {
+                                this.handleHit(enemy, proj);
+                                proj.hitEnemies.add(enemy);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
     }
@@ -294,8 +274,10 @@ export class MagicWandWeapon extends BaseWeapon {
     fireProjectile(proj, time) {
         if (!proj.sprite || !proj.sprite.active) return;
 
-        // Reset pierce count and make visible
+        // Reset pierce count and hit enemies set
         proj.pierceCount = this.stats.pierce;
+        proj.hitEnemies.clear();
+        
         proj.sprite.setVisible(true);
         if (proj.sprite.glow) {
             proj.sprite.glow.setVisible(true);
@@ -310,7 +292,7 @@ export class MagicWandWeapon extends BaseWeapon {
         const dy = target.y - this.player.y;
         proj.angle = Math.atan2(dy, dx);
 
-        // Set initial position
+        // Set initial position and rotation
         proj.sprite.setPosition(this.player.x, this.player.y);
         proj.sprite.rotation = proj.angle;
         if (proj.sprite.glow) {
@@ -320,12 +302,6 @@ export class MagicWandWeapon extends BaseWeapon {
         
         proj.active = true;
         this.lastFiredTime = time;
-
-        // console.log('Firing projectile:', {
-        //     from: { x: this.player.x, y: this.player.y },
-        //     angle: proj.angle,
-        //     pierce: proj.pierceCount
-        // });
     }
 
     getTargetPosition() {
