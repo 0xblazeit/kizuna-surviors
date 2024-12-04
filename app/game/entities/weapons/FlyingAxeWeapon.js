@@ -4,9 +4,6 @@ class FlyingAxeWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
-        // Set weapon name
-        this.name = 'Flying Axe';
-        
         // Level-up configurations
         this.levelConfigs = {
             1: {
