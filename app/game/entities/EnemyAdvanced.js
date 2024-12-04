@@ -11,7 +11,7 @@ class EnemyAdvanced extends EnemyBasic {
       defense: 2, // Added defense
       attackSpeed: 1.2, // 20% faster attacks
       attackDamage: 12, // 50% more damage
-      scale: 0.35, // Just slightly larger than basic enemies (0.4)
+      scale: 0.22, // Just slightly larger than basic enemies (0.4)
       trailTint: 0xffff00, // Gold trail for advanced enemies
       clickDamage: 40, // Higher click damage
       ...config,
