@@ -12,6 +12,7 @@ import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapo
 import FlyingAxeWeapon from "../game/entities/weapons/FlyingAxeWeapon";
 import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
+import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 
 const MenuScene = {
   key: "MenuScene",
@@ -149,128 +150,68 @@ const UpgradeMenuScene = Phaser.Class({
         switch (weapon.constructor.name) {
           case "RotatingDogWeapon":
             return "weapon-dog-projectile";
-          case "FlyingAxeWeapon":
-            return "weapon-axe-projectile";
           case "MagicWandWeapon":
-            return "weapon-wand-projectile";
+            return "weapon-wand-icon";
           case "GlizzyBlasterWeapon":
             return "weapon-hotdog-projectile";
+          case "FlyingAxeWeapon":
+            return "weapon-axe-projectile";
           case "SonicBoomHammer":
             return "weapon-hammer-projectile";
           case "MilkWeapon":
             return "weapon-magic-milk";
+          case "ShapecraftKeyWeapon":
+            return "weapon-shapecraft-key";
           default:
-            return "weapon-wand-projectile";
+            return "weapon-dog-projectile";
         }
       })();
 
-      const icon = this.add.sprite(x, y - cardHeight / 3, iconKey);
-      const targetSize = 48;
-      const scaleX = targetSize / icon.width;
-      const scaleY = targetSize / icon.height;
-      const uniformScale = Math.min(scaleX, scaleY);
-      icon.setScale(uniformScale);
+      const icon = this.add.image(x, y - 80, iconKey);
+      icon.setScale(0.8);
 
       // Add weapon name
-      const nameText = this.add
-        .text(x, y - cardHeight / 6, weapon.name, {
+      this.add
+        .text(x, y, weapon.name, {
+          fontFamily: "VT323",
+          fontSize: "24px",
+          color: "#ffffff",
+          align: "center",
+        })
+        .setOrigin(0.5);
+
+      // Add level text
+      const levelText = this.add
+        .text(x, y + 40, `Level ${weapon.currentLevel}`, {
+          fontFamily: "VT323",
           fontSize: "20px",
-          color: "#ffffff",
+          color: "#ffff00",
           align: "center",
-          fontFamily: "Arial",
         })
         .setOrigin(0.5);
 
-      // Add stats
-      const currentStats = weapon.stats;
-      const nextLevelStats = weapon.levelConfigs[weapon.currentLevel + 1];
-      const statsText = this.add.text(
-        x - cardWidth / 2 + 10,
-        y,
-        `Level: ${weapon.currentLevel} → ${weapon.currentLevel + 1}\n` +
-          `Damage: ${currentStats.damage} → ${nextLevelStats.damage}\n` +
-          `Pierce: ${currentStats.pierce} → ${nextLevelStats.pierce}\n` +
-          (nextLevelStats.projectileCount
-            ? `Projectiles: ${currentStats.projectileCount || 1} → ${
-                nextLevelStats.projectileCount
-              }\n`
-            : "") +
-          (nextLevelStats.count
-            ? `Count: ${currentStats.count || 1} → ${nextLevelStats.count}\n`
-            : "") +
-          (nextLevelStats.magicPower
-            ? `Magic: ${currentStats.magicPower || 0} → ${
-                nextLevelStats.magicPower
-              }\n`
-            : "") +
-          (nextLevelStats.criticalChance
-            ? `Crit: ${Math.round(
-                (currentStats.criticalChance || 0) * 100
-              )}% → ${Math.round(nextLevelStats.criticalChance * 100)}%\n`
-            : ""),
-        {
-          fontSize: "16px",
-          color: "#ffffff",
-          align: "left",
-          fontFamily: "Arial",
-        }
-      );
+      // Add stats text
+      const stats = weapon.stats;
+      const statsText = [];
+      if (stats.damage) statsText.push(`DMG: ${stats.damage}`);
+      if (stats.pierce) statsText.push(`Pierce: ${stats.pierce}`);
+      if (stats.cooldown)
+        statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
 
-      // Add selection text
-      const selectText = this.add
-        .text(x, y + cardHeight / 2 - 25, "Click to Select", {
+      this.add
+        .text(x, y + 80, statsText.join("\n"), {
+          fontFamily: "VT323",
           fontSize: "16px",
-          color: "#00ff00",
+          color: "#aaaaaa",
           align: "center",
-          fontFamily: "Arial",
         })
         .setOrigin(0.5);
-      selectText.setAlpha(0.7);
 
-      const highlight = () => {
-        card.setStrokeStyle(3, 0x00ff00);
-        card.setFillStyle(0x444444);
-        icon.setScale(uniformScale * 1.1);
-        selectText.setAlpha(1);
-      };
-
-      const unhighlight = () => {
-        card.setStrokeStyle(2, 0xffffff);
-        card.setFillStyle(0x333333);
-        icon.setScale(uniformScale);
-        selectText.setAlpha(0.7);
-      };
-
-      card.on("pointerover", highlight);
-      card.on("pointerout", unhighlight);
+      // Make card clickable
       card.on("pointerdown", () => {
-        // Disable all cards
-        this.children.list
-          .filter((child) => child.type === "Rectangle")
-          .forEach((c) => c.removeInteractive());
-
-        highlight();
-        selectText.setText("Selected!");
-        selectText.setColor("#ffff00");
-
-        // Selection animation
-        this.tweens.add({
-          targets: [card, icon, nameText, statsText, selectText],
-          scaleX: 1.1,
-          scaleY: 1.1,
-          duration: 100,
-          yoyo: true,
-          onComplete: () => {
-            // Call levelUp and wait for it to complete
-            const result = weapon.levelUp();
-
-            // Add a slight delay to ensure animations complete
-            this.time.delayedCall(500, () => {
-              this.scene.stop();
-              this.parentScene.scene.resume();
-            });
-          },
-        });
+        weapon.levelUp();
+        this.scene.stop();
+        this.parentScene.scene.resume();
       });
     });
   },
@@ -477,6 +418,14 @@ const GameScene = {
       }
     );
 
+    this.load.svg(
+      "weapon-shapecraft-key",
+      "/assets/game/weapons/weapon-shapecraft-key.svg",
+      {
+        scale: 0.5,
+      }
+    );
+
     // Load XP gem with correct path
     this.load.image("powerup-xp-gem", "/assets/game/powerups/xp-gem.svg");
   },
@@ -629,6 +578,7 @@ const GameScene = {
     let axeIcon = null; // Store axe icon reference
     let hammerIcon = null; // Store hammer icon reference
     let milkIcon = null; // Store milk icon reference
+    let shapecraftIcon = null; // Store shapecraft icon reference
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -662,7 +612,8 @@ const GameScene = {
             cellIndex === 2 ||
             cellIndex === 3 ||
             cellIndex === 4 ||
-            cellIndex === 5
+            cellIndex === 5 ||
+            cellIndex === 6
           ) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
@@ -757,6 +708,17 @@ const GameScene = {
 
             this.updateStatsDisplay();
           });
+        }
+
+        // Add shapecraft key weapon icon to seventh cell
+        if (row === 1 && col === 0) {
+          shapecraftIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            "weapon-shapecraft-key",
+            6,
+            gridCells
+          );
         }
       }
     }
@@ -930,6 +892,7 @@ const GameScene = {
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new ShapecraftKeyWeapon(this, this.player),
     ];
 
     this.weaponInitialized = true;
