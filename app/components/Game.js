@@ -1450,7 +1450,7 @@ const GameScene = {
     });
 
     // Check for new enemy type unlocks and announce them
-    const announceNewEnemyType = (type) => {
+    this.announceNewEnemyType = (type) => {
       if (!this.gameState.enemyTypeAnnounced[type] && 
           this.gameState.gameTimer >= this.gameState.spawnThresholds[type]) {
         this.gameState.enemyTypeAnnounced[type] = true;
@@ -1498,9 +1498,9 @@ const GameScene = {
     };
 
     // Check for new enemy types
-    announceNewEnemyType('advanced');
-    announceNewEnemyType('epic');
-    announceNewEnemyType('boss');
+    this.announceNewEnemyType('advanced');
+    this.announceNewEnemyType('epic');
+    this.announceNewEnemyType('boss');
   },
 
   update: function (time, delta) {
