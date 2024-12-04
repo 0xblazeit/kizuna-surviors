@@ -1113,7 +1113,7 @@ const GameScene = {
             scale: 0.6, // Slightly larger than basic
           };
           enemy = new EnemyEpic(this, x, y, spriteKeyEpic, epicConfig);
-          // enemy.sprite.setTint(0x0000ff); // Blue tint for epic
+          // enemy.sprite.setTint(0x0000ff); // Blue tint for epica
         } else if (this.gameState.gameTimer >= 5) {
           console.log(
             "Spawning ADVANCED enemy at time:",
