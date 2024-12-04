@@ -152,14 +152,14 @@ export class MilkWeapon extends BaseWeapon {
         const puddle = this.scene.add.sprite(x, y, 'weapon-magic-milk');
         puddle.setScale(0);
         puddle.setAlpha(0.8);
-        puddle.setTint(this.effectColors.primary);
+        // puddle.setTint(this.effectColors.primary);
         puddle.setBlendMode(Phaser.BlendModes.ADD);
 
         // Create glow effect
         const glow = this.scene.add.sprite(x, y, 'weapon-magic-milk');
         glow.setScale(0);
         glow.setAlpha(0.4);
-        glow.setTint(this.effectColors.glow);
+        // glow.setTint(this.effectColors.glow);
         glow.setBlendMode(Phaser.BlendModes.ADD);
 
         // Animate puddles appearing
