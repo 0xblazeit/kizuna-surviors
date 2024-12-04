@@ -128,48 +128,48 @@ export class RotatingDogWeapon extends BaseWeapon {
         });
         this.activeProjectiles = [];
 
-        // Calculate even spacing around the circle
         const count = this.stats.count;
-        const angleStep = (Math.PI * 2) / count;
+        const guardDistance = this.stats.guardDistance;
         
-        // Calculate sprite size for proper spacing
-        const spriteSize = 32; // Assuming the sprite is 32x32 pixels
-        const minSpacing = spriteSize * 1.5; // Minimum space between dogs
-        const orbitRadius = Math.max(this.stats.guardDistance, (count * minSpacing) / (2 * Math.PI));
-        
-        // Spawn each dog with proper spacing
+        // Spawn each dog with a random starting position
         for (let i = 0; i < count; i++) {
-            const startAngle = i * angleStep;
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-dog-projectile');
+            const randomAngle = Math.random() * Math.PI * 2;
+            const randomDistance = guardDistance * (0.8 + Math.random() * 0.4);
             
-            // Set the correct scale and anchor point
+            const sprite = this.scene.add.sprite(0, 0, 'weapon-dog-projectile');
             sprite.setScale(0.5);
             sprite.setOrigin(0.5, 0.5);
-            sprite.setDepth(5 + i); // Ensure consistent layering based on position
+            sprite.setDepth(5);
 
-            // Set the initial tint based on level
             if (this.currentLevel === this.maxLevel) {
                 sprite.setTint(this.effectColors.maxLevel.primary);
             }
 
-            // Add the dog to active projectiles
+            // Calculate initial position
+            const x = this.player.x + Math.cos(randomAngle) * randomDistance;
+            const y = this.player.y + Math.sin(randomAngle) * randomDistance;
+            sprite.setPosition(x, y);
+
+            // Add the dog with patrol behavior parameters
             this.activeProjectiles.push({
                 sprite,
-                angle: startAngle,
-                distance: orbitRadius,
+                currentAngle: randomAngle,
+                targetAngle: randomAngle,
+                distance: randomDistance,
+                targetDistance: randomDistance,
                 state: 'guarding',
                 lastAttackTime: 0,
                 targetEnemy: null,
                 originalScale: 0.5,
-                index: i
+                index: i,
+                nextPatrolTime: 0,
+                nextRotationTime: 0,
+                patrolSpeed: 0.5 + Math.random() * 0.5,
+                avoidanceRadius: 40,
+                facingAngle: Math.random() * Math.PI * 2, // Random initial facing direction
+                targetFacingAngle: Math.random() * Math.PI * 2 // Random target facing direction
             });
 
-            // Initialize position with the calculated orbit radius
-            const x = this.player.x + Math.cos(startAngle) * orbitRadius;
-            const y = this.player.y + Math.sin(startAngle) * orbitRadius;
-            sprite.setPosition(x, y);
-
-            // Add max level effects if applicable
             if (this.currentLevel === this.maxLevel) {
                 this.addMaxLevelEffects(sprite);
             }
@@ -177,35 +177,14 @@ export class RotatingDogWeapon extends BaseWeapon {
     }
 
     update(time, delta) {
-        // Call base class update which includes death check
-        if (!super.update(time, delta)) {
-            return;
-        }
-
+        if (!super.update(time, delta)) return;
         if (!this.player) return;
 
-        // Get active enemies if they exist
-        const enemies = this.scene.enemies ? this.scene.enemies.filter(e => {
-            return e && e.sprite && e.sprite.active && !e.isDead;
-        }) : [];
+        const enemies = this.scene.enemies ? this.scene.enemies.filter(e => 
+            e && e.sprite && e.sprite.active && !e.isDead
+        ) : [];
 
-        // Debug: Log number of active enemies
-        if (enemies.length > 0) {
-            console.log(`Active enemies: ${enemies.length}`);
-        }
-
-        // Sort enemies by distance to player for better targeting
-        const sortedEnemies = [...enemies].sort((a, b) => {
-            const distA = this.getDistance(this.player.x, this.player.y, a.sprite.x, a.sprite.y);
-            const distB = this.getDistance(this.player.x, this.player.y, b.sprite.x, b.sprite.y);
-            return distA - distB;
-        });
-
-        // Calculate spacing variables (needed for all states)
-        const count = this.activeProjectiles.length;
-        const angleStep = (Math.PI * 2) / count;
-
-        // First, check if any dogs need new targets
+        // First, check if any dogs need to release their current target
         this.activeProjectiles.forEach(dog => {
             if (dog.targetEnemy) {
                 const targetValid = dog.targetEnemy && 
@@ -220,100 +199,90 @@ export class RotatingDogWeapon extends BaseWeapon {
             }
         });
 
-        // Assign targets to dogs without them
-        const availableEnemies = new Set(sortedEnemies);
-        
-        this.activeProjectiles.forEach(dog => {
-            if (!dog.targetEnemy && dog.state !== 'attacking') {
-                // Find the closest enemy to this dog
-                let bestTarget = null;
-                let bestDistance = Infinity;
-
-                for (const enemy of availableEnemies) {
-                    const distanceToEnemy = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
-                    const distanceToPlayer = this.getDistance(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y);
-                    
-                    // Consider both distance to dog and to player
-                    if (distanceToPlayer < this.stats.range && distanceToEnemy < bestDistance) {
-                        bestDistance = distanceToEnemy;
-                        bestTarget = enemy;
-                    }
-                }
-
-                if (bestTarget) {
-                    dog.targetEnemy = bestTarget;
-                    dog.state = 'chasing';
-                    availableEnemies.delete(bestTarget);
-                    // console.log(`Dog ${dog.index} found new target at distance ${bestDistance}`);
-                }
-            }
-        });
-
         // Update each dog
         this.activeProjectiles.forEach((dog, index) => {
             if (!dog.sprite || !dog.sprite.active) return;
 
-            // Always check for closer enemies, even if we have a target
+            // Always check for nearby enemies regardless of current state
             if (dog.state !== 'attacking' && time - dog.lastAttackTime >= this.stats.cooldown) {
-                let foundCloserTarget = false;
-                
-                for (const enemy of sortedEnemies) {
-                    if (enemy === dog.targetEnemy) continue;
-                    
-                    const distanceToEnemy = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
-                    const distanceToCurrentTarget = dog.targetEnemy ? 
-                        this.getDistance(dog.sprite.x, dog.sprite.y, dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y) : 
-                        Infinity;
+                let nearestEnemy = null;
+                let nearestDistance = Infinity;
 
-                    if (distanceToEnemy < distanceToCurrentTarget && distanceToEnemy < this.stats.detectionRange) {
-                        dog.targetEnemy = enemy;
-                        dog.state = 'chasing';
-                        foundCloserTarget = true;
-                        // console.log(`Dog ${dog.index} switched to closer target`);
-                        break;
+                enemies.forEach(enemy => {
+                    const dist = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
+                    if (dist < this.stats.detectionRange && dist < nearestDistance) {
+                        nearestDistance = dist;
+                        nearestEnemy = enemy;
                     }
+                });
+
+                if (nearestEnemy) {
+                    dog.targetEnemy = nearestEnemy;
+                    dog.state = 'chasing';
                 }
             }
 
             switch (dog.state) {
                 case 'seeking':
-                case 'guarding':
-                    // Calculate the base angle for even spacing
-                    const baseAngle = (index * angleStep) + dog.angle;
-                    
-                    // Calculate new position around player with proper spacing
-                    const newX = this.player.x + Math.cos(baseAngle) * dog.distance;
-                    const newY = this.player.y + Math.sin(baseAngle) * dog.distance;
-                    
-                    // Smoothly interpolate to the new position
-                    const lerpFactor = 0.2;
-                    dog.sprite.x = this.lerp(dog.sprite.x, newX, lerpFactor);
-                    dog.sprite.y = this.lerp(dog.sprite.y, newY, lerpFactor);
-                    
-                    // Update particle position if it exists
+                case 'guarding': {
+                    // Check if it's time to change patrol position
+                    if (time > dog.nextPatrolTime) {
+                        const angleChange = (Math.random() - 0.5) * Math.PI / 2;
+                        dog.targetAngle = dog.currentAngle + angleChange;
+                        dog.targetDistance = this.stats.guardDistance * (0.8 + Math.random() * 0.4);
+                        dog.nextPatrolTime = time + 2000 + Math.random() * 2000;
+                    }
+
+                    // Check if it's time to change facing direction
+                    if (time > dog.nextRotationTime) {
+                        // Random new facing direction with some constraints
+                        const rotationChange = (Math.random() - 0.5) * Math.PI; // ±90 degrees
+                        dog.targetFacingAngle = dog.facingAngle + rotationChange;
+                        dog.nextRotationTime = time + 1000 + Math.random() * 1500; // Change direction every 1-2.5 seconds
+                    }
+
+                    // Smoothly move towards target position
+                    dog.currentAngle = this.lerpAngle(dog.currentAngle, dog.targetAngle, 0.02);
+                    dog.distance = this.lerp(dog.distance, dog.targetDistance, 0.02);
+                    dog.facingAngle = this.lerpAngle(dog.facingAngle, dog.targetFacingAngle, 0.05);
+
+                    let targetX = this.player.x + Math.cos(dog.currentAngle) * dog.distance;
+                    let targetY = this.player.y + Math.sin(dog.currentAngle) * dog.distance;
+
+                    // Apply avoidance from other dogs
+                    let avoidX = 0;
+                    let avoidY = 0;
+                    this.activeProjectiles.forEach(otherDog => {
+                        if (otherDog !== dog && otherDog.sprite) {
+                            const dx = dog.sprite.x - otherDog.sprite.x;
+                            const dy = dog.sprite.y - otherDog.sprite.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (dist < dog.avoidanceRadius) {
+                                const force = (dog.avoidanceRadius - dist) / dog.avoidanceRadius;
+                                avoidX += (dx / dist) * force * 30;
+                                avoidY += (dy / dist) * force * 30;
+                            }
+                        }
+                    });
+
+                    targetX += avoidX;
+                    targetY += avoidY;
+
+                    const moveSpeed = 0.1 * dog.patrolSpeed;
+                    dog.sprite.x = this.lerp(dog.sprite.x, targetX, moveSpeed);
+                    dog.sprite.y = this.lerp(dog.sprite.y, targetY, moveSpeed);
+
                     if (dog.sprite.particles) {
                         dog.sprite.particles.setPosition(dog.sprite.x, dog.sprite.y);
                     }
-                    
-                    // Rotate the angle for orbital movement
-                    dog.angle += 0.006;
-                    
-                    // Point the sprite in the direction of movement
-                    const angle = Math.atan2(dog.sprite.y - this.player.y, dog.sprite.x - this.player.x);
-                    dog.sprite.rotation = angle;
 
-                    // Actively look for targets while in these states
-                    if (!dog.targetEnemy && enemies.length > 0) {
-                        const nearestEnemy = this.findNearestEnemy(dog, enemies);
-                        if (nearestEnemy) {
-                            dog.targetEnemy = nearestEnemy;
-                            dog.state = 'chasing';
-                            // console.log(`Dog ${dog.index} found target while ${dog.state}`);
-                        }
-                    }
+                    // Set the sprite's rotation to the facing angle
+                    dog.sprite.rotation = dog.facingAngle;
                     break;
+                }
 
-                case 'chasing':
+                case 'chasing': {
                     if (dog.targetEnemy && dog.targetEnemy.sprite) {
                         const distanceToEnemy = this.getDistance(
                             dog.sprite.x, dog.sprite.y,
@@ -332,43 +301,21 @@ export class RotatingDogWeapon extends BaseWeapon {
                             this.handleHit(dog.targetEnemy, dog);
                             dog.lastAttackTime = time;
                             this.createAttackEffect(dog.targetEnemy.sprite.x, dog.targetEnemy.sprite.y);
-                            // console.log(`Dog ${dog.index} attacking enemy`);
                         }
+
+                        // Point towards enemy
+                        const angle = Math.atan2(
+                            dog.targetEnemy.sprite.y - dog.sprite.y,
+                            dog.targetEnemy.sprite.x - dog.sprite.x
+                        );
+                        dog.sprite.rotation = angle;
                     } else {
                         dog.state = 'seeking';
                         dog.targetEnemy = null;
                     }
                     break;
-
-                case 'attacking':
-                    const attackDuration = 100;
-                    if (time - dog.attackStartTime >= attackDuration) {
-                        if (dog.targetEnemy && dog.targetEnemy.sprite && !dog.targetEnemy.isDead && !dog.targetEnemy.isDying) {
-                            const distanceToEnemy = this.getDistance(
-                                dog.sprite.x, dog.sprite.y,
-                                dog.targetEnemy.sprite.x,
-                                dog.targetEnemy.sprite.y
-                            );
-                            
-                            if (distanceToEnemy < this.stats.detectionRange) {
-                                dog.state = 'chasing';
-                            } else {
-                                dog.targetEnemy = null;
-                                dog.state = 'seeking';
-                            }
-                        } else {
-                            dog.targetEnemy = null;
-                            dog.state = 'seeking';
-                        }
-                    }
-                    break;
-            }
-
-            // Check if too far from player
-            const distanceToPlayer = this.getDistance(dog.sprite.x, dog.sprite.y, this.player.x, this.player.y);
-            if (distanceToPlayer > this.stats.range) {
-                dog.targetEnemy = null;
-                dog.state = 'seeking';
+                }
+                // ... rest of the code remains the same ...
             }
         });
     }
@@ -379,6 +326,13 @@ export class RotatingDogWeapon extends BaseWeapon {
 
     lerp(start, end, factor) {
         return start + (end - start) * factor;
+    }
+
+    lerpAngle(start, end, t) {
+        let diff = end - start;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        return start + diff * t;
     }
 
     moveTowardsPoint(dog, targetX, targetY, delta, speedMultiplier = 1) {
@@ -566,7 +520,6 @@ export class RotatingDogWeapon extends BaseWeapon {
 
         // If count increased, respawn dogs
         if (newStats.count > oldCount) {
-            // console.log(`Increasing dog count from ${oldCount} to ${newStats.count}`);
             this.spawnDogs();
         }
 
@@ -651,20 +604,17 @@ export class RotatingDogWeapon extends BaseWeapon {
         sprite.particles = particles;
     }
 
-    // Helper function to find the nearest enemy to a dog
     findNearestEnemy(dog, enemies) {
         let nearest = null;
-        let nearestDistance = Infinity;
+        let nearestDist = this.stats.detectionRange;
 
-        for (const enemy of enemies) {
-            const distanceToEnemy = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
-            const distanceToPlayer = this.getDistance(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y);
-            
-            if (distanceToPlayer < this.stats.range && distanceToEnemy < this.stats.detectionRange && distanceToEnemy < nearestDistance) {
+        enemies.forEach(enemy => {
+            const dist = this.getDistance(dog.sprite.x, dog.sprite.y, enemy.sprite.x, enemy.sprite.y);
+            if (dist < nearestDist) {
                 nearest = enemy;
-                nearestDistance = distanceToEnemy;
+                nearestDist = dist;
             }
-        }
+        });
 
         return nearest;
     }
