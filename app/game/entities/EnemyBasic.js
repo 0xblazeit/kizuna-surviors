@@ -196,9 +196,9 @@ class EnemyBasic extends BasePlayer {
   }
 
   takeDamage(amount, sourceX, sourceY) {
-    console.log("Enemy taking damage:", amount);
+    // console.log("Enemy taking damage:", amount);
     if (this.isDead) {
-      console.log("Enemy already dead, ignoring damage");
+      // console.log("Enemy already dead, ignoring damage");
       return 0;
     }
 
@@ -210,7 +210,7 @@ class EnemyBasic extends BasePlayer {
     }
 
     this.stats.currentHealth -= damageDealt;
-    console.log("Enemy health after damage:", this.stats.currentHealth);
+    // console.log("Enemy health after damage:", this.stats.currentHealth);
 
     // Show damage number for every hit
     const damageText = this.scene.add
@@ -243,7 +243,7 @@ class EnemyBasic extends BasePlayer {
 
     // Check for death
     if (this.stats.currentHealth <= 0) {
-      console.log("Enemy health depleted, calling die()");
+      // console.log("Enemy health depleted, calling die()");
       this.die();
     }
 

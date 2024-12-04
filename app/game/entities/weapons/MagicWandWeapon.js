@@ -249,12 +249,12 @@ export class MagicWandWeapon extends BaseWeapon {
         finalDamage *= (1 + this.stats.magicPower / 100);
         
         const roundedDamage = Math.round(finalDamage);
-        console.log('Applying hit:', {
-            projectile: { x: proj.sprite.x, y: proj.sprite.y, pierce: proj.pierceCount },
-            enemy: { x: enemy.sprite.x, y: enemy.sprite.y, health: enemy.stats.currentHealth },
-            damage: roundedDamage,
-            isCritical
-        });
+        // console.log('Applying hit:', {
+        //     projectile: { x: proj.sprite.x, y: proj.sprite.y, pierce: proj.pierceCount },
+        //     enemy: { x: enemy.sprite.x, y: enemy.sprite.y, health: enemy.stats.currentHealth },
+        //     damage: roundedDamage,
+        //     isCritical
+        // });
 
         // Apply damage with source position for proper hit effects
         enemy.takeDamage(roundedDamage, proj.sprite.x, proj.sprite.y);
@@ -264,7 +264,7 @@ export class MagicWandWeapon extends BaseWeapon {
 
         // Reduce pierce count and handle projectile state
         proj.pierceCount--;
-        console.log('Pierce count after hit:', proj.pierceCount);
+        // console.log('Pierce count after hit:', proj.pierceCount);
         
         if (proj.pierceCount <= 0) {
             this.deactivateProjectile(proj);

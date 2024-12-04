@@ -504,7 +504,7 @@ export class RotatingDogWeapon extends BaseWeapon {
   handleHit(enemy, dog) {
     if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
 
-    console.log("Applying damage to enemy");
+    // console.log("Applying damage to enemy");
 
     // Get the source position for the hit effect
     const sourceX = dog.sprite.x;

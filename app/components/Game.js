@@ -1035,6 +1035,11 @@ const GameScene = {
           });
         }
 
+        // Debug logging for spawn thresholds
+        console.log('Current time:', this.gameState.gameTimer);
+        console.log('Advanced threshold:', this.gameState.spawnThresholds.advanced);
+        console.log('Epic threshold:', this.gameState.spawnThresholds.epic);
+
         // Adjust spawn probabilities based on game progress and thresholds
         let spawnRates = {
           basic: 1,
@@ -1046,6 +1051,7 @@ const GameScene = {
         if (this.gameState.gameTimer >= this.gameState.spawnThresholds.advanced) {
           spawnRates.basic = 0.7;    // 70% chance for basic
           spawnRates.advanced = 0.3;  // 30% chance for advanced
+          console.log('Advanced enemies enabled. Spawn rates:', spawnRates);
         }
 
         // Unlock epic enemies
@@ -1053,15 +1059,13 @@ const GameScene = {
           spawnRates.basic = 0.5;     // 50% chance for basic
           spawnRates.advanced = 0.3;  // 30% chance for advanced
           spawnRates.epic = 0.2;      // 20% chance for epic
+          console.log('Epic enemies enabled. Spawn rates:', spawnRates);
         }
 
-        // After 1 minute, gradually increase advanced and epic spawn rates
-        if (this.gameState.gameTimer >= 60) {
-          const timeScale = Math.min(1, (this.gameState.gameTimer - 60) / 300); // Scale over 5 minutes
-          spawnRates.basic = Math.max(0.3, 0.5 - timeScale * 0.2);      // Decrease to 30%
-          spawnRates.advanced = 0.3 + timeScale * 0.2;                   // Increase to 50%
-          spawnRates.epic = Math.min(0.4, 0.2 + timeScale * 0.2);       // Increase to 40%
-        }
+        // Debug logging for spawn roll
+        const roll = Math.random();
+        console.log('Spawn roll:', roll);
+        console.log('Current spawn rates:', spawnRates);
 
         // Get random position using golden ratio distribution
         const getSpawnPosition = () => {
@@ -1099,7 +1103,6 @@ const GameScene = {
         const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
 
         // Determine enemy type based on probabilities
-        const roll = Math.random();
         let enemy;
         let spawnType = '';
         
@@ -1585,9 +1588,9 @@ const GameScene = {
 
         scene.gameState.gameTimer++;
         const minutes = Math.floor(scene.gameState.gameTimer / 60);
-        const seconds = scene.gameState.gameTimer % 60;
+        const seconds = Math.floor(scene.gameState.gameTimer % 60);
         scene.timerText.setText(
-          `${minutes}:${seconds.toString().padStart(2, "0")}`
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
 
         console.log(`Current game time: ${scene.gameState.gameTimer} seconds`); // Debug log
@@ -1626,6 +1629,11 @@ const GameScene = {
 
   update: function (time, delta) {
     if (!this.gameState) return;
+
+    // Update game timer (convert from milliseconds to seconds)
+    if (!this.gameState.isGameOver) {
+      this.gameState.gameTimer += delta / 1000;
+    }
 
     // Handle player movement using the new system
     const input = {
