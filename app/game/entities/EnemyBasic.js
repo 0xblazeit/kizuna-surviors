@@ -213,6 +213,9 @@ class EnemyBasic extends BasePlayer {
     this.stats.currentHealth -= damageDealt;
     console.log("Enemy health after damage:", this.stats.currentHealth);
 
+    // Play hit effects with source position
+    this.playHitEffects(sourceX, sourceY);
+
     // Check for death
     if (this.stats.currentHealth <= 0) {
       console.log("Enemy health depleted, calling die()");
@@ -251,9 +254,16 @@ class EnemyBasic extends BasePlayer {
     const staggerX = Math.cos(angle) * staggerDistance;
     const staggerY = Math.sin(angle) * staggerDistance;
 
-    // Create stagger animation that includes both sprite and health bar
+    // Create stagger animation for the sprite
+    const targets = [this.sprite];
+    // Only include healthBar if it exists
+    if (this.healthBar && this.healthBar.container) {
+      targets.push(this.healthBar.container);
+    }
+
+    // Create stagger animation
     this.scene.tweens.add({
-      targets: [this.sprite, this.healthBar.container],
+      targets: targets,
       x: "+=" + staggerX,
       y: "+=" + staggerY,
       duration: staggerDuration / 2,
@@ -263,10 +273,12 @@ class EnemyBasic extends BasePlayer {
         // Reset position exactly to avoid drift
         this.sprite.x -= staggerX;
         this.sprite.y -= staggerY;
-        this.healthBar.container.setPosition(
-          this.sprite.x,
-          this.sprite.y + this.healthBar.spacing
-        );
+        if (this.healthBar && this.healthBar.container) {
+          this.healthBar.container.setPosition(
+            this.sprite.x,
+            this.sprite.y + this.healthBar.spacing
+          );
+        }
       },
     });
 
