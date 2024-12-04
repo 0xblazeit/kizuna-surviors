@@ -75,7 +75,7 @@ const MenuScene = {
   },
 };
 
-const UpgradeMenuScene = new Phaser.Class({
+const UpgradeMenuScene = Phaser.Class({
   Extends: Phaser.Scene,
 
   initialize: function UpgradeMenuScene() {
@@ -201,8 +201,11 @@ const UpgradeMenuScene = new Phaser.Class({
           duration: 100,
           yoyo: true,
           onComplete: () => {
-            this.time.delayedCall(300, () => {
-              weapon.levelUp();
+            // Call levelUp and wait for it to complete
+            const result = weapon.levelUp();
+            
+            // Add a slight delay to ensure animations complete
+            this.time.delayedCall(500, () => {
               this.scene.stop();
               this.parentScene.scene.resume();
             });

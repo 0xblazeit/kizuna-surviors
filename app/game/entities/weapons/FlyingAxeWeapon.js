@@ -456,11 +456,31 @@ class FlyingAxeWeapon extends BaseWeapon {
             ...newStats
         };
 
-        // Update projectile scales
+        console.log(`Flying Axe leveled up to ${this.currentLevel}! New stats:`, this.stats);
+
+        // Recreate projectiles with new stats
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
-                proj.sprite.setScale(this.stats.scale);
+                proj.sprite.destroy();
             }
+        });
+        this.activeProjectiles = [];
+        this.createProjectiles();
+
+        // Create level up effect around the player
+        const burst = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-axe-projectile');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(0xff6b00); // Orange color for level up
+
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
         });
 
         return true;

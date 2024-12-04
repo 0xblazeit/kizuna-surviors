@@ -424,90 +424,35 @@ export class MagicWandWeapon extends BaseWeapon {
 
         console.log(`Magic Wand leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
-        // Recreate projectiles with new scale
-        this.createMagicProjectiles();
+        // Create level up effect around the player
+        const burst = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-magic-wand');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(0x00ffff);
 
-        // Create level up effects
-        this.activeProjectiles.forEach(proj => {
-            if (proj.sprite && proj.sprite.active) {
-                // Create a magical burst effect
-                const burst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
-                burst.setScale(0.2);
-                burst.setAlpha(0.7);
-                burst.setTint(0xffff00);
-
-                // Special max level animation
-                if (this.currentLevel === this.maxLevel) {
-                    // Create multiple orbiting particles
-                    for (let i = 0; i < 8; i++) {
-                        const particle = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-projectile');
-                        particle.setScale(0.3);
-                        particle.setAlpha(0.8);
-                        particle.setTint(0xff00ff);
-
-                        // Create an orbit animation
-                        this.scene.tweens.add({
-                            targets: particle,
-                            x: {
-                                getStart: () => proj.sprite.x + Math.cos(i * Math.PI / 4) * 30,
-                                getEnd: () => proj.sprite.x + Math.cos((i * Math.PI / 4) + Math.PI * 2) * 30
-                            },
-                            y: {
-                                getStart: () => proj.sprite.y + Math.sin(i * Math.PI / 4) * 30,
-                                getEnd: () => proj.sprite.y + Math.sin((i * Math.PI / 4) + Math.PI * 2) * 30
-                            },
-                            scaleX: { from: 0.3, to: 0 },
-                            scaleY: { from: 0.3, to: 0 },
-                            alpha: { from: 0.8, to: 0 },
-                            duration: 1000,
-                            ease: 'Quad.easeOut',
-                            onComplete: () => particle.destroy()
-                        });
-                    }
-
-                    // Create a larger burst for max level
-                    const maxLevelBurst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-wand-icon');
-                    maxLevelBurst.setScale(0.4);
-                    maxLevelBurst.setAlpha(0.9);
-                    maxLevelBurst.setTint(0xff00ff);
-
-                    this.scene.tweens.add({
-                        targets: maxLevelBurst,
-                        scaleX: 3,
-                        scaleY: 3,
-                        alpha: 0,
-                        duration: 800,
-                        ease: 'Quad.easeOut',
-                        onComplete: () => maxLevelBurst.destroy()
-                    });
-                }
-
-                this.scene.tweens.add({
-                    targets: burst,
-                    scaleX: 2,
-                    scaleY: 2,
-                    alpha: 0,
-                    duration: 500,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => burst.destroy()
-                });
-
-                // Scale animation on projectile
-                this.scene.tweens.add({
-                    targets: proj.sprite,
-                    scaleX: 0.6,
-                    scaleY: 0.6,
-                    duration: 200,
-                    yoyo: true,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => {
-                        if (proj.sprite && proj.sprite.active) {
-                            proj.sprite.setScale(0.4);
-                        }
-                    }
-                });
-            }
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
         });
+
+        // Recreate projectiles with new stats
+        if (this.activeProjectiles) {
+            this.activeProjectiles.forEach(proj => {
+                if (proj.sprite) {
+                    if (proj.sprite.glow) {
+                        proj.sprite.glow.destroy();
+                    }
+                    proj.sprite.destroy();
+                }
+            });
+            this.activeProjectiles = [];
+            this.createMagicProjectiles();
+        }
 
         return true;
     }

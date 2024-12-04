@@ -306,6 +306,42 @@ export class MilkWeapon extends BaseWeapon {
         });
     }
 
+    levelUp() {
+        if (this.currentLevel >= this.maxLevel) {
+            console.log('Weapon already at max level!');
+            return false;
+        }
+
+        this.currentLevel++;
+        const newStats = this.levelConfigs[this.currentLevel];
+        
+        // Update stats
+        this.stats = {
+            ...this.stats,
+            ...newStats
+        };
+
+        console.log(`Milk Weapon leveled up to ${this.currentLevel}! New stats:`, this.stats);
+
+        // Create level up effect around the player
+        const burst = this.scene.add.sprite(this.player.x, this.player.y, 'weapon-magic-milk');
+        burst.setScale(0.2);
+        burst.setAlpha(0.7);
+        burst.setTint(0xffff00);
+
+        this.scene.tweens.add({
+            targets: burst,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => burst.destroy()
+        });
+
+        return true;
+    }
+
     update(time, delta) {
         // Call base class update which includes death check
         if (!super.update(time, delta)) {
