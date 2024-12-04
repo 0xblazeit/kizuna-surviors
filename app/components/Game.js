@@ -245,9 +245,15 @@ const GameScene = {
       difficultyMultiplier: 1,
       // Enemy spawn thresholds (in seconds)
       spawnThresholds: {
-        advanced: 120,  // Advanced enemies start appearing after 2 minutes
-        epic: 300,     // Epic enemies start appearing after 5 minutes
-        boss: 600      // Boss waves start appearing after 10 minutes
+        advanced: 60,    // Advanced enemies start appearing after 1 minute
+        epic: 180,      // Epic enemies start appearing after 3 minutes
+        boss: 600       // Boss waves start appearing after 10 minutes
+      },
+      // Track if we've announced each enemy type
+      enemyTypeAnnounced: {
+        advanced: false,
+        epic: false,
+        boss: false
       }
     };
 
@@ -985,7 +991,7 @@ const GameScene = {
         if (this.enemies.length >= this.gameState.maxEnemies) return;
 
         // Calculate game progress (0 to 1) based on 30-minute max time
-        const maxGameTime = 30 * 60; // 30 minutes in seconds
+        const maxGameTime = 1800; // 30 minutes in seconds
         const gameProgress = Math.min(this.gameState.gameTimer / maxGameTime, 1);
 
         // Update wave timer and check for new wave
@@ -1442,6 +1448,59 @@ const GameScene = {
         selectedWeapons: selectedWeapons,
       });
     });
+
+    // Check for new enemy type unlocks and announce them
+    const announceNewEnemyType = (type) => {
+      if (!this.gameState.enemyTypeAnnounced[type] && 
+          this.gameState.gameTimer >= this.gameState.spawnThresholds[type]) {
+        this.gameState.enemyTypeAnnounced[type] = true;
+        
+        const messages = {
+          advanced: "Advanced Enemies Approaching!",
+          epic: "Epic Enemies Have Arrived!",
+          boss: "Prepare for Boss Waves!"
+        };
+        
+        const colors = {
+          advanced: '#00ff00',
+          epic: '#ff00ff',
+          boss: '#ff0000'
+        };
+        
+        // Create the main announcement text
+        const announcementText = this.add.text(
+          this.cameras.main.centerX,
+          this.cameras.main.centerY - 50,
+          messages[type],
+          {
+            fontFamily: 'VT323',
+            fontSize: '64px',
+            color: colors[type],
+            stroke: '#000000',
+            strokeThickness: 6
+          }
+        ).setOrigin(0.5);
+        announcementText.setScrollFactor(0);
+        
+        // Animate the text
+        this.tweens.add({
+          targets: announcementText,
+          scaleX: [0, 1.2, 1],
+          scaleY: [0, 1.2, 1],
+          alpha: [0, 1, 1, 0],
+          duration: 3000,
+          ease: 'Power2',
+          onComplete: () => {
+            announcementText.destroy();
+          }
+        });
+      }
+    };
+
+    // Check for new enemy types
+    announceNewEnemyType('advanced');
+    announceNewEnemyType('epic');
+    announceNewEnemyType('boss');
   },
 
   update: function (time, delta) {
