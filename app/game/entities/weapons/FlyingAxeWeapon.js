@@ -6,6 +6,10 @@ class FlyingAxeWeapon extends BaseWeapon {
 
         this.name = "Flying Axe";
         
+        // Initialize trail container for level 8
+        this.trailPool = [];
+        this.trailMaxSize = 8;  // Number of trail images per axe
+        
         // Level-up configurations
         this.levelConfigs = {
             1: {
@@ -98,6 +102,10 @@ class FlyingAxeWeapon extends BaseWeapon {
                 orbitCount: 3,
                 orbitSpread: 120,
                 maxOrbitTime: 2.0,
+                trailAlpha: 0.6,     // Alpha for trail images
+                trailScale: 0.95,    // Scale multiplier for each trail image
+                trailSpacing: 0.05,  // Time spacing between trail images
+                glowTint: 0xffff99,  // Yellow-white glow tint
                 isMaxLevel: true
             }
         };
@@ -126,7 +134,16 @@ class FlyingAxeWeapon extends BaseWeapon {
             // Enable physics for the projectile
             this.scene.physics.world.enable(sprite);
             sprite.body.setSize(sprite.width * 0.6, sprite.height * 0.6);
-
+            sprite.setActive(false).setVisible(false);
+            
+            // Create trail sprites for level 8
+            const trailSprites = [];
+            for (let j = 0; j < this.trailMaxSize; j++) {
+                const trailSprite = this.scene.add.sprite(0, 0, 'weapon-axe-projectile');
+                trailSprite.setActive(false).setVisible(false);
+                trailSprites.push(trailSprite);
+            }
+            this.trailPool.push(trailSprites);
             this.activeProjectiles.push({
                 sprite,
                 active: false,
@@ -136,7 +153,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 startY: 0,
                 targetX: 0,
                 targetY: 0,
-                rotation: 0
+                rotation: 0,
+                trailSprites
             });
         }
     }
@@ -228,7 +246,7 @@ class FlyingAxeWeapon extends BaseWeapon {
         }
 
         // Update active projectiles
-        this.activeProjectiles.forEach(proj => {
+        this.activeProjectiles.forEach((proj, index) => {
             if (!proj.active || !proj.sprite || !proj.sprite.active) return;
 
             // Update rotation
@@ -322,6 +340,52 @@ class FlyingAxeWeapon extends BaseWeapon {
                         this.deactivateProjectile(proj);
                     }
                     break;
+            }
+
+            // Level 8 trail and glow effect
+            if (this.currentLevel === 8) {
+                // Update main sprite glow effect
+                proj.sprite.setTint(this.stats.glowTint);
+                
+                // Update trail positions
+                const trailSprites = this.trailPool[index];
+                for (let i = 0; i < this.trailMaxSize; i++) {
+                    const trailSprite = trailSprites[i];
+                    if (!proj.trailPositions) proj.trailPositions = [];
+                    
+                    // Store current position and rotation
+                    if (time - (proj.lastTrailTime || 0) >= this.stats.trailSpacing * 1000) {
+                        proj.trailPositions.unshift({
+                            x: proj.sprite.x,
+                            y: proj.sprite.y,
+                            rotation: proj.rotation,
+                            time: time
+                        });
+                        proj.lastTrailTime = time;
+                        
+                        // Limit trail length
+                        if (proj.trailPositions.length > this.trailMaxSize) {
+                            proj.trailPositions.pop();
+                        }
+                    }
+                    
+                    // Update trail sprite
+                    if (i < proj.trailPositions.length) {
+                        const pos = proj.trailPositions[i];
+                        trailSprite.setActive(true).setVisible(true);
+                        trailSprite.setPosition(pos.x, pos.y);
+                        trailSprite.setRotation(pos.rotation);
+                        
+                        // Calculate fade and scale based on position in trail
+                        const fadeRatio = 1 - (i / this.trailMaxSize);
+                        const scaleRatio = Math.pow(this.stats.trailScale, i);
+                        trailSprite.setAlpha(this.stats.trailAlpha * fadeRatio);
+                        trailSprite.setScale(proj.sprite.scale * scaleRatio);
+                        trailSprite.setTint(this.stats.glowTint);
+                    } else {
+                        trailSprite.setActive(false).setVisible(false);
+                    }
+                }
             }
 
             // Check for enemy collisions
@@ -426,12 +490,21 @@ class FlyingAxeWeapon extends BaseWeapon {
     deactivateProjectile(proj) {
         if (!proj) return;
         
-        proj.active = false;
-        if (proj.sprite) {
-            proj.sprite.setVisible(false);
-            proj.sprite.setActive(false);
-            proj.sprite.body.setVelocity(0, 0);
+        // Hide trail sprites when deactivating projectile
+        if (this.currentLevel === 8) {
+            const index = this.activeProjectiles.indexOf(proj);
+            if (index !== -1) {
+                const trailSprites = this.trailPool[index];
+                trailSprites.forEach(sprite => {
+                    sprite.setActive(false).setVisible(false);
+                });
+            }
         }
+        
+        proj.active = false;
+        proj.sprite.setActive(false).setVisible(false);
+        proj.sprite.body.setVelocity(0, 0);
+        proj.trailPositions = [];  // Clear trail positions
     }
 
     attack(time) {
