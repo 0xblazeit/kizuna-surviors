@@ -21,7 +21,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 4,
                 scale: 0.5,
                 orbitRadius: 80,
-                orbitSpeed: 2.5
+                orbitSpeed: 2.5,
+                projectileCount: 1
             },
             2: {
                 damage: 13,
@@ -32,7 +33,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 4.5,
                 scale: 0.53,
                 orbitRadius: 90,
-                orbitSpeed: 2.7
+                orbitSpeed: 2.7,
+                projectileCount: 1
             },
             3: {
                 damage: 21,
@@ -43,7 +45,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 5,
                 scale: 0.56,
                 orbitRadius: 100,
-                orbitSpeed: 2.9
+                orbitSpeed: 2.9,
+                projectileCount: 2
             },
             4: {
                 damage: 34,
@@ -54,7 +57,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 5.5,
                 scale: 0.59,
                 orbitRadius: 110,
-                orbitSpeed: 3.1
+                orbitSpeed: 3.1,
+                projectileCount: 2
             },
             5: {
                 damage: 55,
@@ -65,7 +69,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 6,
                 scale: 0.62,
                 orbitRadius: 120,
-                orbitSpeed: 3.3
+                orbitSpeed: 3.3,
+                projectileCount: 3
             },
             6: {
                 damage: 89,
@@ -76,7 +81,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 6.5,
                 scale: 0.65,
                 orbitRadius: 130,
-                orbitSpeed: 3.5
+                orbitSpeed: 3.5,
+                projectileCount: 3
             },
             7: {
                 damage: 144,
@@ -87,7 +93,8 @@ class FlyingAxeWeapon extends BaseWeapon {
                 rotationSpeed: 7,
                 scale: 0.68,
                 orbitRadius: 140,
-                orbitSpeed: 3.7
+                orbitSpeed: 3.7,
+                projectileCount: 4
             },
             8: {
                 damage: 233,
@@ -99,6 +106,7 @@ class FlyingAxeWeapon extends BaseWeapon {
                 scale: 0.71,
                 orbitRadius: 150,
                 orbitSpeed: 3.9,
+                projectileCount: 5,
                 orbitCount: 3,
                 orbitSpread: 120,
                 maxOrbitTime: 2.0,
@@ -125,36 +133,38 @@ class FlyingAxeWeapon extends BaseWeapon {
 
     createProjectiles() {
         for (let i = 0; i < this.maxProjectiles; i++) {
-            const sprite = this.scene.add.sprite(0, 0, 'weapon-axe-projectile');
+            const sprite = this.scene.physics.add.sprite(0, 0, 'weapon-axe-projectile');
             sprite.setScale(this.stats.scale);
             sprite.setDepth(5);
             sprite.setVisible(false);
             sprite.setActive(false);
 
             // Enable physics for the projectile
-            this.scene.physics.world.enable(sprite);
             sprite.body.setSize(sprite.width * 0.6, sprite.height * 0.6);
-            sprite.setActive(false).setVisible(false);
             
             // Create trail sprites for level 8
             const trailSprites = [];
             for (let j = 0; j < this.trailMaxSize; j++) {
                 const trailSprite = this.scene.add.sprite(0, 0, 'weapon-axe-projectile');
+                trailSprite.setDepth(4);  // Set below main sprite
+                trailSprite.setScale(this.stats.scale);
                 trailSprite.setActive(false).setVisible(false);
                 trailSprites.push(trailSprite);
             }
             this.trailPool.push(trailSprites);
+
             this.activeProjectiles.push({
                 sprite,
                 active: false,
                 pierceCount: this.stats.pierce,
-                phase: 'outward', // 'outward' or 'return'
+                phase: 'orbit',
                 startX: 0,
                 startY: 0,
-                targetX: 0,
-                targetY: 0,
+                orbitAngle: 0,
                 rotation: 0,
-                trailSprites
+                orbitTime: 0,
+                trailPositions: [],
+                lastTrailTime: 0
             });
         }
     }
@@ -163,56 +173,32 @@ class FlyingAxeWeapon extends BaseWeapon {
         return this.activeProjectiles.find(p => !p.active);
     }
 
-    fireProjectile() {
-        if (this.currentLevel === 8) {
-            // Special level 8 firing pattern
-            for (let i = 0; i < this.stats.orbitCount; i++) {
-                const proj = this.getInactiveProjectile();
-                if (!proj) continue;
+    fireProjectile(angleOffset = 0) {
+        const proj = this.getInactiveProjectile();
+        if (!proj) return;
 
-                const startX = this.player.x;
-                const startY = this.player.y;
+        const player = this.player.sprite;
+        
+        // Set initial position with offset based on angle
+        const radius = this.stats.orbitRadius;
+        const startAngle = angleOffset;
+        const startX = player.x + Math.cos(startAngle) * radius;
+        const startY = player.y + Math.sin(startAngle) * radius;
 
-                proj.active = true;
-                proj.pierceCount = this.stats.pierce;
-                proj.phase = 'orbit';
-                proj.startX = startX;
-                proj.startY = startY;
-                // Spread axes evenly in a circle
-                proj.orbitAngle = (i * this.stats.orbitSpread * Math.PI / 180);
-                proj.rotation = 0;
-                proj.orbitTime = 0;
-                proj.orbitIndex = i; // Track which axe this is in the formation
-
-                if (proj.sprite) {
-                    proj.sprite.setPosition(startX, startY);
-                    proj.sprite.setVisible(true);
-                    proj.sprite.setActive(true);
-                }
-            }
-        } else {
-            // Original firing logic for levels 1-7
-            const proj = this.getInactiveProjectile();
-            if (!proj) return;
-
-            const startX = this.player.x;
-            const startY = this.player.y;
-
-            proj.active = true;
-            proj.pierceCount = this.stats.pierce;
-            proj.phase = 'orbit';
-            proj.startX = startX;
-            proj.startY = startY;
-            proj.orbitAngle = Math.random() * Math.PI * 2;
-            proj.rotation = 0;
-            proj.orbitTime = 0;
-
-            if (proj.sprite) {
-                proj.sprite.setPosition(startX, startY);
-                proj.sprite.setVisible(true);
-                proj.sprite.setActive(true);
-            }
-        }
+        proj.active = true;
+        proj.sprite.setActive(true).setVisible(true);
+        proj.sprite.setPosition(startX, startY);
+        proj.sprite.setScale(this.stats.scale);
+        
+        proj.pierceCount = this.stats.pierce;
+        proj.phase = 'orbit';
+        proj.startX = player.x;
+        proj.startY = player.y;
+        proj.orbitAngle = startAngle;
+        proj.orbitTime = 0;
+        proj.rotation = 0;
+        proj.trailPositions = [];
+        proj.lastTrailTime = 0;
     }
 
     findClosestEnemy(x, y) {
@@ -253,39 +239,24 @@ class FlyingAxeWeapon extends BaseWeapon {
             proj.rotation += this.stats.rotationSpeed * (delta / 1000);
             proj.sprite.setRotation(proj.rotation);
 
+            // Update projectile position based on phase
             switch (proj.phase) {
                 case 'orbit':
                     // Update orbit time
                     proj.orbitTime += delta / 1000;
                     
-                    let currentRadius = this.stats.orbitRadius;
-                    if (this.currentLevel === 8) {
-                        // Level 8: Pulsating orbit radius
-                        const pulseFactor = Math.sin(proj.orbitTime * 4) * 30;
-                        currentRadius = this.stats.orbitRadius + pulseFactor;
-                    } else {
-                        // Normal expanding radius for other levels
-                        currentRadius *= (1 + proj.orbitTime);
-                    }
+                    // Update player reference position
+                    proj.startX = this.player.sprite.x;
+                    proj.startY = this.player.sprite.y;
                     
-                    // Update orbit angle with potential phase offset for level 8
-                    if (this.currentLevel === 8) {
-                        proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
-                        // Add phase offset based on axe index
-                        const phaseOffset = (proj.orbitIndex * this.stats.orbitSpread * Math.PI / 180);
-                        const orbitX = proj.startX + Math.cos(proj.orbitAngle + phaseOffset) * currentRadius;
-                        const orbitY = proj.startY + Math.sin(proj.orbitAngle + phaseOffset) * currentRadius;
-                        proj.sprite.setPosition(orbitX, orbitY);
-                    } else {
-                        proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
-                        const orbitX = proj.startX + Math.cos(proj.orbitAngle) * currentRadius;
-                        const orbitY = proj.startY + Math.sin(proj.orbitAngle) * currentRadius;
-                        proj.sprite.setPosition(orbitX, orbitY);
-                    }
+                    // Calculate orbit position
+                    proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
+                    const orbitX = proj.startX + Math.cos(proj.orbitAngle) * this.stats.orbitRadius;
+                    const orbitY = proj.startY + Math.sin(proj.orbitAngle) * this.stats.orbitRadius;
+                    proj.sprite.setPosition(orbitX, orbitY);
                     
-                    // Transition to seeking phase
-                    const maxOrbitTime = this.currentLevel === 8 ? this.stats.maxOrbitTime : 1.0;
-                    if (proj.orbitTime >= maxOrbitTime) {
+                    // Transition to seeking phase after orbit time
+                    if (proj.orbitTime >= this.stats.maxOrbitTime) {
                         const closestEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
                         if (closestEnemy) {
                             proj.phase = 'seeking';
@@ -349,27 +320,25 @@ class FlyingAxeWeapon extends BaseWeapon {
                 
                 // Update trail positions
                 const trailSprites = this.trailPool[index];
-                for (let i = 0; i < this.trailMaxSize; i++) {
-                    const trailSprite = trailSprites[i];
-                    if (!proj.trailPositions) proj.trailPositions = [];
+                
+                // Store current position and rotation
+                if (time - (proj.lastTrailTime || 0) >= this.stats.trailSpacing * 1000) {
+                    proj.trailPositions.unshift({
+                        x: proj.sprite.x,
+                        y: proj.sprite.y,
+                        rotation: proj.rotation,
+                        time: time
+                    });
+                    proj.lastTrailTime = time;
                     
-                    // Store current position and rotation
-                    if (time - (proj.lastTrailTime || 0) >= this.stats.trailSpacing * 1000) {
-                        proj.trailPositions.unshift({
-                            x: proj.sprite.x,
-                            y: proj.sprite.y,
-                            rotation: proj.rotation,
-                            time: time
-                        });
-                        proj.lastTrailTime = time;
-                        
-                        // Limit trail length
-                        if (proj.trailPositions.length > this.trailMaxSize) {
-                            proj.trailPositions.pop();
-                        }
+                    // Limit trail length
+                    if (proj.trailPositions.length > this.trailMaxSize) {
+                        proj.trailPositions.pop();
                     }
-                    
-                    // Update trail sprite
+                }
+                
+                // Update trail sprites
+                trailSprites.forEach((trailSprite, i) => {
                     if (i < proj.trailPositions.length) {
                         const pos = proj.trailPositions[i];
                         trailSprite.setActive(true).setVisible(true);
@@ -385,7 +354,7 @@ class FlyingAxeWeapon extends BaseWeapon {
                     } else {
                         trailSprite.setActive(false).setVisible(false);
                     }
-                }
+                });
             }
 
             // Check for enemy collisions
@@ -509,7 +478,12 @@ class FlyingAxeWeapon extends BaseWeapon {
 
     attack(time) {
         this.lastFiredTime = time;
-        this.fireProjectile();
+        
+        // Fire multiple projectiles based on level
+        for (let i = 0; i < this.stats.projectileCount; i++) {
+            const angleOffset = (i * 360 / this.stats.projectileCount) * (Math.PI / 180);
+            this.fireProjectile(angleOffset);
+        }
     }
 
     canFire() {
