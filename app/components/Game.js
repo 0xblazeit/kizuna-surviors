@@ -1046,7 +1046,7 @@ const GameScene = {
     this.input.keyboard.addKey("SPACE").on(
       "down",
       () => {
-        this.gainXP(50);
+        this.gainXP(200);
       },
       this
     );
