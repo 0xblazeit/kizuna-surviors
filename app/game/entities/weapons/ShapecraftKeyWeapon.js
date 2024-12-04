@@ -7,6 +7,48 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         this.name = 'Shapecraft Key';
         this.description = 'Conjures geometric shapes with neon trails that seek out enemies';
 
+        // Effect colors for each shape type
+        this.shapeColors = {
+            triangle: {
+                primary: 0x00ffff,    // Cyan
+                secondary: 0x0088ff,  // Light blue
+                trail: 0x00ffff,     // Cyan trail
+                energy: 0xaaffff     // Light cyan energy
+            },
+            square: {
+                primary: 0xff00ff,    // Magenta
+                secondary: 0xff0088,  // Pink
+                trail: 0xff00ff,     // Magenta trail
+                energy: 0xffaaff     // Light magenta energy
+            },
+            pentagon: {
+                primary: 0xffff00,    // Yellow
+                secondary: 0xff8800,  // Orange
+                trail: 0xffff00,     // Yellow trail
+                energy: 0xffffaa     // Light yellow energy
+            },
+            hexagon: {
+                primary: 0x00ff00,    // Green
+                secondary: 0x88ff00,  // Lime
+                trail: 0x00ff00,     // Green trail
+                energy: 0xaaffaa     // Light green energy
+            },
+            octagon: {
+                primary: 0xff0000,    // Red
+                secondary: 0xff0088,  // Pink-red
+                trail: 0xff0000,     // Red trail
+                energy: 0xffaaaa     // Light red energy
+            }
+        };
+
+        // Max level effects
+        this.maxLevelColors = {
+            primary: 0xffffff,   // Pure white
+            secondary: 0xf0f0ff, // Light blue-white
+            trail: 0xffffff,     // White trail
+            energy: 0xffffff     // White energy
+        };
+
         // Level-up configurations
         this.levelConfigs = {
             1: {
@@ -153,18 +195,6 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         this.maxLevel = 8;
         this.stats = { ...this.levelConfigs[1] };
 
-        // Effect colors for the neon trails
-        this.effectColors = {
-            primary: 0x00ffff,    // Cyan
-            secondary: 0xff00ff,  // Magenta
-            energy: 0xf0f0ff,     // Light blue-white
-            maxLevel: {
-                primary: 0xff1493,   // Deep pink
-                secondary: 0x00ffff, // Cyan
-                energy: 0xffffff     // Pure white
-            }
-        };
-
         this.maxProjectiles = 20;
         this.activeProjectiles = [];
         this.lastFiredTime = 0;
@@ -223,8 +253,8 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         const size = 30; // Base size for shapes
 
         // Draw the shape
-        graphics.lineStyle(2, this.effectColors.primary);
-        graphics.fillStyle(this.effectColors.energy, 0.5);
+        graphics.lineStyle(2, this.shapeColors[shapeType].primary);
+        graphics.fillStyle(this.shapeColors[shapeType].energy, 0.5);
 
         switch (shapeType) {
             case 'triangle':
@@ -384,9 +414,10 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                     trailSprite.setScale(proj.sprite.scale * scaleRatio);
 
                     // Set glow effect
+                    const shapeType = this.stats.shapeTypes[index % this.stats.shapeTypes.length];
                     const glowColor = this.currentLevel === this.maxLevel ? 
-                        this.effectColors.maxLevel.primary : 
-                        this.effectColors.primary;
+                        this.maxLevelColors.energy : 
+                        this.shapeColors[shapeType].energy;
                     trailSprite.setTint(glowColor);
                 } else {
                     trailSprite.setActive(false).setVisible(false);
@@ -480,9 +511,10 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         }
 
         // Add glow effect
+        const shapeType = this.stats.shapeTypes[0];
         const glowColor = this.currentLevel === this.maxLevel ? 
-            this.effectColors.maxLevel.primary : 
-            this.effectColors.primary;
+            this.maxLevelColors.primary : 
+            this.shapeColors[shapeType].primary;
         proj.sprite.setTint(glowColor);
     }
 
@@ -519,14 +551,15 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     createHitEffect(x, y) {
-        const hitEffect = this.scene.add.sprite(x, y, this.currentLevel === this.maxLevel ? 
-            this.stats.shapeTypes[0] : 'triangle');
+        const hitEffect = this.scene.add.sprite(x, y, this.stats.shapeTypes[0]);
         
         hitEffect.setScale(this.stats.scale * 0.5);
         hitEffect.setAlpha(0.8);
-        hitEffect.setTint(this.currentLevel === this.maxLevel ? 
-            this.effectColors.maxLevel.energy : 
-            this.effectColors.energy);
+        const shapeType = this.stats.shapeTypes[0];
+        const glowColor = this.currentLevel === this.maxLevel ? 
+            this.maxLevelColors.energy : 
+            this.shapeColors[shapeType].energy;
+        hitEffect.setTint(glowColor);
         hitEffect.setBlendMode(Phaser.BlendModes.ADD);
 
         this.scene.tweens.add({
@@ -578,7 +611,11 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         );
         burst.setScale(0.2);
         burst.setAlpha(0.7);
-        burst.setTint(this.effectColors.energy);
+        const shapeType = this.stats.shapeTypes[0];
+        const glowColor = this.currentLevel === this.maxLevel ? 
+            this.maxLevelColors.energy : 
+            this.shapeColors[shapeType].energy;
+        burst.setTint(glowColor);
 
         this.scene.tweens.add({
             targets: burst,

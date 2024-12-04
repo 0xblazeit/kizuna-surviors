@@ -167,8 +167,11 @@ const UpgradeMenuScene = Phaser.Class({
         }
       })();
 
+      // Create and size icon uniformly
       const icon = this.add.image(x, y - 80, iconKey);
-      icon.setScale(0.8);
+      const targetSize = 48; // Target size for all icons
+      const scale = targetSize / Math.max(icon.width, icon.height);
+      icon.setScale(scale);
 
       // Add weapon name
       this.add
