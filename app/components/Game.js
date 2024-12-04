@@ -241,20 +241,12 @@ const GameScene = {
       goldMilestoneReached: false, // Add gold milestone flag
       enemyWaveTimer: 0,
       waveNumber: 1,
-      bossSpawned: false,
       difficultyMultiplier: 1,
       // Enemy spawn thresholds (in seconds)
       spawnThresholds: {
         advanced: 5,     // Advanced enemies after 5 seconds
         epic: 10,       // Epic enemies after 10 seconds
-        boss: 600       // Boss waves still at 10 minutes
       },
-      // Track if we've announced each enemy type
-      enemyTypeAnnounced: {
-        advanced: false,
-        epic: false,
-        boss: false
-      }
     };
 
     // Debug log initial state
@@ -262,7 +254,6 @@ const GameScene = {
       timerStarted: this.gameState.timerStarted,
       gameTimer: this.gameState.gameTimer,
       spawnThresholds: this.gameState.spawnThresholds,
-      enemyTypeAnnounced: this.gameState.enemyTypeAnnounced
     });
 
     // Bind methods to this scene
@@ -1448,119 +1439,6 @@ const GameScene = {
 
     // Create new timer
     const scene = this;  // Store reference to the scene
-    this.announceNewEnemyType = (type) => {
-      const messages = {
-        advanced: "Advanced Enemies Approaching!",
-        epic: "Epic Enemies Have Arrived!",
-        boss: "Prepare for Boss Waves!"
-      };
-      
-      const colors = {
-        advanced: '#00ff00',
-        epic: '#ff00ff',
-        boss: '#ff0000'
-      };
-
-      // Get camera center coordinates
-      const centerX = this.cameras.main.midPoint.x;
-      const centerY = this.cameras.main.midPoint.y;
-      
-      // Create container for announcement elements
-      const container = this.add.container(centerX, centerY);
-      container.setDepth(1001);
-      
-      // Add flash effect
-      const flash = this.add.rectangle(0, 0, 800, 600, 0xffffff, 0.3);
-      flash.setOrigin(0.5);
-      container.add(flash);
-      
-      // Create the main announcement text
-      const announcementText = this.add.text(
-        0,
-        0,
-        messages[type],
-        {
-          fontFamily: 'VT323',
-          fontSize: '72px',
-          color: colors[type],
-          stroke: '#000000',
-          strokeThickness: 8,
-          align: 'center',
-          shadow: {
-            offsetX: 2,
-            offsetY: 2,
-            color: '#000000',
-            blur: 5,
-            fill: true
-          }
-        }
-      );
-      announcementText.setOrigin(0.5);
-      
-      // Add background for better visibility
-      const padding = 30;
-      const background = this.add.rectangle(
-        0,
-        0,
-        announcementText.width + padding * 2,
-        announcementText.height + padding * 2,
-        0x000000,
-        0.7
-      );
-      background.setOrigin(0.5);
-      
-      // Add elements to container in correct order
-      container.add(background);
-      container.add(announcementText);
-      
-      // Make sure container is fixed to camera
-      container.setScrollFactor(0);
-      
-      // Create multiple animations
-      // Flash effect
-      this.tweens.add({
-        targets: flash,
-        alpha: 0,
-        duration: 500,
-        ease: 'Power2',
-      });
-      
-      // Scale and fade animation for the announcement
-      this.tweens.add({
-        targets: container,
-        scaleX: { from: 0, to: 1 },
-        scaleY: { from: 0, to: 1 },
-        alpha: { from: 0, to: 1 },
-        duration: 1000,
-        ease: 'Back.out',
-        onComplete: () => {
-          // Hold for a moment, then fade out
-          this.time.delayedCall(1500, () => {
-            this.tweens.add({
-              targets: container,
-              alpha: 0,
-              y: centerY - 50,
-              duration: 1000,
-              ease: 'Power2',
-              onComplete: () => {
-                container.destroy();
-              }
-            });
-          });
-        }
-      });
-      
-      // Add screen shake effect
-      this.cameras.main.shake(500, 0.005);
-    };
-
-    // Reset announcement flags when starting new game
-    this.gameState.enemyTypeAnnounced = {
-      advanced: false,
-      epic: false,
-      boss: false
-    };
-
     this.timerEvent = this.time.addEvent({
       delay: 1000,
       callback: () => {
@@ -1574,22 +1452,6 @@ const GameScene = {
         scene.timerText.setText(
           `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
-
-        // Check for new enemy types based on timer
-        if (!scene.gameState.enemyTypeAnnounced.advanced && 
-            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.advanced) {
-          scene.announceNewEnemyType('advanced');
-        }
-
-        if (!scene.gameState.enemyTypeAnnounced.epic && 
-            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.epic) {
-          scene.announceNewEnemyType('epic');
-        }
-
-        if (!scene.gameState.enemyTypeAnnounced.boss && 
-            scene.gameState.gameTimer >= scene.gameState.spawnThresholds.boss) {
-          scene.announceNewEnemyType('boss');
-        }
       },
       callbackScope: this,
       loop: true,
