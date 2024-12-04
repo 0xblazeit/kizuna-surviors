@@ -1461,11 +1461,6 @@ const GameScene = {
   update: function (time, delta) {
     if (!this.gameState) return;
 
-    // Update game timer (convert from milliseconds to seconds)
-    if (!this.gameState.isGameOver) {
-      this.gameState.gameTimer += delta / 1000;
-    }
-
     // Handle player movement using the new system
     const input = {
       left: this.cursors.left.isDown || this.wasd.left.isDown,
