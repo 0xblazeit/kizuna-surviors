@@ -3,6 +3,9 @@ import { BaseWeapon } from './BaseWeapon.js';
 export class SonicBoomHammer extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
+
+        // Set weapon name
+        this.name = 'Hammer of Donkeys';
         
         // Set weapon stats - slow but powerful
         this.stats = {

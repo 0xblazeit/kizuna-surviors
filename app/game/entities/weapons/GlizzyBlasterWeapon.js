@@ -3,6 +3,9 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
+        // Set weapon name
+        this.name = 'Glizzy Blaster';
+
         // Level-up configurations
         this.levelConfigs = {
             1: {

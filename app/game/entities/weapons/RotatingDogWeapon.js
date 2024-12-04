@@ -3,6 +3,9 @@ export class RotatingDogWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
+        // Set weapon name
+        this.name = 'Rotating Dog';
+
         // Level-up configurations using Fibonacci sequence (1,1,2,3,5,8,13,21)
         this.levelConfigs = {
             1: {
