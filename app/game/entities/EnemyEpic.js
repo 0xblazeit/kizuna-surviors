@@ -52,6 +52,18 @@ class EnemyEpic extends EnemyAdvanced {
     }
   }
 
+  takeDamage(amount, sourceX, sourceY) {
+    // Call parent takeDamage to handle health reduction and base effects
+    const damageDealt = super.takeDamage(amount, sourceX, sourceY);
+
+    // Play hit effects with source position
+    if (this.playHitEffects) {
+      this.playHitEffects(sourceX, sourceY);
+    }
+
+    return damageDealt;
+  }
+
   destroy() {
     // Clean up aura
     if (this.aura) {
