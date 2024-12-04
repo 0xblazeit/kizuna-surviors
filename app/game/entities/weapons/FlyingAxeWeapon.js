@@ -3,6 +3,8 @@ import { BaseWeapon } from './BaseWeapon.js';
 class FlyingAxeWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
+
+        this.name = "Flying Axe";
         
         // Level-up configurations
         this.levelConfigs = {

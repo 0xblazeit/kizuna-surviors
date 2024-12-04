@@ -3,7 +3,7 @@ export class MagicWandWeapon extends BaseWeapon {
     constructor(scene, player) {
         super(scene, player);
         
-        this.name = 'Shamirs Shard';
+        this.name = 'Shamir\'s Shard';
 
         // Set weapon stats
         this.stats = {

@@ -148,8 +148,10 @@ const UpgradeMenuScene = Phaser.Class({
         `Level: ${weapon.currentLevel} → ${weapon.currentLevel + 1}\n` +
         `Damage: ${currentStats.damage} → ${nextLevelStats.damage}\n` +
         `Pierce: ${currentStats.pierce} → ${nextLevelStats.pierce}\n` +
-        (currentStats.magicPower ? `Magic: ${currentStats.magicPower} → ${nextLevelStats.magicPower}\n` : '') +
-        (currentStats.criticalChance ? `Crit: ${Math.round(currentStats.criticalChance * 100)}% → ${Math.round(nextLevelStats.criticalChance * 100)}%\n` : ''),
+        (nextLevelStats.projectileCount ? `Projectiles: ${currentStats.projectileCount || 1} → ${nextLevelStats.projectileCount}\n` : '') +
+        (nextLevelStats.count ? `Count: ${currentStats.count || 1} → ${nextLevelStats.count}\n` : '') +
+        (nextLevelStats.magicPower ? `Magic: ${currentStats.magicPower || 0} → ${nextLevelStats.magicPower}\n` : '') +
+        (nextLevelStats.criticalChance ? `Crit: ${Math.round((currentStats.criticalChance || 0) * 100)}% → ${Math.round(nextLevelStats.criticalChance * 100)}%\n` : ''),
         {
           fontSize: '16px',
           color: '#ffffff',
