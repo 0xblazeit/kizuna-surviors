@@ -52,7 +52,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         // Level-up configurations
         this.levelConfigs = {
             1: {
-                damage: 12,
+                damage: 1,
                 pierce: 2,
                 cooldown: 1200,
                 range: 400,
@@ -69,7 +69,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 0.8
             },
             2: {
-                damage: 18,
+                damage: 2,
                 pierce: 2,
                 cooldown: 1100,
                 range: 425,
@@ -86,7 +86,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 0.85
             },
             3: {
-                damage: 25,
+                damage: 2,
                 pierce: 3,
                 cooldown: 1000,
                 range: 450,
@@ -103,7 +103,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 0.9
             },
             4: {
-                damage: 35,
+                damage: 3,
                 pierce: 3,
                 cooldown: 900,
                 range: 475,
@@ -120,7 +120,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 0.95
             },
             5: {
-                damage: 48,
+                damage: 5,
                 pierce: 4,
                 cooldown: 800,
                 range: 500,
@@ -137,7 +137,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 1.0
             },
             6: {
-                damage: 65,
+                damage: 8,
                 pierce: 4,
                 cooldown: 700,
                 range: 525,
@@ -154,7 +154,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 glowIntensity: 1.1
             },
             7: {
-                damage: 85,
+                damage: 8,
                 pierce: 5,
                 cooldown: 600,
                 range: 550,
@@ -172,7 +172,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
             },
             8: {
                 damage: 110,
-                pierce: 5,
+                pierce: 12,
                 cooldown: 500,
                 range: 575,
                 speed: 350,

@@ -1035,11 +1035,6 @@ const GameScene = {
           });
         }
 
-        // Debug logging for spawn thresholds
-        console.log('Current time:', this.gameState.gameTimer);
-        console.log('Advanced threshold:', this.gameState.spawnThresholds.advanced);
-        console.log('Epic threshold:', this.gameState.spawnThresholds.epic);
-
         // Adjust spawn probabilities based on game progress and thresholds
         let spawnRates = {
           basic: 1,
@@ -1051,7 +1046,6 @@ const GameScene = {
         if (this.gameState.gameTimer >= this.gameState.spawnThresholds.advanced) {
           spawnRates.basic = 0.7;    // 70% chance for basic
           spawnRates.advanced = 0.3;  // 30% chance for advanced
-          console.log('Advanced enemies enabled. Spawn rates:', spawnRates);
         }
 
         // Unlock epic enemies
@@ -1059,13 +1053,7 @@ const GameScene = {
           spawnRates.basic = 0.5;     // 50% chance for basic
           spawnRates.advanced = 0.3;  // 30% chance for advanced
           spawnRates.epic = 0.2;      // 20% chance for epic
-          console.log('Epic enemies enabled. Spawn rates:', spawnRates);
         }
-
-        // Debug logging for spawn roll
-        const roll = Math.random();
-        console.log('Spawn roll:', roll);
-        console.log('Current spawn rates:', spawnRates);
 
         // Get random position using golden ratio distribution
         const getSpawnPosition = () => {
@@ -1106,13 +1094,13 @@ const GameScene = {
         let enemy;
         let spawnType = '';
         
-        if (roll < spawnRates.basic) {
+        if (Math.random() < spawnRates.basic) {
           spawnType = 'basic';
           enemy = new EnemyBasic(this, x, y, spriteKey);
           enemy.stats.maxHealth *= this.gameState.difficultyMultiplier;
           enemy.stats.currentHealth = enemy.stats.maxHealth;
           enemy.stats.damage *= this.gameState.difficultyMultiplier;
-        } else if (roll < spawnRates.basic + spawnRates.advanced) {
+        } else if (Math.random() < spawnRates.basic + spawnRates.advanced) {
           spawnType = 'advanced';
           enemy = new EnemyAdvanced(this, x, y, spriteKey);
           enemy.stats.maxHealth *= (1 + gameProgress) * this.gameState.difficultyMultiplier;
@@ -1132,8 +1120,6 @@ const GameScene = {
           enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress * 1.5));
         }
 
-        console.log(`Spawning ${spawnType} enemy at time ${this.gameState.gameTimer}`);
-        
         // Increase max enemies and decrease spawn rate based on wave number
         this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
         this.gameState.spawnRate = Math.max(
@@ -1463,7 +1449,6 @@ const GameScene = {
     // Create new timer
     const scene = this;  // Store reference to the scene
     this.announceNewEnemyType = (type) => {
-      console.log(`Attempting to announce ${type} enemy type`); // Debug log
       const messages = {
         advanced: "Advanced Enemies Approaching!",
         epic: "Epic Enemies Have Arrived!",
@@ -1567,8 +1552,6 @@ const GameScene = {
       
       // Add screen shake effect
       this.cameras.main.shake(500, 0.005);
-      
-      console.log(`Announcement complete for ${type}`); // Debug log
     };
 
     // Reset announcement flags when starting new game
@@ -1582,7 +1565,6 @@ const GameScene = {
       delay: 1000,
       callback: () => {
         if (!scene.gameState.timerStarted || scene.gameState.gameTimer >= 1800) {
-          console.log("Timer not started or exceeded max time"); // Debug log
           return; // 30 minutes = 1800 seconds
         }
 
@@ -1593,33 +1575,20 @@ const GameScene = {
           `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
 
-        console.log(`Current game time: ${scene.gameState.gameTimer} seconds`); // Debug log
-        console.log(`Advanced threshold: ${scene.gameState.spawnThresholds.advanced} seconds`); // Debug log
-        console.log(`Advanced announced: ${scene.gameState.enemyTypeAnnounced.advanced}`); // Debug log
-
         // Check for new enemy types based on timer
         if (!scene.gameState.enemyTypeAnnounced.advanced && 
             scene.gameState.gameTimer >= scene.gameState.spawnThresholds.advanced) {
-          console.log("Triggering advanced enemy announcement"); // Debug log
-          scene.gameState.enemyTypeAnnounced.advanced = true;
           scene.announceNewEnemyType('advanced');
-          console.log("Advanced enemies unlocked at:", scene.gameState.gameTimer);
         }
-        
+
         if (!scene.gameState.enemyTypeAnnounced.epic && 
             scene.gameState.gameTimer >= scene.gameState.spawnThresholds.epic) {
-          console.log("Triggering epic enemy announcement"); // Debug log
-          scene.gameState.enemyTypeAnnounced.epic = true;
           scene.announceNewEnemyType('epic');
-          console.log("Epic enemies unlocked at:", scene.gameState.gameTimer);
         }
-        
+
         if (!scene.gameState.enemyTypeAnnounced.boss && 
             scene.gameState.gameTimer >= scene.gameState.spawnThresholds.boss) {
-          console.log("Triggering boss announcement"); // Debug log
-          scene.gameState.enemyTypeAnnounced.boss = true;
           scene.announceNewEnemyType('boss');
-          console.log("Boss waves unlocked at:", scene.gameState.gameTimer);
         }
       },
       callbackScope: this,
