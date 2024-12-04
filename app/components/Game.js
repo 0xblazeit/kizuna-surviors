@@ -1075,18 +1075,31 @@ const GameScene = {
         const x = spawnPos.x;
         const y = spawnPos.y;
 
-        // Enemy sprite keys
         const enemyAdvancedSprites = [
-          "enemy-basic-one",
-          "enemy-basic-two",
-          "enemy-basic-three",
-          "enemy-basic-four",
-          "enemy-basic-five",
-          "enemy-basic-six",
+          "enemy-advanced-one",
+          "enemy-advanced-two",
+          "enemy-advanced-three",
+          "enemy-advanced-four",
+          "enemy-advanced-five",
+          "enemy-advanced-six",
         ];
 
-        // Random enemy sprite
-        const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
+        const spriteKeyAdvanced =
+          enemyAdvancedSprites[
+            Math.floor(Math.random() * enemyAdvancedSprites.length)
+          ];
+
+        const enemyEpicSprites = [
+          "enemy-epic-one",
+          "enemy-epic-two",
+          "enemy-epic-three",
+          "enemy-epic-four",
+          "enemy-epic-five",
+          "enemy-epic-six",
+        ];
+
+        const spriteKeyEpic =
+          enemyEpicSprites[Math.floor(Math.random() * enemyEpicSprites.length)];
 
         // Simplified enemy spawn system
         let enemy;
@@ -1099,8 +1112,8 @@ const GameScene = {
             attackDamage: 16,
             scale: 0.6, // Slightly larger than basic
           };
-          enemy = new EnemyEpic(this, x, y, spriteKey, epicConfig);
-          enemy.sprite.setTint(0x0000ff); // Blue tint for epic
+          enemy = new EnemyEpic(this, x, y, spriteKeyEpic, epicConfig);
+          // enemy.sprite.setTint(0x0000ff); // Blue tint for epic
         } else if (this.gameState.gameTimer >= 5) {
           console.log(
             "Spawning ADVANCED enemy at time:",
@@ -1113,8 +1126,14 @@ const GameScene = {
             attackDamage: 12,
             scale: 0.5, // Slightly larger than basic
           };
-          enemy = new EnemyAdvanced(this, x, y, spriteKey, advancedConfig);
-          enemy.sprite.setTint(0xff6b00); // Orange tint for advanced
+          enemy = new EnemyAdvanced(
+            this,
+            x,
+            y,
+            spriteKeyAdvanced,
+            advancedConfig
+          );
+          // enemy.sprite.setTint(0xff6b00); // Orange tint for advanced
         } else {
           console.log(
             "Spawning BASIC enemy at time:",
