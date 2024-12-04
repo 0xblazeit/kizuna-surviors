@@ -78,7 +78,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
                 scale: 0.7
             },
             8: {
-                damage: 15,
+                damage: 18,  // Increased damage
                 pierce: 4,
                 projectileCount: 7,
                 spreadAngle: 45,
@@ -86,7 +86,10 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
                 cooldown: 60,
                 speed: 750,
                 scale: 0.75,
-                isMaxLevel: true
+                isMaxLevel: true,
+                mustardExplosion: true,  // Enable mustard explosion
+                explosionDamage: 8,      // Additional explosion damage
+                explosionRadius: 100     // Explosion radius
             }
         };
 
@@ -332,8 +335,13 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         const damage = Math.round(this.stats.damage);
         enemy.takeDamage(damage, proj.sprite.x, proj.sprite.y);
 
-        // Create a simple hit effect
+        // Create hit effect
         this.createHitEffect(enemy, proj);
+
+        // Create mustard explosion at max level
+        if (this.currentLevel === this.maxLevel && this.stats.mustardExplosion) {
+            this.createMustardExplosion(proj.sprite.x, proj.sprite.y);
+        }
 
         // Reduce pierce count
         proj.pierceCount--;
@@ -382,75 +390,170 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
                 rotationSprite.destroy();
             }
         });
+    }
 
-        // Create mustard explosion at max level
-        if (this.currentLevel === this.maxLevel) {
-            // Create multiple mustard particles in a circular pattern
-            const particleCount = 8;
-            for (let i = 0; i < particleCount; i++) {
-                const angle = (i / particleCount) * Math.PI * 2;
-                const mustardSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-hotdog-projectile');
-                mustardSprite.setScale(0.2);
-                mustardSprite.setAlpha(0.9);
-                mustardSprite.setTint(0xFFDB58); // Mustard yellow color
+    createMustardExplosion(x, y) {
+        const particleCount = 16;  // Increased particle count
+        const explosionRadius = this.stats.explosionRadius;
+        
+        // Create shockwave ring
+        const shockwave = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+        shockwave.setScale(0.1);
+        shockwave.setAlpha(0.7);
+        shockwave.setTint(0xFFF000); // Bright yellow
+        
+        this.scene.tweens.add({
+            targets: shockwave,
+            scaleX: 3,
+            scaleY: 3,
+            alpha: 0,
+            duration: 500,
+            ease: 'Cubic.Out',
+            onComplete: () => shockwave.destroy()
+        });
 
-                // Calculate end position in a circular pattern
-                const radius = 50;
-                const endX = proj.sprite.x + Math.cos(angle) * radius;
-                const endY = proj.sprite.y + Math.sin(angle) * radius;
+        // Create central explosion burst
+        const burstSprite = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+        burstSprite.setScale(0.5);
+        burstSprite.setAlpha(1);
+        burstSprite.setTint(0xFFDB58); // Mustard yellow
 
-                // Create spreading animation
-                this.scene.tweens.add({
-                    targets: mustardSprite,
-                    x: endX,
-                    y: endY,
-                    scaleX: { from: 0.2, to: 0.4 },
-                    scaleY: { from: 0.2, to: 0.4 },
-                    alpha: { from: 0.9, to: 0 },
-                    duration: 400,
-                    ease: 'Cubic.Out',
-                    onComplete: () => {
-                        mustardSprite.destroy();
-                    }
-                });
-            }
+        // Burst animation with bounce effect
+        this.scene.tweens.add({
+            targets: burstSprite,
+            scaleX: { from: 0.5, to: 2.5 },
+            scaleY: { from: 0.5, to: 2.5 },
+            alpha: { from: 1, to: 0 },
+            duration: 400,
+            ease: 'Back.Out',
+            onComplete: () => burstSprite.destroy()
+        });
 
-            // Add a central mustard burst
-            const centralBurst = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-hotdog-projectile');
-            centralBurst.setScale(0.3);
-            centralBurst.setAlpha(0.8);
-            centralBurst.setTint(0xFFDB58);
+        // Create inner ring of particles
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const innerRadius = explosionRadius * 0.5;
+            
+            const mustardDrop = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+            mustardDrop.setScale(0.4);
+            mustardDrop.setAlpha(0.9);
+            mustardDrop.setTint(0xFFDB58);
+            mustardDrop.setRotation(angle);
 
+            const endX = x + Math.cos(angle) * innerRadius;
+            const endY = y + Math.sin(angle) * innerRadius;
+
+            // Drip effect
             this.scene.tweens.add({
-                targets: centralBurst,
-                scaleX: { from: 0.3, to: 1.0 },
-                scaleY: { from: 0.3, to: 1.0 },
-                alpha: { from: 0.8, to: 0 },
+                targets: mustardDrop,
+                x: endX,
+                y: endY,
+                scaleX: { from: 0.4, to: 0.2 },
+                scaleY: { from: 0.4, to: 0.2 },
+                alpha: { from: 0.9, to: 0 },
                 duration: 300,
-                ease: 'Quad.Out',
-                onComplete: () => {
-                    centralBurst.destroy();
-                }
-            });
-
-            // Create a shockwave ring
-            const shockwave = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, 'weapon-hotdog-projectile');
-            shockwave.setScale(0.2);
-            shockwave.setAlpha(0.5);
-            shockwave.setTint(0xFFA500); // Orange tint
-
-            this.scene.tweens.add({
-                targets: shockwave,
-                scaleX: { from: 0.2, to: 1.5 },
-                scaleY: { from: 0.2, to: 1.5 },
-                alpha: { from: 0.5, to: 0 },
-                duration: 500,
-                ease: 'Sine.Out',
-                onComplete: () => {
-                    shockwave.destroy();
-                }
+                ease: 'Power2',
+                onComplete: () => mustardDrop.destroy()
             });
         }
+
+        // Create outer ring of particles with trails
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const outerRadius = explosionRadius;
+            
+            // Create trail effect
+            const trail = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+            trail.setScale(0.3);
+            trail.setAlpha(0.6);
+            trail.setTint(0xFFA500); // Orange tint for trail
+            
+            const mustardParticle = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+            mustardParticle.setScale(0.3);
+            mustardParticle.setAlpha(1);
+            mustardParticle.setTint(0xFFDB58);
+            mustardParticle.setRotation(angle);
+
+            const endX = x + Math.cos(angle) * outerRadius;
+            const endY = y + Math.sin(angle) * outerRadius;
+
+            // Trail animation
+            this.scene.tweens.add({
+                targets: trail,
+                x: endX,
+                y: endY,
+                scaleX: { from: 0.3, to: 0.1 },
+                scaleY: { from: 0.3, to: 0.1 },
+                alpha: { from: 0.6, to: 0 },
+                duration: 500,
+                ease: 'Power1',
+                onComplete: () => trail.destroy()
+            });
+
+            // Particle animation with spin
+            this.scene.tweens.add({
+                targets: mustardParticle,
+                x: endX,
+                y: endY,
+                scaleX: { from: 0.3, to: 0.15 },
+                scaleY: { from: 0.3, to: 0.15 },
+                rotation: angle + Math.PI * 4, // Two full rotations
+                alpha: { from: 1, to: 0 },
+                duration: 400,
+                ease: 'Power2',
+                onComplete: () => mustardParticle.destroy()
+            });
+
+            // Add random small splatter particles
+            if (Math.random() < 0.5) {
+                const splatter = this.scene.add.sprite(
+                    x + Math.cos(angle) * (outerRadius * 0.3),
+                    y + Math.sin(angle) * (outerRadius * 0.3),
+                    'weapon-hotdog-projectile'
+                );
+                splatter.setScale(0.15);
+                splatter.setAlpha(0.8);
+                splatter.setTint(0xFFDB58);
+                splatter.setRotation(Math.random() * Math.PI * 2);
+
+                this.scene.tweens.add({
+                    targets: splatter,
+                    scaleX: { from: 0.15, to: 0.3 },
+                    scaleY: { from: 0.15, to: 0.3 },
+                    alpha: { from: 0.8, to: 0 },
+                    rotation: splatter.rotation + Math.PI,
+                    duration: 300 + Math.random() * 200,
+                    ease: 'Power2',
+                    onComplete: () => splatter.destroy()
+                });
+            }
+        }
+
+        // Create pulsing glow effect
+        const glow = this.scene.add.sprite(x, y, 'weapon-hotdog-projectile');
+        glow.setScale(1);
+        glow.setAlpha(0.3);
+        glow.setTint(0xFFFF00);
+        
+        this.scene.tweens.add({
+            targets: glow,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 600,
+            ease: 'Sine.Out',
+            onComplete: () => glow.destroy()
+        });
+
+        // Deal explosion damage to nearby enemies
+        const enemies = this.scene.enemies.filter(e => 
+            e && e.sprite && e.sprite.active && !e.isDead &&
+            Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <= explosionRadius
+        );
+
+        enemies.forEach(enemy => {
+            enemy.takeDamage(this.stats.explosionDamage, x, y);
+        });
     }
 }
 
