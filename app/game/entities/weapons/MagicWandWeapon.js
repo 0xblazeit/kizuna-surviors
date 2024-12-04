@@ -239,7 +239,6 @@ export class MagicWandWeapon extends BaseWeapon {
         if (Math.random() < this.stats.criticalChance) {
             finalDamage *= 2;
             isCritical = true;
-            console.log('Critical hit!', finalDamage);
         }
 
         // Add elemental damage

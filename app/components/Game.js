@@ -1026,27 +1026,7 @@ const GameScene = {
           });
         }
 
-        // Adjust spawn probabilities based on game progress and thresholds
-        let spawnRates = {
-          basic: 1,
-          advanced: 0,
-          epic: 0
-        };
-
-        // Unlock advanced enemies
-        if (this.gameState.gameTimer >= this.gameState.spawnThresholds.advanced) {
-          spawnRates.basic = 0.7;    // 70% chance for basic
-          spawnRates.advanced = 0.3;  // 30% chance for advanced
-        }
-
-        // Unlock epic enemies
-        if (this.gameState.gameTimer >= this.gameState.spawnThresholds.epic) {
-          spawnRates.basic = 0.5;     // 50% chance for basic
-          spawnRates.advanced = 0.3;  // 30% chance for advanced
-          spawnRates.epic = 0.2;      // 20% chance for epic
-        }
-
-        // Get random position using golden ratio distribution
+        // Get spawn position
         const getSpawnPosition = () => {
           const minSpawnDistance = 300; // Minimum distance from player
           const maxSpawnDistance = 500; // Maximum distance from player
@@ -1081,36 +1061,51 @@ const GameScene = {
         // Random enemy sprite
         const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
 
-        // Determine enemy type based on probabilities
+        // Simplified enemy spawn system
         let enemy;
-        let spawnType = '';
-        
-        if (Math.random() < spawnRates.basic) {
-          spawnType = 'basic';
-          enemy = new EnemyBasic(this, x, y, spriteKey);
-          enemy.stats.maxHealth *= this.gameState.difficultyMultiplier;
-          enemy.stats.currentHealth = enemy.stats.maxHealth;
-          enemy.stats.damage *= this.gameState.difficultyMultiplier;
-        } else if (Math.random() < spawnRates.basic + spawnRates.advanced) {
-          spawnType = 'advanced';
-          enemy = new EnemyAdvanced(this, x, y, spriteKey);
-          enemy.stats.maxHealth *= (1 + gameProgress) * this.gameState.difficultyMultiplier;
-          enemy.stats.currentHealth = enemy.stats.maxHealth;
-          enemy.stats.moveSpeed *= (1 + gameProgress * 0.5);
-          enemy.stats.damage *= (1 + gameProgress * 0.7) * this.gameState.difficultyMultiplier;
-          enemy.stats.defense *= (1 + gameProgress * 0.3);
-          enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress));
-        } else {
-          spawnType = 'epic';
-          enemy = new EnemyEpic(this, x, y, spriteKey);
-          enemy.stats.maxHealth *= (1 + gameProgress * 2) * this.gameState.difficultyMultiplier;
-          enemy.stats.currentHealth = enemy.stats.maxHealth;
-          enemy.stats.moveSpeed *= (1 + gameProgress * 0.7);
-          enemy.stats.damage *= (1 + gameProgress * 1.2) * this.gameState.difficultyMultiplier;
-          enemy.stats.defense *= (1 + gameProgress * 0.5);
-          enemy.xpValue = Math.floor(enemy.xpValue * (1 + gameProgress * 1.5));
+        if (this.gameState.gameTimer >= 20) {
+          console.log('Spawning EPIC enemy at time:', this.gameState.gameTimer);
+          const epicConfig = {
+            maxHealth: 600,
+            moveSpeed: 2.2,
+            defense: 4,
+            attackDamage: 16,
+            scale: 0.6  // Slightly larger than basic
+          };
+          enemy = new EnemyEpic(this, x, y, spriteKey, epicConfig);
+          enemy.sprite.setTint(0xff0000);  // Red tint for epic
+        }
+        else if (this.gameState.gameTimer >= 5) {
+          console.log('Spawning ADVANCED enemy at time:', this.gameState.gameTimer);
+          const advancedConfig = {
+            maxHealth: 300,
+            moveSpeed: 2.0,
+            defense: 2,
+            attackDamage: 12,
+            scale: 0.5  // Slightly larger than basic
+          };
+          enemy = new EnemyAdvanced(this, x, y, spriteKey, advancedConfig);
+          enemy.sprite.setTint(0xff6b00);  // Orange tint for advanced
+        }
+        else {
+          console.log('Spawning BASIC enemy at time:', this.gameState.gameTimer);
+          const basicConfig = {
+            maxHealth: 100,
+            moveSpeed: 1.8,
+            defense: 0,
+            attackDamage: 8,
+            scale: 0.4
+          };
+          enemy = new EnemyBasic(this, x, y, spriteKey, basicConfig);
         }
 
+        // Add to physics system and enemy group
+        this.physics.add.existing(enemy);
+        this.enemies.add(enemy);
+        
+        // Debug: Log spawn location
+        console.log('Enemy spawned at:', {x, y}, 'Player at:', {px: this.player.x, py: this.player.y});
+        
         // Increase max enemies and decrease spawn rate based on wave number
         this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
         this.gameState.spawnRate = Math.max(
