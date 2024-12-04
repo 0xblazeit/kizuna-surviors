@@ -1077,7 +1077,7 @@ const GameScene = {
 
         // Enemy sprite keys
         const enemyAdvancedSprites = [
-          "enemy-ad-one",
+          "enemy-basic-one",
           "enemy-basic-two",
           "enemy-basic-three",
           "enemy-basic-four",
