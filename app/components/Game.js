@@ -1101,52 +1101,78 @@ const GameScene = {
         const spriteKeyEpic =
           enemyEpicSprites[Math.floor(Math.random() * enemyEpicSprites.length)];
 
+        const enemySprites = [
+          "enemy-basic-one",
+          "enemy-basic-two",
+          "enemy-basic-three",
+          "enemy-basic-four",
+          "enemy-basic-five",
+          "enemy-basic-six",
+        ];
+    
+          // Get random enemy sprite
+          const randomSprite =
+            enemySprites[Math.floor(Math.random() * enemyEpicSprites.length)];
+
         // Simplified enemy spawn system
         let enemy;
-        if (this.gameState.gameTimer >= 20) {
-          console.log("Spawning EPIC enemy at time:", this.gameState.gameTimer);
-          const epicConfig = {
-            maxHealth: 600,
-            moveSpeed: 2.2,
-            defense: 4,
-            attackDamage: 16,
-            scale: 0.6, // Slightly larger than basic
-          };
-          enemy = new EnemyEpic(this, x, y, spriteKeyEpic, epicConfig);
-          // enemy.sprite.setTint(0x0000ff); // Blue tint for epica
-        } else if (this.gameState.gameTimer >= 5) {
-          console.log(
-            "Spawning ADVANCED enemy at time:",
-            this.gameState.gameTimer
-          );
-          const advancedConfig = {
-            maxHealth: 300,
-            moveSpeed: 2.0,
-            defense: 2,
-            attackDamage: 12,
-            scale: 0.5, // Slightly larger than basic
-          };
-          enemy = new EnemyAdvanced(
-            this,
-            x,
-            y,
-            spriteKeyAdvanced,
-            advancedConfig
-          );
-          // enemy.sprite.setTint(0xff6b00); // Orange tint for advanced
-        } else {
-          console.log(
-            "Spawning BASIC enemy at time:",
-            this.gameState.gameTimer
-          );
-          const basicConfig = {
+        const roll = Math.random();
+        
+        if (this.gameState.gameTimer < 5) {
+          // Before 5 seconds - 100% basic
+          enemy = new EnemyBasic(this, x, y, randomSprite, {
             maxHealth: 100,
             moveSpeed: 1.8,
             defense: 0,
             attackDamage: 8,
             scale: 0.4,
-          };
-          enemy = new EnemyBasic(this, x, y, spriteKey, basicConfig);
+          });
+        } else if (this.gameState.gameTimer < 20) {
+          // 5-20 seconds - 70% advanced, 30% basic
+          if (roll < 0.7) {
+            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+              maxHealth: 300,
+              moveSpeed: 2.0,
+              defense: 2,
+              attackDamage: 12,
+              scale: 0.5,
+            });
+          } else {
+            enemy = new EnemyBasic(this, x, y, randomSprite, {
+              maxHealth: 100,
+              moveSpeed: 1.8,
+              defense: 0,
+              attackDamage: 8,
+              scale: 0.4,
+            });
+          }
+        } else {
+          // After 20 seconds - 50% epic, 30% advanced, 20% basic
+          if (roll < 0.5) {
+            enemy = new EnemyEpic(this, x, y, spriteKeyEpic, {
+              maxHealth: 600,
+              moveSpeed: 2.2,
+              defense: 4,
+              attackDamage: 16,
+              scale: 0.6,
+            });
+          } else if (roll < 0.8) {
+            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+              maxHealth: 300,
+              moveSpeed: 2.0,
+              defense: 2,
+              attackDamage: 12,
+              scale: 0.5,
+            });
+          } else {
+            enemy = new EnemyBasic(this, x, y, randomSprite, {
+              maxHealth: 100,
+              moveSpeed: 1.8,
+              defense: 0,
+              attackDamage: 8,
+              scale: 0.4,
+            });
+          }
         }
 
         // Add to physics system
@@ -1707,7 +1733,7 @@ export default function Game() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900">
+    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
       <div
         ref={gameRef}
         className="w-[800px] h-[600px] bg-black border-2 border-white"
