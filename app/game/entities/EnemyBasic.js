@@ -34,6 +34,16 @@ class EnemyBasic extends BasePlayer {
     this.minDistance = 20; // Minimum distance to keep from player
     this.lastMoveTime = 0; // Add timestamp for movement updates
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
+    this.separationRadius = 40; // Radius to check for nearby enemies
+    this.separationForce = 0.5; // Strength of the separation force
+
+    // Movement properties
+    this.targetPlayer = null;
+    this.moveSpeed = enemyConfig.moveSpeed;
+    this.movementEnabled = true;
+    this.minDistance = 20; // Minimum distance to keep from player
+    this.lastMoveTime = 0; // Add timestamp for movement updates
+    this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
 
     // Attack properties
     this.attackRange = enemyConfig.attackRange;
@@ -101,6 +111,8 @@ class EnemyBasic extends BasePlayer {
   }
 
   update() {
+    if (!this.sprite || this.isDead) return;
+
     super.update();
 
     const currentTime = Date.now();
@@ -117,6 +129,7 @@ class EnemyBasic extends BasePlayer {
       this.movementEnabled &&
       !this.isStaggered &&
       this.targetPlayer &&
+      this.targetPlayer.sprite &&
       !this.isDead
     ) {
       // Calculate distance to player
@@ -124,15 +137,39 @@ class EnemyBasic extends BasePlayer {
       const dy = this.targetPlayer.sprite.y - this.sprite.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
+      // Calculate separation force from other enemies
+      let separationX = 0;
+      let separationY = 0;
+
+      if (Array.isArray(this.scene.enemies)) {
+        for (const otherEnemy of this.scene.enemies) {
+          if (otherEnemy && 
+              otherEnemy.sprite && 
+              otherEnemy !== this && 
+              !otherEnemy.isDead &&
+              otherEnemy.sprite.active) {  // Check if sprite is still active
+            const enemyDx = this.sprite.x - otherEnemy.sprite.x;
+            const enemyDy = this.sprite.y - otherEnemy.sprite.y;
+            const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
+
+            if (enemyDistance > 0 && enemyDistance < this.separationRadius) {  // Avoid division by zero
+              // Calculate normalized repulsion vector
+              separationX += (enemyDx / enemyDistance) * (1 - enemyDistance / this.separationRadius);
+              separationY += (enemyDy / enemyDistance) * (1 - enemyDistance / this.separationRadius);
+            }
+          }
+        }
+      }
+
       // Always move towards player if not too close
       if (distance > this.minDistance) {
         // Normalize direction
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
 
-        // Apply movement
-        this.sprite.x += normalizedDx * this.moveSpeed;
-        this.sprite.y += normalizedDy * this.moveSpeed;
+        // Apply movement with separation
+        this.sprite.x += (normalizedDx * this.moveSpeed) + (separationX * this.separationForce);
+        this.sprite.y += (normalizedDy * this.moveSpeed) + (separationY * this.separationForce);
 
         // Update sprite direction
         if (dx < 0) {
@@ -146,6 +183,10 @@ class EnemyBasic extends BasePlayer {
           super.createTrailEffect();
           this.lastTrailTime = currentTime;
         }
+      } else {
+        // Apply only separation force when close to player
+        this.sprite.x += separationX * this.separationForce;
+        this.sprite.y += separationY * this.separationForce;
       }
 
       // Check if within attack range and cooldown is ready
