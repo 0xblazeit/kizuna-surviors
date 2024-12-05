@@ -224,7 +224,7 @@ const UpgradeMenuScene = Phaser.Class({
         switch (weapon.name) {
           case "Rotating Dog":
             return "weapon-dog-projectile";
-          case "Magic Wand":
+          case "Shamir's Shard":
             return "weapon-wand-icon";
           case "Glizzy Blaster":
             return "weapon-hotdog-projectile";
