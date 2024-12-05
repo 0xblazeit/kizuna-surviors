@@ -1085,7 +1085,7 @@ const GameScene = Phaser.Class({
       .text(
         gridX, // Same X as inventory grid
         gridBottom + 10, // 10px spacing below grid
-        "Initializing debug...",
+        "Initializing game.... Press Arrow Keys / WASD to start",
         debugConfig
       )
       .setScrollFactor(0)
