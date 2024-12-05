@@ -178,7 +178,7 @@ class EnemyBasic extends BasePlayer {
         damageDealt.toString(),
         {
           fontSize: "16px",
-          fill: "#ff0000",
+          fill: "#ffffff",
         }
       )
       .setDepth(100);

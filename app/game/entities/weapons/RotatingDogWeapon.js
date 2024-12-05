@@ -567,7 +567,7 @@ export class RotatingDogWeapon extends BaseWeapon {
           .text(enemy.sprite.x, enemy.sprite.y - 20, `CRIT! ${critDamage}`, {
             fontSize: "20px",
             fontFamily: "VT323",
-            fill: "#FFD700",
+            fill: "#ffffff",
             stroke: "#000000",
             strokeThickness: 3,
           })

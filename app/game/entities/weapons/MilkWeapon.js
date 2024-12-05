@@ -332,7 +332,7 @@ export class MilkWeapon extends BaseWeapon {
         {
           fontSize: isCritical ? "20px" : "16px",
           fontFamily: "VT323",
-          fill: isCritical ? "#ff0000" : "#ffffff",
+          fill: isCritical ? "#ffffff" : "#ffffff",
           stroke: "#000000",
           strokeThickness: 3,
         }
