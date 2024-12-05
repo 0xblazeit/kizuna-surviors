@@ -195,9 +195,9 @@ class EnemyBasic extends BasePlayer {
       },
     });
 
-    // Flash red when hit
+    // Flash white when hit
     if (this.sprite) {
-      this.sprite.setTint(0xff0000);
+      this.sprite.setTint(0xffffff);
       this.scene.time.delayedCall(this.hitFlashDuration, () => {
         if (this.sprite) {
           this.sprite.clearTint();
@@ -250,8 +250,8 @@ class EnemyBasic extends BasePlayer {
   playHitEffects(sourceX, sourceY) {
     if (!this.sprite || this.isDead) return;
 
-    // Flash red
-    this.sprite.setTint(0xff0000);
+    // Flash white
+    this.sprite.setTint(0xffffff);
     this.scene.time.delayedCall(this.hitFlashDuration, () => {
       if (this.sprite) {
         this.sprite.clearTint();
