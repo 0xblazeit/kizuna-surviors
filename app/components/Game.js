@@ -34,8 +34,12 @@ const ENEMY_ADVANCED_SPRITES = [
 ];
 
 const ENEMY_EPIC_SPRITES = [
-  'enemy-epic-one',
-  'enemy-epic-two'
+  "enemy-epic-one",
+  "enemy-epic-two",
+  "enemy-epic-three",
+  "enemy-epic-four",
+  "enemy-epic-five",
+  "enemy-epic-six",
 ];
 
 const MenuScene = {
