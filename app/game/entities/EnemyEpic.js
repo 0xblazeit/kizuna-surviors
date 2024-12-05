@@ -14,7 +14,7 @@ class EnemyEpic extends EnemyAdvanced {
       scale: 0.15, // Slightly larger than advanced (0.42)
       trailTint: 0xffa500, // Orange trail
       clickDamage: 60, // Higher click damage
-      attackRange: 200, // Double the basic enemy range
+      attackRange: 230, // Double the basic enemy range
       ...config,
     };
 
