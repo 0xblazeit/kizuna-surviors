@@ -14,6 +14,7 @@ class EnemyAdvanced extends EnemyBasic {
       scale: 0.18, // Just slightly larger than basic enemies (0.4)
       trailTint: 0xffff00, // Gold trail for advanced enemies
       clickDamage: 40, // Higher click damage
+      attackRange: 200, // Four times the basic enemy attack range
       ...config,
     };
 

@@ -14,6 +14,7 @@ class EnemyBasic extends BasePlayer {
       scale: 0.4, // Fixed scale for basic enemies
       trailTint: 0x3498db, // Light blue trail
       clickDamage: 25, // Add default click damage
+      attackRange: 50, // Default attack range
       ...config,
     };
 
@@ -37,7 +38,7 @@ class EnemyBasic extends BasePlayer {
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
 
     // Attack properties
-    this.attackRange = 50; // Range at which enemy can attack player
+    this.attackRange = enemyConfig.attackRange; // Set from config
     this.lastAttackTime = 0; // Track last attack time
     this.attackCooldown = 1000; // Attack cooldown in milliseconds
 
