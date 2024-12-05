@@ -532,7 +532,7 @@ const GameScene = Phaser.Class({
       "weapon-skull-projectile",
       "/assets/game/weapons/weapon-skull-projectile.svg?v=1",
       {
-        scale: 0.5,
+        scale: 1.2,
       }
     );
 
