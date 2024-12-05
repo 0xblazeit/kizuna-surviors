@@ -910,7 +910,7 @@ const GameScene = Phaser.Class({
         })
         .setOrigin(1, 0),
       leaderboardColumns: this.add
-        .text(statsX, uiRowY + 332, "Rank    Kills    Gold", {
+        .text(statsX, uiRowY + 332, "Rank    Gold    Kills", {
           ...statsStyle,
           color: "#ffff00",
         })
@@ -1002,10 +1002,10 @@ const GameScene = Phaser.Class({
           if (index < 5) {
             // Format each entry with proper spacing for columns
             const rank = `#${index + 1}`.padEnd(8);
-            const kills = `${entry.kills}`.padEnd(9);
-            const gold = `${entry.gold}`;
+            const gold = `${entry.gold}`.padEnd(9);
+            const kills = `${entry.kills}`;
             this.statsTexts.leaderboardEntries[index].setText(
-              `${rank}${kills}${gold}`
+              `${rank}${gold}${kills}`
             );
           }
         });
