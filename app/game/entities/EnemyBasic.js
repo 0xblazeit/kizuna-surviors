@@ -157,9 +157,7 @@ class EnemyBasic extends BasePlayer {
   }
 
   takeDamage(amount, sourceX, sourceY) {
-    // console.log("Enemy taking damage:", amount);
     if (this.isDead) {
-      // console.log("Enemy already dead, ignoring damage");
       return 0;
     }
 
@@ -171,7 +169,6 @@ class EnemyBasic extends BasePlayer {
     }
 
     this.stats.currentHealth -= damageDealt;
-    // console.log("Enemy health after damage:", this.stats.currentHealth);
 
     // Show damage number for every hit
     const damageText = this.scene.add
@@ -221,82 +218,44 @@ class EnemyBasic extends BasePlayer {
     return damageDealt;
   }
 
-  playHitEffects(sourceX, sourceY) {
-    if (this.isStaggered) return; // Prevent stagger interruption
+  applyKnockback(sourceX, sourceY) {
+    if (!this.sprite || this.isDead) return;
 
+    // Calculate direction from source to enemy
+    const dx = this.sprite.x - sourceX;
+    const dy = this.sprite.y - sourceY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance === 0) return; // Avoid division by zero
+
+    // Normalize direction and apply knockback force
+    const knockbackX = (dx / distance) * this.knockbackForce;
+    const knockbackY = (dy / distance) * this.knockbackForce;
+
+    // Apply the knockback movement
+    this.sprite.x += knockbackX;
+    this.sprite.y += knockbackY;
+
+    // Temporarily disable movement during knockback
+    this.movementEnabled = false;
     this.isStaggered = true;
-    this.movementEnabled = false; // Stop movement during stagger
 
-    // Flash effect - already flashing white
-    const originalTint = this.sprite.tintTopLeft;
-    this.sprite.setTint(0xffffff);
-
-    // Create a slight knockback/stagger effect
-    const staggerDistance = 10;
-    const staggerDuration = 100;
-
-    // Calculate stagger direction
-    let angle;
-    if (sourceX !== undefined && sourceY !== undefined) {
-      // If we have a source position, stagger away from it
-      const dx = this.sprite.x - sourceX;
-      const dy = this.sprite.y - sourceY;
-      angle = Math.atan2(dy, dx);
-    } else {
-      // Otherwise use random direction like the player
-      angle = Math.random() * Math.PI * 2;
-    }
-
-    const staggerX = Math.cos(angle) * staggerDistance;
-    const staggerY = Math.sin(angle) * staggerDistance;
-
-    // Create stagger animation for the sprite
-    const targets = [this.sprite];
-    // Only include healthBar if it exists
-    if (this.healthBar && this.healthBar.container) {
-      targets.push(this.healthBar.container);
-    }
-
-    // Create stagger animation
-    this.scene.tweens.add({
-      targets: targets,
-      x: "+=" + staggerX,
-      y: "+=" + staggerY,
-      duration: staggerDuration / 2,
-      ease: "Quad.Out",
-      yoyo: true,
-      onComplete: () => {
-        // Reset position exactly to avoid drift
-        this.sprite.x -= staggerX;
-        this.sprite.y -= staggerY;
-        if (this.healthBar && this.healthBar.container) {
-          this.healthBar.container.setPosition(
-            this.sprite.x,
-            this.sprite.y + this.healthBar.spacing
-          );
-        }
-      },
-    });
-
-    // Visual feedback during stagger
-    this.scene.tweens.add({
-      targets: this.sprite,
-      alpha: 0.6,
-      yoyo: true,
-      repeat: 2,
-      duration: 100,
-      ease: "Linear",
-    });
-
-    // Reset after stagger duration
-    this.scene.time.delayedCall(this.hitFlashDuration, () => {
-      this.sprite.setTint(originalTint);
-    });
-
+    // Re-enable movement after stagger duration
     this.scene.time.delayedCall(this.staggerDuration, () => {
-      this.isStaggered = false;
       this.movementEnabled = true;
-      this.sprite.alpha = 1;
+      this.isStaggered = false;
+    });
+  }
+
+  playHitEffects(sourceX, sourceY) {
+    if (!this.sprite || this.isDead) return;
+
+    // Flash red
+    this.sprite.setTint(0xff0000);
+    this.scene.time.delayedCall(this.hitFlashDuration, () => {
+      if (this.sprite) {
+        this.sprite.clearTint();
+      }
     });
   }
 
