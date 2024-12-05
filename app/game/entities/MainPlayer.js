@@ -81,33 +81,6 @@ class MainPlayer extends BasePlayer {
             // Take configured click damage when clicked
             const damageDealt = this.takeDamage(this.clickDamage);
             
-            // Show the actual damage number
-            if (damageDealt > 0) {
-                const damageText = this.scene.add.text(
-                    this.sprite.x,
-                    this.sprite.y - 20,
-                    damageDealt.toString(),
-                    {
-                        fontSize: '20px',
-                        fill: '#ffffff',
-                        stroke: '#000000',
-                        strokeThickness: 4
-                    }
-                );
-                
-                // Animate the damage number floating up and fading away
-                this.scene.tweens.add({
-                    targets: damageText,
-                    y: damageText.y - 50,
-                    alpha: 0,
-                    duration: 1000,
-                    ease: 'Cubic.Out',
-                    onComplete: () => {
-                        damageText.destroy();
-                    }
-                });
-            }
-            
             // Play hit effects
             if (!this.isStaggered) {
                 this.playHitEffects();
@@ -206,25 +179,85 @@ class MainPlayer extends BasePlayer {
     }
 
     takeDamage(amount) {
-        super.takeDamage(amount);
+        // Get the raw damage before defense
+        const rawDamage = Math.max(1, Number(amount) || 0);
+        
+        // Call parent class takeDamage which applies defense and returns actual damage dealt
+        const damageAfterDefense = super.takeDamage(amount);
+        
+        // Calculate how much damage was blocked by defense
+        const blockedDamage = rawDamage - damageAfterDefense;
+        
+        // Show both the damage taken and blocked amount
+        if (damageAfterDefense > 0) {
+            const damageText = this.scene.add.text(
+                this.sprite.x,
+                this.sprite.y - 20,
+                `-${damageAfterDefense}`,
+                {
+                    fontSize: '20px',
+                    fill: '#ff0000',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }
+            ).setOrigin(0.5);
+            
+            // If any damage was blocked, show it
+            if (blockedDamage > 0) {
+                const blockedText = this.scene.add.text(
+                    this.sprite.x + 20,
+                    this.sprite.y - 20,
+                    `(${blockedDamage} blocked)`,
+                    {
+                        fontSize: '16px',
+                        fill: '#00ff00',
+                        stroke: '#000000',
+                        strokeThickness: 4
+                    }
+                ).setOrigin(0, 0.5);
+                
+                // Animate the blocked text
+                this.scene.tweens.add({
+                    targets: blockedText,
+                    y: blockedText.y - 30,
+                    alpha: 0,
+                    duration: 1000,
+                    ease: 'Cubic.Out',
+                    onComplete: () => {
+                        blockedText.destroy();
+                    }
+                });
+            }
+            
+            // Animate the damage text
+            this.scene.tweens.add({
+                targets: damageText,
+                y: damageText.y - 30,
+                alpha: 0,
+                duration: 1000,
+                ease: 'Cubic.Out',
+                onComplete: () => {
+                    damageText.destroy();
+                }
+            });
+        }
         
         // Check for death
-        if (this.stats.health <= 0 && !this.isDead) {
+        if (this.stats.currentHealth <= 0 && !this.isDead) {
             this.isDead = true;
             this.sprite.setTint(0x666666);  // Darken the player sprite
             this.movementEnabled = false;  // Disable movement
-            
-            // Add physics to make player "float" when dead
-            this.sprite.body.setAllowGravity(false);
             
             // Add a slight random rotation and drift
             const randomAngle = Phaser.Math.FloatBetween(-0.5, 0.5);
             const randomVelocityX = Phaser.Math.FloatBetween(-20, 20);
             const randomVelocityY = Phaser.Math.FloatBetween(-20, 20);
             
-            this.sprite.body.setAngularVelocity(randomAngle);
-            this.sprite.body.setVelocity(randomVelocityX, randomVelocityY);
-            this.sprite.body.setDrag(0.1);
+            if (this.sprite.body) {
+                this.sprite.body.setAngularVelocity(randomAngle);
+                this.sprite.body.setVelocity(randomVelocityX, randomVelocityY);
+                this.sprite.body.setDrag(0.1);
+            }
 
             // Call onDeath to handle cleanup and event emission
             this.onDeath();
