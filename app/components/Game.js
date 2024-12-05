@@ -465,6 +465,12 @@ const GameScene = Phaser.Class({
       "/assets/game/characters/enemies-epic/epic-six.svg"
     );
 
+    // Load special enemy sprites
+    this.load.svg(
+      "enemy-shooter",
+      "/assets/game/characters/enemies-special/enemy-shooter.svg"
+    );
+
     // Load weapon sprites
     this.load.svg(
       "weapon-dog-projectile",
@@ -515,10 +521,16 @@ const GameScene = Phaser.Class({
         scale: 0.5,
       }
     );
-
     this.load.svg(
       "weapon-shapecraft-key",
       "/assets/game/weapons/weapon-shapecraft-key.svg?v=1",
+      {
+        scale: 0.5,
+      }
+    );
+    this.load.svg(
+      "weapon-skull-projectile",
+      "/assets/game/weapons/weapon-skull-projectile.svg?v=1",
       {
         scale: 0.5,
       }

@@ -8,10 +8,10 @@ class EnemyShooter extends EnemyBasic {
       moveSpeed: Phaser.Math.FloatBetween(1.2, 1.4), // Slower than basic enemy
       defense: 0,
       attackSpeed: 1,
-      attackDamage: 15, // More damage than basic enemy
+      attackDamage: 15, 
       scale: 0.4,
-      trailTint: 0xff4d4d, // Red trail
-      attackRange: 300, // Much larger attack range for shooting
+      trailTint: 0xff4d4d, 
+      attackRange: 800, 
       ...config,
     };
 
@@ -22,10 +22,10 @@ class EnemyShooter extends EnemyBasic {
     
     // Projectile properties
     this.projectiles = new Set();
-    this.projectileSpeed = 200;
-    this.projectileLifetime = 2000; // Projectiles last for 2 seconds
-    this.attackCooldown = 2000; // 2 seconds between shots
-    this.minAttackDistance = 100; // Minimum distance to start shooting
+    this.projectileSpeed = 300; 
+    this.projectileLifetime = 4000; 
+    this.attackCooldown = 2000; 
+    this.minAttackDistance = 100; 
     
     // Initialize projectile pool
     this.initProjectilePool();
