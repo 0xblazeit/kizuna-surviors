@@ -1109,15 +1109,15 @@ const GameScene = {
           "enemy-basic-five",
           "enemy-basic-six",
         ];
-    
-          // Get random enemy sprite
-          const randomSprite =
-            enemySprites[Math.floor(Math.random() * enemyEpicSprites.length)];
+
+        // Get random enemy sprite
+        const randomSprite =
+          enemySprites[Math.floor(Math.random() * enemyEpicSprites.length)];
 
         // Simplified enemy spawn system
         let enemy;
         const roll = Math.random();
-        
+
         if (this.gameState.gameTimer < 5) {
           // Before 5 seconds - 100% basic
           enemy = new EnemyBasic(this, x, y, randomSprite, {
@@ -1387,6 +1387,19 @@ const GameScene = {
     // Create function to show WASTED screen
     this.showWastedScreen = () => {
       if (this.gameState.isGameOver) return;
+
+      // Post game stats to /game-over endpoint before showing wasted screen
+      fetch("/api/game-over", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gold: this.gameState.gold,
+          kills: this.gameState.kills,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch((error) => console.error("Error posting game stats:", error));
 
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
