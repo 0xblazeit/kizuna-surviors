@@ -1003,7 +1003,7 @@ const GameScene = Phaser.Class({
             // Format each entry with proper spacing for columns
             const rank = `#${index + 1}`.padEnd(8);
             const kills = `${entry.kills}`.padEnd(9);
-            const gold = `${entry.gold}G`;
+            const gold = `${entry.gold}`;
             this.statsTexts.leaderboardEntries[index].setText(
               `${rank}${kills}${gold}`
             );
