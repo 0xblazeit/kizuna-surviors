@@ -1317,8 +1317,8 @@ const GameScene = Phaser.Class({
             attackDamage: 8,
             scale: 0.4,
           });
-        } else if (this.gameState.gameTimer < 20) {
-          // 5-20 seconds - 70% advanced, 30% basic
+        } else if (this.gameState.gameTimer < 60) {
+          // 5-60 seconds - 70% advanced, 30% basic
           if (roll < 0.7) {
             enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
               maxHealth: 300,
