@@ -107,46 +107,30 @@ const UpgradeMenuScene = Phaser.Class({
   },
 
   preload: function() {
-    // Preload weapon icons
-    this.load.svg(
-      "weapon-dog-projectile",
-      "/assets/game/weapons/weapon-dog-projectile.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-wand-icon",
-      "/assets/game/weapons/weapon-wand-icon.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-hotdog-projectile",
-      "/assets/game/weapons/weapon-hotdog-projectile.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-axe-projectile",
-      "/assets/game/weapons/weapon-axe-projectile.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-hammer-projectile",
-      "/assets/game/weapons/weapon-hammer-projectile.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-magic-milk",
-      "/assets/game/weapons/weapon-magic-milk.svg?v=1",
-      { scale: 0.5 }
-    );
-    this.load.svg(
-      "weapon-shapecraft-key",
-      "/assets/game/weapons/weapon-shapecraft-key.svg?v=1",
-      { scale: 0.5 }
-    );
-
-    // Add error handling
+    // Add loading event handlers first
     this.load.on("loaderror", (file) => {
-      console.error("Error loading weapon icon:", file.key);
+      console.error("Error loading weapon icon:", file.key, file.src);
+    });
+
+    this.load.on("complete", () => {
+      console.log("All weapon icons loaded successfully");
+    });
+
+    // Preload weapon icons with cache busting and error handling
+    const weaponIcons = [
+      { key: "weapon-dog-projectile", file: "weapon-dog-projectile.svg" },
+      { key: "weapon-wand-icon", file: "weapon-wand-icon.svg" },
+      { key: "weapon-hotdog-projectile", file: "weapon-hotdog-projectile.svg" },
+      { key: "weapon-axe-projectile", file: "weapon-axe-projectile.svg" },
+      { key: "weapon-hammer-projectile", file: "weapon-hammer-projectile.svg" },
+      { key: "weapon-magic-milk", file: "weapon-magic-milk.svg" },
+      { key: "weapon-shapecraft-key", file: "weapon-shapecraft-key.svg" }
+    ];
+
+    weaponIcons.forEach(({ key, file }) => {
+      const path = `/assets/game/weapons/${file}?v=${Date.now()}`;
+      this.load.svg(key, path, { scale: 0.5 });
+      console.log(`Loading weapon icon: ${key} from ${path}`);
     });
   },
 
@@ -156,6 +140,28 @@ const UpgradeMenuScene = Phaser.Class({
   },
 
   create: function () {
+    // Verify all required textures are loaded
+    const requiredTextures = [
+      "weapon-dog-projectile",
+      "weapon-wand-icon",
+      "weapon-hotdog-projectile",
+      "weapon-axe-projectile",
+      "weapon-hammer-projectile",
+      "weapon-magic-milk",
+      "weapon-shapecraft-key"
+    ];
+
+    const missingTextures = requiredTextures.filter(key => !this.textures.exists(key));
+    if (missingTextures.length > 0) {
+      console.error("Missing weapon textures:", missingTextures);
+      // Use a default texture for missing ones
+      missingTextures.forEach(key => {
+        this.textures.on(`addtexture-${key}`, () => {
+          console.log(`Texture ${key} loaded successfully`);
+        });
+      });
+    }
+
     // Create dark overlay
     const overlay = this.add.rectangle(
       this.cameras.main.centerX,
