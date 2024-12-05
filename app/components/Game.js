@@ -909,9 +909,15 @@ const GameScene = Phaser.Class({
           color: "#ffffff",
         })
         .setOrigin(1, 0),
+      leaderboardColumns: this.add
+        .text(statsX, uiRowY + 332, "Rank    Kills    Gold", {
+          ...statsStyle,
+          color: "#ffff00",
+        })
+        .setOrigin(1, 0),
       leaderboardEntries: Array(5).fill(null).map((_, i) => 
         this.add
-          .text(statsX, uiRowY + 332 + (i * 22), "", statsStyle)
+          .text(statsX, uiRowY + 354 + (i * 22), "", statsStyle)
           .setOrigin(1, 0)
       ),
     };
@@ -994,8 +1000,12 @@ const GameScene = Phaser.Class({
       .then(data => {
         data.data.forEach((entry, index) => {
           if (index < 5) {
+            // Format each entry with proper spacing for columns
+            const rank = `#${index + 1}`.padEnd(8);
+            const kills = `${entry.kills}`.padEnd(9);
+            const gold = `${entry.gold}G`;
             this.statsTexts.leaderboardEntries[index].setText(
-              `#${index + 1}: ${entry.gold}G ${entry.kills}K`
+              `${rank}${kills}${gold}`
             );
           }
         });
