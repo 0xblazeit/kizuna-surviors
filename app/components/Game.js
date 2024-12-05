@@ -899,84 +899,34 @@ const GameScene = Phaser.Class({
       defense: this.add
         .text(statsX, uiRowY + 244, "", statsStyle)
         .setOrigin(1, 0),
-      speed: this.add
-        .text(statsX, uiRowY + 266, "", statsStyle)
+      // Add leaderboard section
+      leaderboardHeader: this.add
+        .text(statsX, uiRowY + 284, "--- Leaderboard ---", {
+          ...statsStyle,
+          color: "#ffffff",
+        })
         .setOrigin(1, 0),
+      leaderboardEntries: Array(5).fill(null).map((_, i) => 
+        this.add
+          .text(statsX, uiRowY + 310 + (i * 22), "", statsStyle)
+          .setOrigin(1, 0)
+      ),
     };
+    uiContainer.add(Object.values(this.statsTexts).flat());
 
-    // Add stats text to UI container
-    uiContainer.add(Object.values(this.statsTexts));
-
-    // Function to update stats display
-    this.updateStatsDisplay = () => {
-      if (!this.player) return;
-
-      const stats = this.player.stats;
-      console.log(
-        "Current selectedWeaponIndex:",
-        this.gameState.selectedWeaponIndex
-      );
-      console.log("Available weapons:", this.weapons.length);
-      console.log(
-        "Weapons array:",
-        this.weapons.map((w) => w.constructor.name)
-      );
-
-      const selectedWeapon = this.weapons[this.gameState.selectedWeaponIndex];
-      console.log("Selected weapon:", selectedWeapon);
-
-      // Base stats
-      let displayStats = {
-        health: `HP: ${stats.currentHealth}/${stats.maxHealth}`,
-        attack: `ATK: ${stats.damage.toFixed(1)}`,
-        defense: `DEF: ${stats.defense.toFixed(1)}`,
-        speed: `SPD: ${stats.moveSpeed.toFixed(1)}`,
-      };
-
-      // Add weapon-specific stats if a weapon is selected
-      if (selectedWeapon) {
-        if (selectedWeapon.stats) {
-          const weaponStats = selectedWeapon.stats;
-          const levelConfig = selectedWeapon.levelConfigs
-            ? selectedWeapon.levelConfigs[selectedWeapon.currentLevel]
-            : null;
-
-          // Use level-specific stats if available, otherwise use base stats
-          const currentDamage = levelConfig
-            ? levelConfig.damage
-            : weaponStats.damage;
-          const currentPierce = levelConfig
-            ? levelConfig.pierce
-            : weaponStats.pierce;
-          const currentCooldown = levelConfig
-            ? levelConfig.cooldown
-            : weaponStats.cooldown;
-
-          displayStats.attack = `ATK: ${(stats.damage + currentDamage).toFixed(
-            1
-          )}`;
-          displayStats.attack += ` Pierce: ${currentPierce}`;
-          if (currentCooldown) {
-            displayStats.attack += ` (${(1000 / currentCooldown).toFixed(
-              1
-            )}/s)`;
+    // Fetch and display leaderboard data
+    fetch('/api/game-results')
+      .then(response => response.json())
+      .then(data => {
+        data.data.forEach((entry, index) => {
+          if (index < 5) {
+            this.statsTexts.leaderboardEntries[index].setText(
+              `#${index + 1}: ${entry.gold}G ${entry.kills}K`
+            );
           }
-
-          // Add additional weapon stats if available
-          if (weaponStats.criticalChance) {
-            displayStats.attack += ` Crit: ${(
-              weaponStats.criticalChance * 100
-            ).toFixed(0)}%`;
-          }
-        }
-      }
-
-      // Update the display
-      this.statsTexts.health.setText(displayStats.health);
-      this.statsTexts.attack.setText(displayStats.attack);
-      this.statsTexts.defense.setText(displayStats.defense);
-      this.statsTexts.speed.setText(displayStats.speed);
-    };
+        });
+      })
+      .catch(error => console.error('Error fetching leaderboard:', error));
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
