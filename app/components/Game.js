@@ -106,6 +106,50 @@ const UpgradeMenuScene = Phaser.Class({
     Phaser.Scene.call(this, { key: "UpgradeMenu" });
   },
 
+  preload: function() {
+    // Preload weapon icons
+    this.load.svg(
+      "weapon-dog-projectile",
+      "/assets/game/weapons/weapon-dog-projectile.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-wand-icon",
+      "/assets/game/weapons/weapon-wand-icon.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-hotdog-projectile",
+      "/assets/game/weapons/weapon-hotdog-projectile.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-axe-projectile",
+      "/assets/game/weapons/weapon-axe-projectile.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-hammer-projectile",
+      "/assets/game/weapons/weapon-hammer-projectile.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-magic-milk",
+      "/assets/game/weapons/weapon-magic-milk.svg?v=1",
+      { scale: 0.5 }
+    );
+    this.load.svg(
+      "weapon-shapecraft-key",
+      "/assets/game/weapons/weapon-shapecraft-key.svg?v=1",
+      { scale: 0.5 }
+    );
+
+    // Add error handling
+    this.load.on("loaderror", (file) => {
+      console.error("Error loading weapon icon:", file.key);
+    });
+  },
+
   init: function (data) {
     this.parentScene = data.parentScene;
     this.selectedWeapons = data.selectedWeapons;
