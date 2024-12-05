@@ -6,18 +6,24 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate": "drizzle-kit generate:sqlite",
+    "migrate": "drizzle-kit push:sqlite"
   },
   "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "drizzle-orm": "^0.37.0",
     "next": "15.0.3",
     "phaser": "^3.87.0",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106"
   },
   "devDependencies": {
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.29.1",
     "eslint": "^8",
-    "eslint-config-next": "15.0.3"
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
   }
 }

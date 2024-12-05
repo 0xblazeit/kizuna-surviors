@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { db } from '../../../db';
+import { gameStats } from '../../../db/schema';
 
 export async function GET() {
   try {
@@ -43,17 +45,23 @@ export async function POST(request) {
     console.log('Kills:', data.kills);
     console.log('Timestamp (EST):', formattedDate);
     
-    // You could store this data in a database here
+    // Save the data to the database
+    await db.insert(gameStats).values({
+      gold: data.gold,
+      kills: data.kills,
+      timestamp: formattedDate,
+    });
     
     return NextResponse.json(
       { 
         message: 'Game over data saved successfully',
         data: {
-          ...data,
-          formattedTimestamp: formattedDate
+          gold: data.gold,
+          kills: data.kills,
+          timestamp: formattedDate
         }
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
     console.error('POST Error:', error);
