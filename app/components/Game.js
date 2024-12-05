@@ -759,9 +759,19 @@ const GameScene = {
       .setOrigin(1, 0);
     uiContainer.add(this.killsText);
 
-    // Controls text (right side, below stats)
+    // Add wave tracker
+    this.waveText = this.add
+      .text(statsX, uiRowY + 70, "Wave: 1", {
+        fontFamily: "VT323",
+        fontSize: "24px",
+        color: "#4444ff",
+      })
+      .setOrigin(1, 0);
+    uiContainer.add(this.waveText);
+
+    // Controls text (right side, adjusted spacing)
     const controlsText = this.add
-      .text(statsX, uiRowY + 80, "ESC - Back to Menu", {
+      .text(statsX, uiRowY + 110, "ESC - Back to Menu", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#aaaaaa",
@@ -770,7 +780,7 @@ const GameScene = {
     uiContainer.add(controlsText);
 
     const controlsText2 = this.add
-      .text(statsX, uiRowY + 104, "Move: Arrow Keys / WASD", {
+      .text(statsX, uiRowY + 134, "Move: Arrow Keys / WASD", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#aaaaaa",
@@ -778,7 +788,7 @@ const GameScene = {
       .setOrigin(1, 0);
     uiContainer.add(controlsText2);
 
-    // Stats display (below controls)
+    // Stats display (adjusted spacing)
     const statsStyle = {
       fontFamily: "VT323",
       fontSize: "20px",
@@ -787,26 +797,26 @@ const GameScene = {
 
     // Add header for stats
     const statsHeader = this.add
-      .text(statsX, uiRowY + 144, "--- Player Stats ---", {
+      .text(statsX, uiRowY + 174, "--- Player Stats ---", {
         ...statsStyle,
         color: "#ffffff",
       })
       .setOrigin(1, 0);
     uiContainer.add(statsHeader);
 
-    // Create stats text objects
+    // Create stats text objects (adjusted spacing)
     this.statsTexts = {
       health: this.add
-        .text(statsX, uiRowY + 170, "", statsStyle)
+        .text(statsX, uiRowY + 200, "", statsStyle)
         .setOrigin(1, 0),
       attack: this.add
-        .text(statsX, uiRowY + 192, "", statsStyle)
+        .text(statsX, uiRowY + 222, "", statsStyle)
         .setOrigin(1, 0),
       defense: this.add
-        .text(statsX, uiRowY + 214, "", statsStyle)
+        .text(statsX, uiRowY + 244, "", statsStyle)
         .setOrigin(1, 0),
       speed: this.add
-        .text(statsX, uiRowY + 236, "", statsStyle)
+        .text(statsX, uiRowY + 266, "", statsStyle)
         .setOrigin(1, 0),
     };
 
@@ -1002,6 +1012,11 @@ const GameScene = {
           this.gameState.enemyWaveTimer = 0;
           this.gameState.waveNumber++;
           this.gameState.difficultyMultiplier += 0.1;
+
+          // Update the static wave tracker
+          if (this.waveText) {
+            this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
+          }
 
           // Announce new wave
           const waveText = this.add
