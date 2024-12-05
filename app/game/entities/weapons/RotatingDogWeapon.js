@@ -14,7 +14,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         speed: 300,
         detectionRange: 120,
         guardDistance: 120,
-        scale: 0.2, // Tiny to start
+        scale: 0.4, // Tiny to start
       },
       2: {
         // First upgrade
@@ -26,7 +26,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         speed: 320,
         detectionRange: 90,
         guardDistance: 85,
-        scale: 0.3,
+        scale: 0.45,
       },
       3: {
         // Getting stronger
@@ -38,7 +38,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         speed: 340,
         detectionRange: 100,
         guardDistance: 90,
-        scale: 0.4,
+        scale: 0.5,
       },
       4: {
         // Significant boost
@@ -50,7 +50,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         speed: 360,
         detectionRange: 110,
         guardDistance: 95,
-        scale: 0.5,
+        scale: 0.55,
       },
       5: {
         // Major power spike
@@ -62,7 +62,7 @@ export class RotatingDogWeapon extends BaseWeapon {
         speed: 380,
         detectionRange: 120,
         guardDistance: 100,
-        scale: 0.55,
+        scale: 0.58,
       },
       6: {
         // Getting powerful
