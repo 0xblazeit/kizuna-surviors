@@ -219,12 +219,17 @@ const UpgradeMenuScene = Phaser.Class({
   },
 });
 
-const GameScene = {
-  key: "GameScene",
+const GameScene = Phaser.Class({
+  Extends: Phaser.Scene,
+
+  initialize: function GameScene() {
+    Phaser.Scene.call(this, { key: "GameScene" });
+  },
 
   init: function () {
     // Initialize game state
     this.gameState = {
+      gameStarted: false,
       timerStarted: false,
       gameTimer: 0,
       level: 1,
@@ -444,6 +449,85 @@ const GameScene = {
 
     // Load XP gem with correct path
     this.load.image("powerup-xp-gem", "/assets/game/powerups/xp-gem.svg");
+  },
+
+  spawnEnemies: function() {
+    if (!this.gameState.gameStarted || this.enemies.length >= this.gameState.maxEnemies) return;
+
+    // Calculate game progress (0 to 1) based on 30-minute max time
+    const maxGameTime = 1800; // 30 minutes in seconds
+    const gameProgress = Math.min(this.gameState.gameTimer / maxGameTime, 1);
+
+    // Update wave timer and check for new wave
+    this.gameState.enemyWaveTimer += this.gameState.spawnRate / 1000;
+    if (this.gameState.enemyWaveTimer >= 60) {
+      // New wave every minute
+      this.gameState.enemyWaveTimer = 0;
+      this.gameState.waveNumber++;
+      this.gameState.difficultyMultiplier += 0.1;
+
+      // Update wave text
+      if (this.waveText) {
+        this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
+      }
+    }
+
+    // Spawn new enemy
+    const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
+    const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
+    const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+    
+    const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+      type: "basic",
+      scale: 0.3,
+    });
+
+    enemy.sprite.once("destroy", () => {
+      const index = this.enemies.indexOf(enemy);
+      if (index > -1) {
+        this.enemies.splice(index, 1);
+      }
+    });
+
+    this.enemies.push(enemy);
+  },
+
+  startGame: function() {
+    // Initial enemy spawn
+    for (let i = 0; i < 15; i++) {
+      const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
+      const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
+      const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+      
+      const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+        type: "basic",
+        scale: 0.3,
+      });
+
+      enemy.sprite.once("destroy", () => {
+        const index = this.enemies.indexOf(enemy);
+        if (index > -1) {
+          this.enemies.splice(index, 1);
+        }
+      });
+
+      this.enemies.push(enemy);
+    }
+
+    // Start enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+      delay: this.gameState.spawnRate,
+      callback: this.spawnEnemies,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // Initialize weapons
+    this.weapons.forEach(weapon => {
+      if (weapon.initialize) {
+        weapon.initialize();
+      }
+    });
   },
 
   create: function () {
@@ -956,7 +1040,7 @@ const GameScene = {
     this.enemies = [];
 
     // Enemy sprite keys
-    const enemySprites = [
+    this.enemySprites = [
       "enemy-basic-one",
       "enemy-basic-two",
       "enemy-basic-three",
@@ -965,32 +1049,16 @@ const GameScene = {
       "enemy-basic-six",
     ];
 
-    // Initial spawn of fewer enemies
-    for (let i = 0; i < 15; i++) {
-      // Get random position within world bounds
-      const randomX = Phaser.Math.Between(100, width * 2 - 100);
-      const randomY = Phaser.Math.Between(100, height * 2 - 100);
-
-      // Get random enemy sprite
-      const randomSprite =
-        enemySprites[Phaser.Math.Between(0, enemySprites.length - 1)];
-
-      // Create enemy
-      const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
-        type: "basic",
-        scale: 0.3,
-      });
-
-      // Listen for enemy death
-      enemy.sprite.once("destroy", () => {
-        const index = this.enemies.indexOf(enemy);
-        if (index > -1) {
-          this.enemies.splice(index, 1);
-        }
-      });
-
-      this.enemies.push(enemy);
-    }
+    // Initialize weapons array but don't start them yet
+    this.weapons = [
+      new RotatingDogWeapon(this, this.player),
+      new MagicWandWeapon(this, this.player),
+      new GlizzyBlasterWeapon(this, this.player),
+      new FlyingAxeWeapon(this, this.player),
+      new SonicBoomHammer(this, this.player),
+      new MilkWeapon(this, this.player),
+      new ShapecraftKeyWeapon(this, this.player),
+    ];
 
     // Create enemy spawn timer
     this.enemySpawnTimer = this.time.addEvent({
@@ -1575,7 +1643,22 @@ const GameScene = {
   },
 
   update: function (time, delta) {
-    if (!this.gameState) return;
+    if (!this.gameState.gameStarted) {
+      const keys = this.input.keyboard.createCursorKeys();
+      const wasd = {
+        up: this.input.keyboard.addKey('W'),
+        down: this.input.keyboard.addKey('S'),
+        left: this.input.keyboard.addKey('A'),
+        right: this.input.keyboard.addKey('D')
+      };
+      
+      if (keys.left.isDown || keys.right.isDown || keys.up.isDown || keys.down.isDown ||
+          wasd.left.isDown || wasd.right.isDown || wasd.up.isDown || wasd.down.isDown) {
+        this.gameState.gameStarted = true;
+        this.startGame();
+      }
+      return;
+    }
 
     // Handle player movement using the new system
     const input = {
@@ -1704,7 +1787,7 @@ const GameScene = {
       this.showWastedScreen();
     }
   },
-};
+});
 
 export default function Game() {
   const gameRef = useRef(null);
