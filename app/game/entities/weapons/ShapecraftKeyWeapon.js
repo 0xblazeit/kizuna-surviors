@@ -579,24 +579,48 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     createHitEffect(x, y) {
-        const hitEffect = this.scene.add.sprite(x, y, this.stats.shapeTypes[0]);
-        
-        hitEffect.setScale(this.stats.scale * 0.5);
-        hitEffect.setAlpha(0.8);
+        // Create a graphics object for the hit effect
+        const graphics = this.scene.add.graphics();
         const shapeType = this.stats.shapeTypes[0];
         const glowColor = this.currentLevel === this.maxLevel ? 
             this.maxLevelColors.energy : 
             this.shapeColors[shapeType].energy;
-        hitEffect.setTint(glowColor);
+            
+        // Draw the shape
+        graphics.lineStyle(2, glowColor, 1);
+        graphics.fillStyle(glowColor, 0.5);
+        graphics.beginPath();
+        
+        // Draw a circle for the hit effect
+        graphics.arc(0, 0, 15, 0, Math.PI * 2);
+        graphics.closePath();
+        graphics.strokePath();
+        graphics.fillPath();
+        
+        // Generate a unique texture key using timestamp
+        const textureKey = `hit_effect_${Date.now()}`;
+        graphics.generateTexture(textureKey, 32, 32);
+        graphics.destroy();
+        
+        // Create the sprite using the generated texture
+        const hitEffect = this.scene.add.sprite(x, y, textureKey);
+        hitEffect.setScale(this.stats.scale * 0.5);
+        hitEffect.setAlpha(0.8);
         hitEffect.setBlendMode(Phaser.BlendModes.ADD);
-
+        
+        // Create the animation timeline
         this.scene.tweens.add({
             targets: hitEffect,
-            scale: this.stats.scale * 2,
+            scaleX: this.stats.scale * 1.5,
+            scaleY: this.stats.scale * 1.5,
             alpha: 0,
             duration: 200,
-            ease: 'Quad.easeOut',
-            onComplete: () => hitEffect.destroy()
+            ease: 'Power2',
+            onComplete: () => {
+                // Clean up the sprite and its texture
+                hitEffect.destroy();
+                this.scene.textures.remove(textureKey);
+            }
         });
     }
 
