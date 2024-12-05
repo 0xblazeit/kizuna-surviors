@@ -197,9 +197,15 @@ class EnemyBasic extends BasePlayer {
 
     // Flash white when hit
     if (this.sprite) {
+      // Apply a more intense white flash
+      this.sprite.setAlpha(1);  // Ensure full opacity
+      this.sprite.setBlendMode(Phaser.BlendModes.ADD);  // Make the white more vibrant
       this.sprite.setTint(0xffffff);
+      
+      // Clear the flash effect after duration
       this.scene.time.delayedCall(this.hitFlashDuration, () => {
-        if (this.sprite) {
+        if (this.sprite && !this.isDead) {
+          this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
           this.sprite.clearTint();
         }
       });
