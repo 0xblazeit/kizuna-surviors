@@ -415,49 +415,49 @@ const GameScene = Phaser.Class({
     // Load weapon sprites
     this.load.svg(
       "weapon-dog-projectile",
-      "/assets/game/weapons/weapon-dog-projectile.svg",
+      "/assets/game/weapons/weapon-dog-projectile.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-wand-icon",
-      "/assets/game/weapons/weapon-wand-icon.svg",
+      "/assets/game/weapons/weapon-wand-icon.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-wand-projectile",
-      "/assets/game/weapons/weapon-wand-projectile.svg",
+      "/assets/game/weapons/weapon-wand-projectile.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-hotdog-projectile",
-      "/assets/game/weapons/weapon-hotdog-projectile.svg",
+      "/assets/game/weapons/weapon-hotdog-projectile.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-axe-projectile",
-      "/assets/game/weapons/weapon-axe-projectile.svg",
+      "/assets/game/weapons/weapon-axe-projectile.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-hammer-projectile",
-      "/assets/game/weapons/weapon-hammer-projectile.svg",
+      "/assets/game/weapons/weapon-hammer-projectile.svg?v=1",
       {
         scale: 0.5,
       }
     );
     this.load.svg(
       "weapon-magic-milk",
-      "/assets/game/weapons/weapon-magic-milk.svg",
+      "/assets/game/weapons/weapon-magic-milk.svg?v=1",
       {
         scale: 0.5,
       }
@@ -465,7 +465,7 @@ const GameScene = Phaser.Class({
 
     this.load.svg(
       "weapon-shapecraft-key",
-      "/assets/game/weapons/weapon-shapecraft-key.svg",
+      "/assets/game/weapons/weapon-shapecraft-key.svg?v=1",
       {
         scale: 0.5,
       }
