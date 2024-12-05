@@ -24,7 +24,7 @@ class EnemyBasic extends BasePlayer {
     this.isStaggered = false;
     this.hitFlashDuration = 300; // Increased from 100 to 300ms
     this.staggerDuration = 500; // Added separate stagger duration
-    this.knockbackForce = 30; // Reduced from 150 to 30
+    this.knockbackForce = 5; // Reduced from 150 to 30
     this.isDead = false; // Add flag to track death state
 
     // Movement properties
