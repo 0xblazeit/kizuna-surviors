@@ -61,6 +61,11 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
+    // Clean up aura first
+    if (this.aura) {
+      this.aura.destroy();
+      this.aura = null;
+    }
     // Set higher coin value for epic enemies
     const coinValue = 50;
     // Initialize arrays if they don't exist
@@ -93,7 +98,7 @@ class EnemyEpic extends EnemyAdvanced {
     }
 
     super.playDeathAnimation().then(() => {
-      // Rest of cleanup handled by parent class
+      // Then call parent die method
       super.die();
     });
   }
