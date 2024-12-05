@@ -292,8 +292,11 @@ class MainPlayer extends BasePlayer {
         this.stats.defense += 1;
         this.stats.moveSpeed += 0.2; // Small increment to movement speed
 
-        // Emit level up event for the upgrade menu
+        // Emit level up event for the upgrade menu and stats update
         this.scene.events.emit('showWeaponUpgradeMenu');
+        this.scene.updateStatsDisplay(); // Update stats display
+
+        // Emit level up event for the upgrade menu
     }
 
     collectGold(amount) {
