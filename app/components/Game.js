@@ -1311,8 +1311,8 @@ const GameScene = Phaser.Class({
         let enemy;
         const roll = Math.random();
 
-        if (this.gameState.gameTimer < 5) {
-          // Before 5 seconds - 100% basic
+        if (this.gameState.gameTimer < 45) {
+          // Before 45 seconds - 100% basic
           enemy = new EnemyBasic(this, x, y, randomSprite, {
             maxHealth: 100,
             moveSpeed: 1.8,
@@ -1320,8 +1320,8 @@ const GameScene = Phaser.Class({
             attackDamage: 8,
             scale: 0.4,
           });
-        } else if (this.gameState.gameTimer < 60) {
-          // 5-60 seconds - 70% advanced, 30% basic
+        } else if (this.gameState.gameTimer < 200) {
+          // 45-200 seconds - 70% advanced, 30% basic
           if (roll < 0.7) {
             enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
               maxHealth: 300,
