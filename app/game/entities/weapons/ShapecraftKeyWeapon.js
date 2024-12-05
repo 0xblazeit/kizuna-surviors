@@ -208,6 +208,9 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         // Clear existing projectiles
         this.activeProjectiles.forEach(proj => {
             if (proj.sprite) {
+                if (proj.sprite.texture) {
+                    this.scene.textures.remove(proj.sprite.texture.key);
+                }
                 proj.sprite.destroy();
             }
         });
@@ -216,7 +219,12 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         // Clear existing trail pools
         this.trailPools.forEach(pool => {
             pool.forEach(sprite => {
-                if (sprite) sprite.destroy();
+                if (sprite) {
+                    if (sprite.texture) {
+                        this.scene.textures.remove(sprite.texture.key);
+                    }
+                    sprite.destroy();
+                }
             });
         });
         this.trailPools = [];
@@ -274,15 +282,20 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 break;
         }
 
+        // Generate unique key for this shape
+        const textureKey = `${shapeType}_${Date.now()}_${Math.random()}`;
+
         // Convert to sprite
-        const texture = graphics.generateTexture(shapeType, size * 2, size * 2);
+        const texture = graphics.generateTexture(textureKey, size * 2, size * 2);
         graphics.destroy();
 
         // Create sprite and enable physics
-        const sprite = this.scene.add.sprite(0, 0, shapeType);
+        const sprite = this.scene.add.sprite(0, 0, textureKey);
         this.scene.physics.world.enable(sprite);
         sprite.body.setCollideWorldBounds(true);
         sprite.body.setBounce(1, 1);
+        sprite.setVisible(false);
+        sprite.setActive(false);
         
         return sprite;
     }
@@ -573,60 +586,49 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     deactivateProjectile(projectile) {
-        projectile.active = false;
-        projectile.sprite.setActive(false).setVisible(false);
-        if (projectile.sprite.body) {
+        if (projectile.sprite) {
+            projectile.active = false;
+            projectile.sprite.setActive(false).setVisible(false);
             projectile.sprite.body.setVelocity(0, 0);
-        }
-        projectile.targetEnemy = null;
-        
-        // Hide trail sprites
-        const projIndex = this.activeProjectiles.indexOf(projectile);
-        if (projIndex >= 0) {
-            const trailSprites = this.trailPools[projIndex];
-            trailSprites.forEach(sprite => sprite.setActive(false).setVisible(false));
+            projectile.trailPositions = [];
+            
+            // Hide trail sprites
+            const trailPool = this.trailPools[this.activeProjectiles.indexOf(projectile)];
+            if (trailPool) {
+                trailPool.forEach(sprite => {
+                    sprite.setActive(false).setVisible(false);
+                });
+            }
         }
     }
 
     levelUp() {
-        if (this.currentLevel >= this.maxLevel) {
-            console.log("Weapon already at max level!");
-            return false;
+        if (this.currentLevel < this.maxLevel) {
+            // Clean up existing projectiles
+            this.activeProjectiles.forEach(proj => {
+                if (proj.sprite) {
+                    if (proj.sprite.texture) {
+                        this.scene.textures.remove(proj.sprite.texture.key);
+                    }
+                    proj.sprite.destroy();
+                }
+            });
+
+            // Clean up trail pools
+            this.trailPools.forEach(pool => {
+                pool.forEach(sprite => {
+                    if (sprite) {
+                        if (sprite.texture) {
+                            this.scene.textures.remove(sprite.texture.key);
+                        }
+                        sprite.destroy();
+                    }
+                });
+            });
+
+            this.currentLevel++;
+            this.stats = { ...this.levelConfigs[this.currentLevel] };
+            this.createProjectiles();
         }
-
-        this.currentLevel++;
-        const newStats = this.levelConfigs[this.currentLevel];
-        this.stats = { ...this.stats, ...newStats };
-
-        console.log(`Shapecraft Key leveled up to ${this.currentLevel}! New stats:`, this.stats);
-
-        // Recreate projectiles with new stats
-        this.createProjectiles();
-
-        // Create level up effect
-        const burst = this.scene.add.sprite(
-            this.player.sprite.x,
-            this.player.sprite.y,
-            this.stats.shapeTypes[0]
-        );
-        burst.setScale(0.2);
-        burst.setAlpha(0.7);
-        const shapeType = this.stats.shapeTypes[0];
-        const glowColor = this.currentLevel === this.maxLevel ? 
-            this.maxLevelColors.energy : 
-            this.shapeColors[shapeType].energy;
-        burst.setTint(glowColor);
-
-        this.scene.tweens.add({
-            targets: burst,
-            scaleX: 2,
-            scaleY: 2,
-            alpha: 0,
-            duration: 500,
-            ease: 'Quad.easeOut',
-            onComplete: () => burst.destroy()
-        });
-
-        return true;
     }
 }
