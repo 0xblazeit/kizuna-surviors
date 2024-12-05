@@ -16,7 +16,7 @@ class Coin {
     // Create coin sprite
     this.sprite = scene.add.sprite(x, y, "coin");
     this.sprite.setScale(0.15);
-    this.value = value; // Store the coin's value
+    this.value = value;
 
     // Initial spawn animation
     this.sprite.setAlpha(0);
@@ -32,10 +32,10 @@ class Coin {
     // Replace floating with rotation animation
     scene.tweens.add({
       targets: this.sprite,
-      angle: 360, // Full rotation
+      angle: 360,
       duration: 1500,
-      repeat: -1, // Infinite repeat
-      ease: "Linear", // Linear for smooth constant rotation
+      repeat: -1,
+      ease: "Linear",
     });
   }
 
@@ -52,27 +52,28 @@ class Coin {
     if (distance <= 50) {
       // Mark as collected
       this.isCollected = true;
-      Coin.totalCoins--; // Decrease total coins when collected
+      Coin.totalCoins--;
 
       // Update gold count
       this.scene.gameState.gold += this.value;
       this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
 
-      // Add collection animation
+      // Simplified collection animation
       this.scene.tweens.add({
         targets: this.sprite,
         scale: 0,
         alpha: 0,
-        y: this.sprite.y - 20,
         duration: 200,
         ease: "Power2",
         onComplete: () => {
-          this.sprite.destroy();
-          this.sprite = null;
+          if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+          }
         },
       });
 
-      // Add floating text effect
+      // Simple floating text that cleans itself up
       const floatingText = this.scene.add
         .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
           fontFamily: "VT323",
@@ -85,9 +86,11 @@ class Coin {
         targets: floatingText,
         y: floatingText.y - 40,
         alpha: 0,
-        duration: 1000,
+        duration: 500,
         ease: "Power2",
-        onComplete: () => floatingText.destroy(),
+        onComplete: () => {
+          floatingText.destroy();
+        },
       });
     }
   }
