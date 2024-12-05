@@ -5,13 +5,13 @@ import MainPlayer from "../game/entities/MainPlayer";
 import EnemyBasic from "../game/entities/EnemyBasic";
 import EnemyAdvanced from "../game/entities/EnemyAdvanced";
 import EnemyEpic from "../game/entities/EnemyEpic";
-import Coin from "../game/entities/Coin";
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
 import FlyingAxeWeapon from "../game/entities/weapons/FlyingAxeWeapon";
 import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
+import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 
 const MenuScene = {
   key: "MenuScene",
@@ -79,15 +79,15 @@ const UpgradeMenuScene = Phaser.Class({
   Extends: Phaser.Scene,
 
   initialize: function UpgradeMenuScene() {
-    Phaser.Scene.call(this, { key: 'UpgradeMenu' });
+    Phaser.Scene.call(this, { key: "UpgradeMenu" });
   },
 
-  init: function(data) {
+  init: function (data) {
     this.parentScene = data.parentScene;
     this.selectedWeapons = data.selectedWeapons;
   },
 
-  create: function() {
+  create: function () {
     // Create dark overlay
     const overlay = this.add.rectangle(
       this.cameras.main.centerX,
@@ -99,13 +99,44 @@ const UpgradeMenuScene = Phaser.Class({
     );
     overlay.setOrigin(0.5);
 
+    // Add "LEVEL UP!" text centered above weapon panels
+    const levelUpText = this.add
+      .text(
+        this.cameras.main.centerX,
+        100, // Position above the weapon panels
+        "LEVEL UP!",
+        {
+          fontFamily: "VT323",
+          fontSize: "48px",
+          color: "#ffff00", // Bright yellow
+          stroke: "#000000",
+          strokeThickness: 4,
+          align: "center",
+        }
+      )
+      .setOrigin(0.5);
+
+    // Add subtle pulsing animation to the text
+    this.tweens.add({
+      targets: levelUpText,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
     const cardWidth = 200;
     const cardHeight = 300;
     const cardSpacing = 20;
-    const startX = -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 + cardWidth / 2;
+    const startX =
+      -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 +
+      cardWidth / 2;
 
     this.selectedWeapons.forEach((weapon, index) => {
-      const x = this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
+      const x =
+        this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
       const y = this.cameras.main.centerY;
 
       // Create card background
@@ -115,115 +146,90 @@ const UpgradeMenuScene = Phaser.Class({
 
       // Add weapon icon
       const iconKey = (() => {
-        switch(weapon.constructor.name) {
-          case 'RotatingDogWeapon': return 'weapon-dog-projectile';
-          case 'FlyingAxeWeapon': return 'weapon-axe-projectile';
-          case 'MagicWandWeapon': return 'weapon-wand-projectile';
-          case 'GlizzyBlasterWeapon': return 'weapon-hotdog-projectile';
-          case 'SonicBoomHammer': return 'weapon-hammer-projectile';
-          case 'MilkWeapon': return 'weapon-magic-milk';
-          default: return 'weapon-wand-projectile';
+        switch (weapon.constructor.name) {
+          case "RotatingDogWeapon":
+            return "weapon-dog-projectile";
+          case "MagicWandWeapon":
+            return "weapon-wand-icon";
+          case "GlizzyBlasterWeapon":
+            return "weapon-hotdog-projectile";
+          case "FlyingAxeWeapon":
+            return "weapon-axe-projectile";
+          case "SonicBoomHammer":
+            return "weapon-hammer-projectile";
+          case "MilkWeapon":
+            return "weapon-magic-milk";
+          case "ShapecraftKeyWeapon":
+            return "weapon-shapecraft-key";
+          default:
+            return "weapon-dog-projectile";
         }
       })();
 
-      const icon = this.add.sprite(x, y - cardHeight/3, iconKey);
-      const targetSize = 48;
-      const scaleX = targetSize / icon.width;
-      const scaleY = targetSize / icon.height;
-      const uniformScale = Math.min(scaleX, scaleY);
-      icon.setScale(uniformScale);
+      // Create and size icon uniformly
+      const icon = this.add.image(x, y - 80, iconKey);
+      const targetSize = 48; // Target size for all icons
+      const scale = targetSize / Math.max(icon.width, icon.height);
+      icon.setScale(scale);
 
       // Add weapon name
-      const nameText = this.add.text(x, y - cardHeight/6, weapon.name, {
-        fontSize: '20px',
-        color: '#ffffff',
-        align: 'center',
-        fontFamily: 'Arial'
-      }).setOrigin(0.5);
+      this.add
+        .text(x, y, weapon.name, {
+          fontFamily: "VT323",
+          fontSize: "24px",
+          color: "#ffffff",
+          align: "center",
+        })
+        .setOrigin(0.5);
 
-      // Add stats
-      const currentStats = weapon.stats;
-      const nextLevelStats = weapon.levelConfigs[weapon.currentLevel + 1];
-      const statsText = this.add.text(x - cardWidth/2 + 10, y,
-        `Level: ${weapon.currentLevel} → ${weapon.currentLevel + 1}\n` +
-        `Damage: ${currentStats.damage} → ${nextLevelStats.damage}\n` +
-        `Pierce: ${currentStats.pierce} → ${nextLevelStats.pierce}\n` +
-        (nextLevelStats.projectileCount ? `Projectiles: ${currentStats.projectileCount || 1} → ${nextLevelStats.projectileCount}\n` : '') +
-        (nextLevelStats.count ? `Count: ${currentStats.count || 1} → ${nextLevelStats.count}\n` : '') +
-        (nextLevelStats.magicPower ? `Magic: ${currentStats.magicPower || 0} → ${nextLevelStats.magicPower}\n` : '') +
-        (nextLevelStats.criticalChance ? `Crit: ${Math.round((currentStats.criticalChance || 0) * 100)}% → ${Math.round(nextLevelStats.criticalChance * 100)}%\n` : ''),
-        {
-          fontSize: '16px',
-          color: '#ffffff',
-          align: 'left',
-          fontFamily: 'Arial'
-        }
-      );
+      // Add level text
+      const levelText = this.add
+        .text(x, y + 40, `Level ${weapon.currentLevel}`, {
+          fontFamily: "VT323",
+          fontSize: "20px",
+          color: "#ffff00",
+          align: "center",
+        })
+        .setOrigin(0.5);
 
-      // Add selection text
-      const selectText = this.add.text(x, y + cardHeight/2 - 25, 'Click to Select', {
-        fontSize: '16px',
-        color: '#00ff00',
-        align: 'center',
-        fontFamily: 'Arial'
-      }).setOrigin(0.5);
-      selectText.setAlpha(0.7);
+      // Add stats text
+      const stats = weapon.stats;
+      const statsText = [];
+      if (stats.damage) statsText.push(`DMG: ${stats.damage}`);
+      if (stats.pierce) statsText.push(`Pierce: ${stats.pierce}`);
+      if (stats.cooldown)
+        statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
 
-      const highlight = () => {
-        card.setStrokeStyle(3, 0x00ff00);
-        card.setFillStyle(0x444444);
-        icon.setScale(uniformScale * 1.1);
-        selectText.setAlpha(1);
-      };
+      this.add
+        .text(x, y + 80, statsText.join("\n"), {
+          fontFamily: "VT323",
+          fontSize: "16px",
+          color: "#aaaaaa",
+          align: "center",
+        })
+        .setOrigin(0.5);
 
-      const unhighlight = () => {
-        card.setStrokeStyle(2, 0xffffff);
-        card.setFillStyle(0x333333);
-        icon.setScale(uniformScale);
-        selectText.setAlpha(0.7);
-      };
-
-      card.on('pointerover', highlight);
-      card.on('pointerout', unhighlight);
-      card.on('pointerdown', () => {
-        // Disable all cards
-        this.children.list
-          .filter(child => child.type === 'Rectangle')
-          .forEach(c => c.removeInteractive());
-
-        highlight();
-        selectText.setText('Selected!');
-        selectText.setColor('#ffff00');
-
-        // Selection animation
-        this.tweens.add({
-          targets: [card, icon, nameText, statsText, selectText],
-          scaleX: 1.1,
-          scaleY: 1.1,
-          duration: 100,
-          yoyo: true,
-          onComplete: () => {
-            // Call levelUp and wait for it to complete
-            const result = weapon.levelUp();
-            
-            // Add a slight delay to ensure animations complete
-            this.time.delayedCall(500, () => {
-              this.scene.stop();
-              this.parentScene.scene.resume();
-            });
-          }
-        });
+      // Make card clickable
+      card.on("pointerdown", () => {
+        weapon.levelUp();
+        this.scene.stop();
+        this.parentScene.scene.resume();
       });
     });
-  }
+  },
 });
 
-const GameScene = {
-  key: "GameScene",
+const GameScene = Phaser.Class({
+  Extends: Phaser.Scene,
+
+  initialize: function GameScene() {
+    Phaser.Scene.call(this, { key: "GameScene" });
+  },
 
   init: function () {
     // Initialize game state
     this.gameState = {
+      gameStarted: false,
       timerStarted: false,
       gameTimer: 0,
       level: 1,
@@ -234,16 +240,25 @@ const GameScene = {
       selectedWeaponIndex: 0,
       isGameOver: false,
       coins: 0, // Add coin counter
-      maxEnemies: 30,  // Maximum enemies allowed at once
+      maxEnemies: 15, // Maximum enemies allowed at once
       spawnRate: 1000, // Base spawn rate in milliseconds
-      minSpawnRate: 500, // Minimum spawn rate (fastest spawn rate allowed)
-      goldMilestoneReached: false, // Add gold milestone flag
-      touchInput: {
-        isActive: false,
-        x: 0,
-        y: 0
-      }
+      minSpawnRate: 300, // Minimum spawn rate (fastest spawn rate allowed)
+      enemyWaveTimer: 0,
+      waveNumber: 1,
+      difficultyMultiplier: 1,
+      // Enemy spawn thresholds (in seconds)
+      spawnThresholds: {
+        advanced: 5, // Advanced enemies after 5 seconds
+        epic: 10, // Epic enemies after 10 seconds
+      },
     };
+
+    // Debug log initial state
+    console.log("Initial game state:", {
+      timerStarted: this.gameState.timerStarted,
+      gameTimer: this.gameState.gameTimer,
+      spawnThresholds: this.gameState.spawnThresholds,
+    });
 
     // Bind methods to this scene
     this.gainXP = (amount) => {
@@ -424,8 +439,95 @@ const GameScene = {
       }
     );
 
+    this.load.svg(
+      "weapon-shapecraft-key",
+      "/assets/game/weapons/weapon-shapecraft-key.svg",
+      {
+        scale: 0.5,
+      }
+    );
+
     // Load XP gem with correct path
-    this.load.image('powerup-xp-gem', '/assets/game/powerups/xp-gem.svg');
+    this.load.image("powerup-xp-gem", "/assets/game/powerups/xp-gem.svg");
+  },
+
+  spawnEnemies: function() {
+    if (!this.gameState.gameStarted || this.enemies.length >= this.gameState.maxEnemies) return;
+
+    // Calculate game progress (0 to 1) based on 30-minute max time
+    const maxGameTime = 1800; // 30 minutes in seconds
+    const gameProgress = Math.min(this.gameState.gameTimer / maxGameTime, 1);
+
+    // Update wave timer and check for new wave
+    this.gameState.enemyWaveTimer += this.gameState.spawnRate / 1000;
+    if (this.gameState.enemyWaveTimer >= 60) {
+      // New wave every minute
+      this.gameState.enemyWaveTimer = 0;
+      this.gameState.waveNumber++;
+      this.gameState.difficultyMultiplier += 0.1;
+
+      // Update wave text
+      if (this.waveText) {
+        this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
+      }
+    }
+
+    // Spawn new enemy
+    const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
+    const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
+    const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+    
+    const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+      type: "basic",
+      scale: 0.3,
+    });
+
+    enemy.sprite.once("destroy", () => {
+      const index = this.enemies.indexOf(enemy);
+      if (index > -1) {
+        this.enemies.splice(index, 1);
+      }
+    });
+
+    this.enemies.push(enemy);
+  },
+
+  startGame: function() {
+    // Initial enemy spawn
+    for (let i = 0; i < 15; i++) {
+      const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
+      const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
+      const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+      
+      const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+        type: "basic",
+        scale: 0.3,
+      });
+
+      enemy.sprite.once("destroy", () => {
+        const index = this.enemies.indexOf(enemy);
+        if (index > -1) {
+          this.enemies.splice(index, 1);
+        }
+      });
+
+      this.enemies.push(enemy);
+    }
+
+    // Start enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+      delay: this.gameState.spawnRate,
+      callback: this.spawnEnemies,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // Initialize weapons
+    this.weapons.forEach(weapon => {
+      if (weapon.initialize) {
+        weapon.initialize();
+      }
+    });
   },
 
   create: function () {
@@ -576,6 +678,7 @@ const GameScene = {
     let axeIcon = null; // Store axe icon reference
     let hammerIcon = null; // Store hammer icon reference
     let milkIcon = null; // Store milk icon reference
+    let shapecraftIcon = null; // Store shapecraft icon reference
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -609,7 +712,8 @@ const GameScene = {
             cellIndex === 2 ||
             cellIndex === 3 ||
             cellIndex === 4 ||
-            cellIndex === 5
+            cellIndex === 5 ||
+            cellIndex === 6
           ) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
@@ -705,6 +809,17 @@ const GameScene = {
             this.updateStatsDisplay();
           });
         }
+
+        // Add shapecraft key weapon icon to seventh cell
+        if (row === 1 && col === 0) {
+          shapecraftIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            "weapon-shapecraft-key",
+            6,
+            gridCells
+          );
+        }
       }
     }
 
@@ -728,9 +843,19 @@ const GameScene = {
       .setOrigin(1, 0);
     uiContainer.add(this.killsText);
 
-    // Controls text (right side, below stats)
+    // Add wave tracker
+    this.waveText = this.add
+      .text(statsX, uiRowY + 70, "Wave: 1", {
+        fontFamily: "VT323",
+        fontSize: "24px",
+        color: "#4444ff",
+      })
+      .setOrigin(1, 0);
+    uiContainer.add(this.waveText);
+
+    // Controls text (right side, adjusted spacing)
     const controlsText = this.add
-      .text(statsX, uiRowY + 80, "ESC - Back to Menu", {
+      .text(statsX, uiRowY + 110, "ESC - Back to Menu", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#aaaaaa",
@@ -739,7 +864,7 @@ const GameScene = {
     uiContainer.add(controlsText);
 
     const controlsText2 = this.add
-      .text(statsX, uiRowY + 104, "Move: Arrow Keys / WASD", {
+      .text(statsX, uiRowY + 134, "Move: Arrow Keys / WASD", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#aaaaaa",
@@ -747,7 +872,7 @@ const GameScene = {
       .setOrigin(1, 0);
     uiContainer.add(controlsText2);
 
-    // Stats display (below controls)
+    // Stats display (adjusted spacing)
     const statsStyle = {
       fontFamily: "VT323",
       fontSize: "20px",
@@ -756,31 +881,47 @@ const GameScene = {
 
     // Add header for stats
     const statsHeader = this.add
-      .text(statsX, uiRowY + 144, "--- Player Stats ---", {
+      .text(statsX, uiRowY + 174, "--- Player Stats ---", {
         ...statsStyle,
         color: "#ffffff",
       })
       .setOrigin(1, 0);
     uiContainer.add(statsHeader);
 
-    // Create stats text objects
+    // Create stats text objects (adjusted spacing)
     this.statsTexts = {
       health: this.add
-        .text(statsX, uiRowY + 170, "", statsStyle)
+        .text(statsX, uiRowY + 200, "", statsStyle)
         .setOrigin(1, 0),
       attack: this.add
-        .text(statsX, uiRowY + 192, "", statsStyle)
+        .text(statsX, uiRowY + 222, "", statsStyle)
         .setOrigin(1, 0),
       defense: this.add
-        .text(statsX, uiRowY + 214, "", statsStyle)
+        .text(statsX, uiRowY + 244, "", statsStyle)
         .setOrigin(1, 0),
       speed: this.add
-        .text(statsX, uiRowY + 236, "", statsStyle)
+        .text(statsX, uiRowY + 266, "", statsStyle)
         .setOrigin(1, 0),
+      // Add leaderboard section
+      leaderboardHeader: this.add
+        .text(statsX, uiRowY + 306, "--- Leaderboard ---", {
+          ...statsStyle,
+          color: "#ffffff",
+        })
+        .setOrigin(1, 0),
+      leaderboardColumns: this.add
+        .text(statsX, uiRowY + 332, "Rank    Gold    Kills", {
+          ...statsStyle,
+          color: "#ffff00",
+        })
+        .setOrigin(1, 0),
+      leaderboardEntries: Array(5).fill(null).map((_, i) => 
+        this.add
+          .text(statsX, uiRowY + 354 + (i * 22), "", statsStyle)
+          .setOrigin(1, 0)
+      ),
     };
-
-    // Add stats text to UI container
-    uiContainer.add(Object.values(this.statsTexts));
+    uiContainer.add(Object.values(this.statsTexts).flat());
 
     // Function to update stats display
     this.updateStatsDisplay = () => {
@@ -853,49 +994,41 @@ const GameScene = {
       this.statsTexts.speed.setText(displayStats.speed);
     };
 
+    // Fetch and display leaderboard data
+    fetch('/api/game-results')
+      .then(response => response.json())
+      .then(data => {
+        data.data.forEach((entry, index) => {
+          if (index < 5) {
+            // Format each entry with proper spacing for columns
+            const rank = `#${index + 1}`.padEnd(8);
+            const gold = `${entry.gold}`.padEnd(9);
+            const kills = `${entry.kills}`;
+            this.statsTexts.leaderboardEntries[index].setText(
+              `${rank}${gold}${kills}`
+            );
+          }
+        });
+      })
+      .catch(error => console.error('Error fetching leaderboard:', error));
+
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
 
-    // Initialize player
+    // Create player with physics and pass trail container
     this.player = new MainPlayer(this, width / 2, height / 2, "player", {
       trailContainer: this.trailContainer,
       scale: 1,
       spriteKey: "player",
     });
 
-    // Add touch input handlers
-    this.input.on('pointerdown', (pointer) => {
-      this.gameState.touchInput.isActive = true;
-      this.gameState.touchInput.x = pointer.x;
-      this.gameState.touchInput.y = pointer.y;
+    // Listen for player death event
+    this.events.on("playerDeath", () => {
+      this.showWastedScreen();
     });
 
-    this.input.on('pointermove', (pointer) => {
-      if (this.gameState.touchInput.isActive) {
-        this.gameState.touchInput.x = pointer.x;
-        this.gameState.touchInput.y = pointer.y;
-      }
-    });
-
-    this.input.on('pointerup', () => {
-      this.gameState.touchInput.isActive = false;
-    });
-
-    // Add touch control overlay for mobile
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      const touchOverlay = this.add.circle(100, height - 100, 80, 0x000000, 0.2);
-      touchOverlay.setScrollFactor(0);
-      touchOverlay.setDepth(1000);
-      touchOverlay.setInteractive();
-      
-      // Add visual indicator
-      const touchIndicator = this.add.circle(100, height - 100, 20, 0xffffff, 0.5);
-      touchIndicator.setScrollFactor(0);
-      touchIndicator.setDepth(1001);
-      this.gameState.touchIndicator = touchIndicator;
-    }
-
-    // Create weapons array
+    // Initialize weapon system - this is needed for selectable weapons grid
+    console.log("Initializing weapon system...");
     this.weapons = [
       new RotatingDogWeapon(this, this.player),
       new MagicWandWeapon(this, this.player),
@@ -903,6 +1036,7 @@ const GameScene = {
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new ShapecraftKeyWeapon(this, this.player),
     ];
 
     this.weaponInitialized = true;
@@ -940,7 +1074,7 @@ const GameScene = {
     this.enemies = [];
 
     // Enemy sprite keys
-    const enemySprites = [
+    this.enemySprites = [
       "enemy-basic-one",
       "enemy-basic-two",
       "enemy-basic-three",
@@ -949,32 +1083,16 @@ const GameScene = {
       "enemy-basic-six",
     ];
 
-    // Initial spawn of fewer enemies
-    for (let i = 0; i < 15; i++) {
-      // Get random position within world bounds
-      const randomX = Phaser.Math.Between(100, worldWidth - 100);
-      const randomY = Phaser.Math.Between(100, worldHeight - 100);
-
-      // Get random enemy sprite
-      const randomSprite =
-        enemySprites[Phaser.Math.Between(0, enemySprites.length - 1)];
-
-      // Create enemy
-      const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
-        type: "basic",
-        scale: 0.3,
-      });
-
-      // Listen for enemy death
-      enemy.sprite.once("destroy", () => {
-        const index = this.enemies.indexOf(enemy);
-        if (index > -1) {
-          this.enemies.splice(index, 1);
-        }
-      });
-
-      this.enemies.push(enemy);
-    }
+    // Initialize weapons array but don't start them yet
+    this.weapons = [
+      new RotatingDogWeapon(this, this.player),
+      new MagicWandWeapon(this, this.player),
+      new GlizzyBlasterWeapon(this, this.player),
+      new FlyingAxeWeapon(this, this.player),
+      new SonicBoomHammer(this, this.player),
+      new MilkWeapon(this, this.player),
+      new ShapecraftKeyWeapon(this, this.player),
+    ];
 
     // Create enemy spawn timer
     this.enemySpawnTimer = this.time.addEvent({
@@ -982,40 +1100,280 @@ const GameScene = {
       callback: () => {
         if (this.enemies.length >= this.gameState.maxEnemies) return;
 
-        // Increase max enemies and decrease spawn rate based on game time
-        if (this.gameState.gameTimer > 0 && this.gameState.gameTimer % 60 === 0) {
-          this.gameState.maxEnemies = Math.min(50, this.gameState.maxEnemies + 2);
-          this.gameState.spawnRate = Math.max(
-            this.gameState.minSpawnRate,
-            this.gameState.spawnRate - 50
-          );
-          this.enemySpawnTimer.delay = this.gameState.spawnRate;
+        // Calculate game progress (0 to 1) based on 30-minute max time
+        const maxGameTime = 1800; // 30 minutes in seconds
+        const gameProgress = Math.min(
+          this.gameState.gameTimer / maxGameTime,
+          1
+        );
+
+        // Update wave timer and check for new wave
+        this.gameState.enemyWaveTimer += this.gameState.spawnRate / 1000;
+        if (this.gameState.enemyWaveTimer >= 60) {
+          // New wave every minute
+          this.gameState.enemyWaveTimer = 0;
+          this.gameState.waveNumber++;
+          this.gameState.difficultyMultiplier += 0.1;
+
+          // Update the static wave tracker
+          if (this.waveText) {
+            this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
+          }
+
+          // Announce new wave
+          const waveText = this.add
+            .text(
+              this.cameras.main.centerX,
+              100,
+              `Wave ${this.gameState.waveNumber}`,
+              {
+                fontFamily: "VT323",
+                fontSize: "48px",
+                color: "#ff0000",
+                stroke: "#000000",
+                strokeThickness: 4,
+              }
+            )
+            .setOrigin(0.5);
+          waveText.setScrollFactor(0);
+
+          // Fade out and destroy
+          this.tweens.add({
+            targets: waveText,
+            alpha: 0,
+            y: 50,
+            duration: 2000,
+            ease: "Power2",
+            onComplete: () => waveText.destroy(),
+          });
         }
 
-        // Get random position within world bounds but not too close to player
-        let x, y, distanceToPlayer;
-        do {
-          x = Phaser.Math.Between(
-            100,
-            this.physics.world.bounds.width - 100
-          );
-          y = Phaser.Math.Between(
-            100,
-            this.physics.world.bounds.height - 100
-          );
-          distanceToPlayer = Phaser.Math.Distance.Between(
-            x,
-            y,
-            this.player.x,
-            this.player.y
-          );
-        } while (distanceToPlayer < 200); // Minimum spawn distance from player
+        // Get spawn position
+        const getSpawnPosition = () => {
+          const minSpawnDistance = 300; // Minimum distance from player
+          const maxSpawnDistance = 500; // Maximum distance from player
+          const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // Golden angle in radians
 
-        // Random enemy sprite
-        const spriteKey = Phaser.Utils.Array.GetRandom(enemySprites);
+          // Use wave number to rotate spawn points for variety
+          const baseAngle = this.gameState.waveNumber * goldenAngle;
 
-        // Spawn enemy
-        const enemy = new EnemyBasic(this, x, y, spriteKey);
+          // Get random distance between min and max
+          const distance = Phaser.Math.Between(
+            minSpawnDistance,
+            maxSpawnDistance
+          );
+
+          // Calculate angle using golden ratio for better distribution
+          const angle = baseAngle + Math.random() * Math.PI * 2;
+
+          // Calculate position relative to player
+          const spawnX = this.player.x + Math.cos(angle) * distance;
+          const spawnY = this.player.y + Math.sin(angle) * distance;
+
+          // Clamp to world bounds with padding
+          const padding = 50;
+          return {
+            x: Phaser.Math.Clamp(
+              spawnX,
+              padding,
+              this.physics.world.bounds.width - padding
+            ),
+            y: Phaser.Math.Clamp(
+              spawnY,
+              padding,
+              this.physics.world.bounds.height - padding
+            ),
+          };
+        };
+
+        // Get spawn position
+        const spawnPos = getSpawnPosition();
+        const x = spawnPos.x;
+        const y = spawnPos.y;
+
+        const enemyAdvancedSprites = [
+          "enemy-advanced-one",
+          "enemy-advanced-two",
+          "enemy-advanced-three",
+          "enemy-advanced-four",
+          "enemy-advanced-five",
+          "enemy-advanced-six",
+        ];
+
+        const spriteKeyAdvanced =
+          enemyAdvancedSprites[
+            Math.floor(Math.random() * enemyAdvancedSprites.length)
+          ];
+
+        const enemyEpicSprites = [
+          "enemy-epic-one",
+          "enemy-epic-two",
+          "enemy-epic-three",
+          "enemy-epic-four",
+          "enemy-epic-five",
+          "enemy-epic-six",
+        ];
+
+        const spriteKeyEpic =
+          enemyEpicSprites[Math.floor(Math.random() * enemyEpicSprites.length)];
+
+        const enemySprites = [
+          "enemy-basic-one",
+          "enemy-basic-two",
+          "enemy-basic-three",
+          "enemy-basic-four",
+          "enemy-basic-five",
+          "enemy-basic-six",
+        ];
+
+        // Get random enemy sprite
+        const randomSprite =
+          enemySprites[Math.floor(Math.random() * enemyEpicSprites.length)];
+
+        // Simplified enemy spawn system
+        let enemy;
+        const roll = Math.random();
+
+        if (this.gameState.gameTimer < 5) {
+          // Before 5 seconds - 100% basic
+          enemy = new EnemyBasic(this, x, y, randomSprite, {
+            maxHealth: 100,
+            moveSpeed: 1.8,
+            defense: 0,
+            attackDamage: 8,
+            scale: 0.4,
+          });
+        } else if (this.gameState.gameTimer < 20) {
+          // 5-20 seconds - 70% advanced, 30% basic
+          if (roll < 0.7) {
+            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+              maxHealth: 300,
+              moveSpeed: 2.0,
+              defense: 2,
+              attackDamage: 12,
+              scale: 0.5,
+            });
+          } else {
+            enemy = new EnemyBasic(this, x, y, randomSprite, {
+              maxHealth: 100,
+              moveSpeed: 1.8,
+              defense: 0,
+              attackDamage: 8,
+              scale: 0.4,
+            });
+          }
+        } else {
+          // After 20 seconds - 50% epic, 30% advanced, 20% basic
+          if (roll < 0.5) {
+            enemy = new EnemyEpic(this, x, y, spriteKeyEpic, {
+              maxHealth: 600,
+              moveSpeed: 2.2,
+              defense: 4,
+              attackDamage: 16,
+              scale: 0.6,
+            });
+          } else if (roll < 0.8) {
+            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+              maxHealth: 300,
+              moveSpeed: 2.0,
+              defense: 2,
+              attackDamage: 12,
+              scale: 0.5,
+            });
+          } else {
+            enemy = new EnemyBasic(this, x, y, randomSprite, {
+              maxHealth: 100,
+              moveSpeed: 1.8,
+              defense: 0,
+              attackDamage: 8,
+              scale: 0.4,
+            });
+          }
+        }
+
+        // Add to physics system
+        this.physics.add.existing(enemy);
+
+        // Simply push to array instead of using .add()
+        this.enemies.push(enemy);
+
+        // Debug: Log spawn location
+        console.log("Enemy spawned at:", { x, y }, "Player at:", {
+          px: this.player.x,
+          py: this.player.y,
+        });
+
+        // Increase max enemies and decrease spawn rate based on wave number
+        this.gameState.maxEnemies = Math.min(
+          50,
+          15 + Math.floor(this.gameState.waveNumber / 2)
+        );
+        this.gameState.spawnRate = Math.max(
+          this.gameState.minSpawnRate,
+          1000 - this.gameState.waveNumber * 50
+        );
+        this.enemySpawnTimer.delay = this.gameState.spawnRate;
+
+        // Enhanced enemy movement behavior
+        enemy.updateMovement = function (time, delta) {
+          if (!this.scene.player || !this.sprite) return;
+
+          // Calculate direction to player
+          const dx = this.scene.player.x - this.sprite.x;
+          const dy = this.scene.player.y - this.sprite.y;
+          const angle = Math.atan2(dy, dx);
+
+          // Add slight randomization to movement for more organic feel
+          const randomAngle = angle + (Math.random() - 0.5) * 0.2;
+
+          // Calculate velocity components
+          const speed = this.stats.moveSpeed;
+          this.sprite.body.velocity.x = Math.cos(randomAngle) * speed;
+          this.sprite.body.velocity.y = Math.sin(randomAngle) * speed;
+
+          // Rotate sprite to face movement direction
+          this.sprite.rotation = angle + Math.PI / 2;
+
+          // Epic enemies get special movement patterns
+          if (this instanceof EnemyEpic) {
+            // Periodic speed bursts
+            const burstInterval = 3000; // 3 seconds
+            if (time % burstInterval < 500) {
+              // 0.5 second burst
+              this.sprite.body.velocity.x *= 1.5;
+              this.sprite.body.velocity.y *= 1.5;
+            }
+
+            // Periodic sidestep movement
+            const sideStepInterval = 2000; // 2 seconds
+            if (time % sideStepInterval < 1000) {
+              // 1 second sidestep
+              const perpAngle = angle + Math.PI / 2;
+              const sideStepSpeed = speed * 0.5;
+              this.sprite.body.velocity.x +=
+                Math.cos(perpAngle) * sideStepSpeed;
+              this.sprite.body.velocity.y +=
+                Math.sin(perpAngle) * sideStepSpeed;
+            }
+          }
+
+          // Advanced enemies get simpler but effective patterns
+          if (this instanceof EnemyAdvanced) {
+            // Periodic speed adjustments
+            const speedInterval = 2000; // 2 seconds
+            if (time % speedInterval < 1000) {
+              // 1 second faster
+              this.sprite.body.velocity.x *= 1.3;
+              this.sprite.body.velocity.y *= 1.3;
+            }
+          }
+        };
+
+        // Set up movement update
+        enemy.sprite.update = function (time, delta) {
+          enemy.updateMovement(time, delta);
+        };
+
         this.enemies.push(enemy);
       },
       callbackScope: this,
@@ -1146,6 +1504,19 @@ const GameScene = {
     this.showWastedScreen = () => {
       if (this.gameState.isGameOver) return;
 
+      // Post game stats to /game-over endpoint before showing wasted screen
+      fetch("/api/game-over", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gold: this.gameState.gold,
+          kills: this.gameState.kills,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch((error) => console.error("Error posting game stats:", error));
+
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1262,7 +1633,7 @@ const GameScene = {
     });
 
     // Add event listener for weapon upgrade menu
-    this.events.on('showWeaponUpgradeMenu', () => {
+    this.events.on("showWeaponUpgradeMenu", () => {
       // Select 3 random weapons
       const availableWeapons = [...this.weapons];
       const selectedWeapons = [];
@@ -1273,17 +1644,57 @@ const GameScene = {
 
       // Launch the upgrade menu scene
       this.scene.pause();
-      this.scene.launch('UpgradeMenu', {
+      this.scene.launch("UpgradeMenu", {
         parentScene: this,
-        selectedWeapons: selectedWeapons
+        selectedWeapons: selectedWeapons,
       });
+    });
+
+    // Create new timer
+    const scene = this; // Store reference to the scene
+    this.timerEvent = this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        if (
+          !scene.gameState.timerStarted ||
+          scene.gameState.gameTimer >= 1800
+        ) {
+          return; // 30 minutes = 1800 seconds
+        }
+
+        scene.gameState.gameTimer++;
+        const minutes = Math.floor(scene.gameState.gameTimer / 60);
+        const seconds = Math.floor(scene.gameState.gameTimer % 60);
+        scene.timerText.setText(
+          `${minutes.toString().padStart(2, "0")}:${seconds
+            .toString()
+            .padStart(2, "0")}`
+        );
+      },
+      callbackScope: this,
+      loop: true,
     });
   },
 
   update: function (time, delta) {
-    if (!this.gameState) return;
+    if (!this.gameState.gameStarted) {
+      const keys = this.input.keyboard.createCursorKeys();
+      const wasd = {
+        up: this.input.keyboard.addKey('W'),
+        down: this.input.keyboard.addKey('S'),
+        left: this.input.keyboard.addKey('A'),
+        right: this.input.keyboard.addKey('D')
+      };
+      
+      if (keys.left.isDown || keys.right.isDown || keys.up.isDown || keys.down.isDown ||
+          wasd.left.isDown || wasd.right.isDown || wasd.up.isDown || wasd.down.isDown) {
+        this.gameState.gameStarted = true;
+        this.startGame();
+      }
+      return;
+    }
 
-    // Handle player movement using both keyboard and touch
+    // Handle player movement using the new system
     const input = {
       left: this.cursors.left.isDown || this.wasd.left.isDown,
       right: this.cursors.right.isDown || this.wasd.right.isDown,
@@ -1291,38 +1702,52 @@ const GameScene = {
       down: this.cursors.down.isDown || this.wasd.down.isDown,
     };
 
-    // Add touch input processing
-    if (this.gameState.touchInput.isActive && this.player) {
-      const touchX = this.gameState.touchInput.x;
-      const touchY = this.gameState.touchInput.y;
-      
-      // Calculate direction relative to touch overlay center
-      const centerX = 100;
-      const centerY = this.scale.height - 100;
-      
-      // Calculate differences
-      const dx = touchX - centerX;
-      const dy = touchY - centerY;
-      
-      // Add to input based on touch position
-      input.left = input.left || dx < -20;
-      input.right = input.right || dx > 20;
-      input.up = input.up || dy < -20;
-      input.down = input.down || dy > 20;
-
-      // Update touch indicator position if it exists
-      if (this.gameState.touchIndicator) {
-        const maxDistance = 60; // Maximum distance the indicator can move from center
-        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
-        const angle = Math.atan2(dy, dx);
-        
-        this.gameState.touchIndicator.x = centerX + Math.cos(angle) * distance;
-        this.gameState.touchIndicator.y = centerY + Math.sin(angle) * distance;
-      }
-    }
-
     if (this.player) {
       this.player.handleMovement(input);
+    }
+
+    // Update debug text first
+    if (this.debugText && this.player && this.weapons) {
+      try {
+        const weapon = this.weapons[this.gameState.selectedWeaponIndex];
+        const stats = weapon?.stats || {};
+
+        // Create level progress bar
+        const maxBoxes = 8;
+        const filledBoxes = weapon?.currentLevel || 1;
+        const progressBar = Array(maxBoxes)
+          .fill("░")
+          .fill("█", 0, filledBoxes)
+          .join("");
+
+        const text = [
+          `Position: (${Math.round(this.player.x)}, ${Math.round(
+            this.player.y
+          )})`,
+          `Active Weapons: ${this.weapons.length}`,
+          `Weapon Stats:`,
+          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${
+            weapon?.maxLevel || 8
+          }`,
+          `  Damage: ${stats.damage || 0}`,
+          `  Pierce: ${stats.pierce || 0}`,
+          `  Range: ${stats.range || 0}`,
+          `  Speed: ${stats.speed || 0}`,
+          ...(stats.magicPower
+            ? [
+                `  Magic Power: ${stats.magicPower}`,
+                `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
+                `  Elemental Damage: ${stats.elementalDamage}`,
+              ]
+            : []),
+          `FPS: ${Math.round(1000 / delta)}`,
+          `Time: ${Math.round(time / 1000)}s`,
+        ].join("\n");
+
+        this.debugText.setText(text);
+      } catch (error) {
+        console.error("Error updating debug text:", error);
+      }
     }
 
     // Update coins
@@ -1384,31 +1809,6 @@ const GameScene = {
     ) {
       console.log("Starting timer..."); // Debug log
       this.gameState.timerStarted = true;
-
-      // Clear any existing timer
-      if (this.timerEvent) {
-        this.timerEvent.remove();
-      }
-
-      // Create new timer
-      this.timerEvent = this.time.addEvent({
-        delay: 1000,
-        callback: () => {
-          if (!this.gameState.timerStarted || this.gameState.gameTimer >= 1800)
-            return; // 30 minutes = 1800 seconds
-
-          this.gameState.gameTimer++;
-          const minutes = Math.floor(this.gameState.gameTimer / 60);
-          const seconds = this.gameState.gameTimer % 60;
-          this.timerText.setText(
-            `${minutes}:${seconds.toString().padStart(2, "0")}`
-          );
-
-          console.log("Timer updated:", this.gameState.gameTimer); // Debug log
-        },
-        callbackScope: this,
-        loop: true,
-      });
     }
 
     // Update player with movement input
@@ -1421,7 +1821,7 @@ const GameScene = {
       this.showWastedScreen();
     }
   },
-};
+});
 
 export default function Game() {
   const gameRef = useRef(null);

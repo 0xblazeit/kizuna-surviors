@@ -123,8 +123,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[1] };
 
-    // Initialize projectile pool
-    this.maxProjectiles = 5; // Hard limit of 5 axes
+    this.maxProjectiles = this.stats.projectileCount; // Initialize with level 1 projectile count
     this.activeProjectiles = [];
     this.lastFiredTime = 0;
 
@@ -555,11 +554,13 @@ class FlyingAxeWeapon extends BaseWeapon {
     this.currentLevel++;
     const newStats = this.levelConfigs[this.currentLevel];
 
-    // Update stats
     this.stats = {
       ...this.stats,
       ...newStats,
     };
+
+    // Update maxProjectiles based on new level stats
+    this.maxProjectiles = this.stats.projectileCount;
 
     console.log(
       `Flying Axe leveled up to ${this.currentLevel}! New stats:`,

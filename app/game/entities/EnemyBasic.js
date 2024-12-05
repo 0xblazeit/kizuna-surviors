@@ -11,7 +11,7 @@ class EnemyBasic extends BasePlayer {
       defense: 0,
       attackSpeed: 1,
       attackDamage: 8,
-      scale: 0.4, // Reduced from 0.8
+      scale: 0.4, // Fixed scale for basic enemies
       trailTint: 0x3498db, // Light blue trail
       clickDamage: 25, // Add default click damage
       ...config,
@@ -32,8 +32,7 @@ class EnemyBasic extends BasePlayer {
     this.targetPlayer = null;
     this.moveSpeed = enemyConfig.moveSpeed;
     this.movementEnabled = true;
-    this.movementRange = 500; // Fixed larger movement range
-    this.minDistance = 20; // Reduced minimum distance
+    this.minDistance = 20; // Minimum distance to keep from player
     this.lastMoveTime = 0; // Add timestamp for movement updates
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
 
@@ -146,37 +145,17 @@ class EnemyBasic extends BasePlayer {
       const dy = this.targetPlayer.sprite.y - this.sprite.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Check if within attack range and cooldown is ready
-      if (
-        distance <= this.attackRange &&
-        currentTime - this.lastAttackTime >= this.attackCooldown
-      ) {
-        this.attackPlayer();
-        this.lastAttackTime = currentTime;
-      }
-
-      // Move if within range and not too close
-      if (distance <= this.movementRange && distance > this.minDistance) {
+      // Always move towards player if not too close
+      if (distance > this.minDistance) {
         // Normalize direction
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
 
-        // Calculate movement step
-        const step = this.moveSpeed; // Remove the time scaling since we're already using fixed intervals
+        // Apply movement
+        this.sprite.x += normalizedDx * this.moveSpeed;
+        this.sprite.y += normalizedDy * this.moveSpeed;
 
-        // Move towards player
-        this.sprite.x += normalizedDx * step;
-        this.sprite.y += normalizedDy * step;
-
-        // Update health bar position
-        if (this.healthBar) {
-          this.healthBar.container.setPosition(
-            this.sprite.x,
-            this.sprite.y + this.healthBar.spacing
-          );
-        }
-
-        // Flip sprite based on movement direction
+        // Update sprite direction
         if (dx < 0) {
           this.sprite.setFlipX(true);
         } else {
@@ -184,22 +163,24 @@ class EnemyBasic extends BasePlayer {
         }
 
         // Add trail effect if moving
-        if (
-          currentTime - this.lastTrailTime >=
-          this.trailConfig.spawnInterval
-        ) {
+        if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
           super.createTrailEffect();
           this.lastTrailTime = currentTime;
         }
+      }
+
+      // Check if within attack range and cooldown is ready
+      if (distance <= this.attackRange && 
+          currentTime - this.lastAttackTime >= this.attackCooldown) {
+        this.attackPlayer();
       }
     }
   }
 
   takeDamage(amount, sourceX, sourceY) {
-    console.log("Enemy taking damage:", amount);
-    // Only check isDead for damage, not isDying
+    // console.log("Enemy taking damage:", amount);
     if (this.isDead) {
-      console.log("Enemy already dead, ignoring damage");
+      // console.log("Enemy already dead, ignoring damage");
       return 0;
     }
 
@@ -211,14 +192,40 @@ class EnemyBasic extends BasePlayer {
     }
 
     this.stats.currentHealth -= damageDealt;
-    console.log("Enemy health after damage:", this.stats.currentHealth);
+    // console.log("Enemy health after damage:", this.stats.currentHealth);
+
+    // Show damage number for every hit
+    const damageText = this.scene.add
+      .text(
+        this.sprite.x,
+        this.sprite.y - 20,
+        Math.floor(damageDealt).toString(),
+        {
+          fontSize: "16px",
+          fontFamily: "VT323",
+          fill: "#ffffff", // White color for normal hits
+          stroke: "#000000",
+          strokeThickness: 3,
+        }
+      )
+      .setOrigin(0.5);
+
+    // Animate the damage text
+    this.scene.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30,
+      alpha: 0,
+      duration: 800,
+      ease: "Cubic.Out",
+      onComplete: () => damageText.destroy(),
+    });
 
     // Play hit effects with source position
     this.playHitEffects(sourceX, sourceY);
 
     // Check for death
     if (this.stats.currentHealth <= 0) {
-      console.log("Enemy health depleted, calling die()");
+      // console.log("Enemy health depleted, calling die()");
       this.die();
     }
 
@@ -492,17 +499,36 @@ class EnemyBasic extends BasePlayer {
       this.scene.xpGems = [];
     }
 
+    // Determine coin value based on enemy type
+    let coinValue = 10; // Base value for basic enemies
+    if (this.type === "advanced") {
+      coinValue = 25; // Advanced enemies drop more
+    } else if (this.type === "epic") {
+      coinValue = 50; // Epic enemies drop even more
+    }
+
     // Determine drop type - 25% chance for any drop
     const dropChance = Math.random();
-    if (dropChance < 0.25) {  // 25% chance for a drop
+    if (dropChance < 0.25) {
       // 40% chance for coin (10% total), 60% chance for XP gem (15% total)
-      if (dropChance < 0.10) {
-        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
+      if (dropChance < 0.1) {
+        const coin = new Coin(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          coinValue
+        );
         if (coin) {
           this.scene.coins.push(coin);
         }
       } else {
-        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
+        const gem = new XPGem(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          50,
+          0.12
+        );
         if (gem) {
           this.scene.xpGems.push(gem);
         }

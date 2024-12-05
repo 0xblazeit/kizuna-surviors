@@ -3,36 +3,37 @@ class Coin {
   static totalCoins = 0;
   static MAX_COINS = 75;
 
-  constructor(scene, x, y) {
+  constructor(scene, x, y, value = 10) {
     // Check if we're at the coin limit
     if (Coin.totalCoins >= Coin.MAX_COINS) {
       return null;
     }
-    
+
     Coin.totalCoins++;
     this.scene = scene;
     this.isCollected = false;
 
     // Create coin sprite
-    this.sprite = scene.add.image(x, y, "coin");
+    this.sprite = scene.add.sprite(x, y, "coin");
     this.sprite.setScale(0.15);
-    this.sprite.setDepth(5); // Set above ground items but below players
+    this.value = value;
 
-    // Add floating animation
+    // Initial spawn animation
+    this.sprite.setAlpha(0);
+    this.sprite.setScale(0.13);
     scene.tweens.add({
       targets: this.sprite,
-      y: y - 10,
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
+      alpha: 1,
+      scale: 0.15,
+      duration: 200,
+      ease: "Back.easeOut",
     });
 
-    // Add rotation animation
+    // Replace floating with rotation animation
     scene.tweens.add({
       targets: this.sprite,
       angle: 360,
-      duration: 4000,
+      duration: 1500,
       repeat: -1,
       ease: "Linear",
     });
@@ -51,29 +52,30 @@ class Coin {
     if (distance <= 50) {
       // Mark as collected
       this.isCollected = true;
-      Coin.totalCoins--; // Decrease total coins when collected
+      Coin.totalCoins--;
 
       // Update gold count
-      this.scene.gameState.gold += 1;
+      this.scene.gameState.gold += this.value;
       this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
 
-      // Add collection animation
+      // Simplified collection animation
       this.scene.tweens.add({
         targets: this.sprite,
         scale: 0,
         alpha: 0,
-        y: this.sprite.y - 20,
         duration: 200,
         ease: "Power2",
         onComplete: () => {
-          this.sprite.destroy();
-          this.sprite = null;
+          if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+          }
         },
       });
 
-      // Add floating text effect
+      // Simple floating text that cleans itself up
       const floatingText = this.scene.add
-        .text(this.sprite.x, this.sprite.y, "+1", {
+        .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
           fontFamily: "VT323",
           fontSize: "20px",
           color: "#FFD700",
@@ -84,9 +86,11 @@ class Coin {
         targets: floatingText,
         y: floatingText.y - 40,
         alpha: 0,
-        duration: 1000,
+        duration: 500,
         ease: "Power2",
-        onComplete: () => floatingText.destroy(),
+        onComplete: () => {
+          floatingText.destroy();
+        },
       });
     }
   }

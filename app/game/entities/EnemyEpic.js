@@ -11,7 +11,7 @@ class EnemyEpic extends EnemyAdvanced {
       defense: 4, // Double defense
       attackSpeed: 1.4, // 40% faster attacks
       attackDamage: 18, // 50% more damage than advanced
-      scale: 0.44, // Slightly larger than advanced (0.42)
+      scale: 0.15, // Slightly larger than advanced (0.42)
       trailTint: 0xffa500, // Orange trail
       clickDamage: 60, // Higher click damage
       ...config,
@@ -61,6 +61,13 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
+    // Clean up aura first
+    if (this.aura) {
+      this.aura.destroy();
+      this.aura = null;
+    }
+    // Set higher coin value for epic enemies
+    const coinValue = 50;
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -72,20 +79,26 @@ class EnemyEpic extends EnemyAdvanced {
     // Determine drop type - 100% chance for any drop
     const dropChance = Math.random();
     // 40% chance for coin, 60% chance for XP gem
-    if (dropChance < 0.40) {
+    if (dropChance < 0.4) {
       const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
       if (coin) {
         this.scene.coins.push(coin);
       }
     } else {
-      const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 200, 0.18);
+      const gem = new XPGem(
+        this.scene,
+        this.sprite.x,
+        this.sprite.y,
+        200,
+        0.18
+      );
       if (gem) {
         this.scene.xpGems.push(gem);
       }
     }
 
     super.playDeathAnimation().then(() => {
-      // Rest of cleanup handled by parent class
+      // Then call parent die method
       super.die();
     });
   }
