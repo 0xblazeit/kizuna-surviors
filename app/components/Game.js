@@ -220,28 +220,31 @@ const UpgradeMenuScene = Phaser.Class({
 
       // Add weapon icon
       const iconKey = (() => {
-        switch (weapon.constructor.name) {
-          case "RotatingDogWeapon":
+        // Use weapon.name instead of constructor.name since it's more reliable in production
+        switch (weapon.name) {
+          case "Rotating Dog":
             return "weapon-dog-projectile";
-          case "MagicWandWeapon":
+          case "Magic Wand":
             return "weapon-wand-icon";
-          case "GlizzyBlasterWeapon":
+          case "Glizzy Blaster":
             return "weapon-hotdog-projectile";
-          case "FlyingAxeWeapon":
+          case "Flying Axe":
             return "weapon-axe-projectile";
-          case "SonicBoomHammer":
+          case "Sonic Hammer":
             return "weapon-hammer-projectile";
-          case "MilkWeapon":
+          case "Magical Goo":
             return "weapon-magic-milk";
-          case "ShapecraftKeyWeapon":
+          case "Shapecraft Key":
             return "weapon-shapecraft-key";
           default:
+            console.warn(`Unknown weapon type: ${weapon.name}`);
             return "weapon-dog-projectile";
         }
       })();
 
       // Create and size icon uniformly
       const icon = this.add.image(x, y - 80, iconKey);
+      console.log(`Creating weapon icon for ${weapon.name} with key ${iconKey}`);
       const targetSize = 48; // Target size for all icons
       const scale = targetSize / Math.max(icon.width, icon.height);
       icon.setScale(scale);
