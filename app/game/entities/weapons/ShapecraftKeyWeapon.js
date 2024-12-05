@@ -205,55 +205,70 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     createProjectiles() {
-        // Clear existing projectiles
+        const texturesToRemove = new Set();
+        
+        // Collect textures to remove
         this.activeProjectiles.forEach(proj => {
-            if (proj.sprite) {
-                if (proj.sprite.texture) {
-                    this.scene.textures.remove(proj.sprite.texture.key);
-                }
-                proj.sprite.destroy();
+            if (proj.sprite && proj.sprite.texture) {
+                texturesToRemove.add(proj.sprite.texture.key);
             }
         });
-        this.activeProjectiles = [];
-
-        // Clear existing trail pools
+        
         this.trailPools.forEach(pool => {
             pool.forEach(sprite => {
-                if (sprite) {
-                    if (sprite.texture) {
-                        this.scene.textures.remove(sprite.texture.key);
-                    }
-                    sprite.destroy();
+                if (sprite && sprite.texture) {
+                    texturesToRemove.add(sprite.texture.key);
                 }
             });
         });
+
+        // Batch remove textures
+        texturesToRemove.forEach(key => {
+            if (this.scene.textures.exists(key)) {
+                this.scene.textures.remove(key);
+            }
+        });
+
+        // Clear arrays
+        this.activeProjectiles = [];
         this.trailPools = [];
 
-        // Create new projectiles
-        for (let i = 0; i < this.maxProjectiles; i++) {
-            const shapeType = this.stats.shapeTypes[i % this.stats.shapeTypes.length];
-            const sprite = this.createShapeSprite(shapeType);
-            
-            this.activeProjectiles.push({
-                sprite: sprite,
-                active: false,
-                pierceCount: this.stats.pierce,
-                trailPositions: [],
-                lastTrailTime: 0,
-                rotation: 0,
-                targetEnemy: null,
-                state: 'seeking'
-            });
+        // Create projectiles in batches
+        const batchSize = 2;
+        const createBatch = (startIndex) => {
+            for (let i = startIndex; i < Math.min(startIndex + batchSize, this.maxProjectiles); i++) {
+                const shapeType = this.stats.shapeTypes[i % this.stats.shapeTypes.length];
+                const sprite = this.createShapeSprite(shapeType);
+                
+                this.activeProjectiles.push({
+                    sprite: sprite,
+                    active: false,
+                    pierceCount: this.stats.pierce,
+                    trailPositions: [],
+                    lastTrailTime: 0,
+                    rotation: 0,
+                    targetEnemy: null,
+                    state: 'seeking'
+                });
 
-            // Create trail pool for this projectile
-            const trailPool = [];
-            for (let j = 0; j < this.stats.trailLength; j++) {
-                const trailSprite = this.createShapeSprite(shapeType);
-                trailSprite.setActive(false).setVisible(false);
-                trailPool.push(trailSprite);
+                // Create trail pool for this projectile
+                const trailPool = [];
+                for (let j = 0; j < this.stats.trailLength; j++) {
+                    const trailSprite = this.createShapeSprite(shapeType);
+                    trailSprite.setActive(false).setVisible(false);
+                    trailPool.push(trailSprite);
+                }
+                this.trailPools.push(trailPool);
             }
-            this.trailPools.push(trailPool);
-        }
+
+            // Schedule next batch if needed
+            if (startIndex + batchSize < this.maxProjectiles) {
+                this.scene.time.delayedCall(16, () => createBatch(startIndex + batchSize));
+            }
+        };
+
+        // Start creating batches
+        createBatch(0);
     }
 
     createShapeSprite(shapeType) {
@@ -604,31 +619,29 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
 
     levelUp() {
         if (this.currentLevel < this.maxLevel) {
-            // Clean up existing projectiles
+            // Instead of destroying, just deactivate existing projectiles
             this.activeProjectiles.forEach(proj => {
                 if (proj.sprite) {
-                    if (proj.sprite.texture) {
-                        this.scene.textures.remove(proj.sprite.texture.key);
-                    }
-                    proj.sprite.destroy();
+                    proj.sprite.setActive(false).setVisible(false);
                 }
             });
 
-            // Clean up trail pools
+            // Deactivate trail pools
             this.trailPools.forEach(pool => {
                 pool.forEach(sprite => {
                     if (sprite) {
-                        if (sprite.texture) {
-                            this.scene.textures.remove(sprite.texture.key);
-                        }
-                        sprite.destroy();
+                        sprite.setActive(false).setVisible(false);
                     }
                 });
             });
 
             this.currentLevel++;
             this.stats = { ...this.levelConfigs[this.currentLevel] };
-            this.createProjectiles();
+            
+            // Defer creation to next frame to prevent lag
+            this.scene.time.delayedCall(0, () => {
+                this.createProjectiles();
+            });
         }
     }
 }
