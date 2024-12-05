@@ -238,7 +238,6 @@ const GameScene = {
       maxEnemies: 15, // Maximum enemies allowed at once
       spawnRate: 1000, // Base spawn rate in milliseconds
       minSpawnRate: 300, // Minimum spawn rate (fastest spawn rate allowed)
-      goldMilestoneReached: false, // Add gold milestone flag
       enemyWaveTimer: 0,
       waveNumber: 1,
       difficultyMultiplier: 1,
@@ -1580,25 +1579,6 @@ const GameScene = {
       try {
         const weapon = this.weapons[this.gameState.selectedWeaponIndex];
         const stats = weapon?.stats || {};
-
-        // Check if gold has reached 5 and send data to endpoint
-        if (this.gameState.gold >= 5 && !this.gameState.goldMilestoneReached) {
-          this.gameState.goldMilestoneReached = true;
-
-          fetch("/api/game-over", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              gold: this.gameState.gold,
-              kills: this.gameState.kills,
-              timestamp: new Date().toISOString(),
-            }),
-          }).catch((error) =>
-            console.error("Error posting game stats:", error)
-          );
-        }
 
         // Create level progress bar
         const maxBoxes = 8;
