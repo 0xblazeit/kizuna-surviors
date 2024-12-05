@@ -128,6 +128,9 @@ export class RotatingDogWeapon extends BaseWeapon {
     };
 
     this.activeProjectiles = [];
+  }
+
+  initialize() {
     this.spawnDogs();
   }
 
