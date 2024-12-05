@@ -5,6 +5,7 @@ import MainPlayer from "../game/entities/MainPlayer";
 import EnemyBasic from "../game/entities/EnemyBasic";
 import EnemyAdvanced from "../game/entities/EnemyAdvanced";
 import EnemyEpic from "../game/entities/EnemyEpic";
+import EnemyShooter from "../game/entities/EnemyShooter";
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
@@ -468,7 +469,10 @@ const GameScene = Phaser.Class({
     // Load special enemy sprites
     this.load.svg(
       "enemy-shooter",
-      "/assets/game/characters/enemies-special/enemy-shooter.svg"
+      "/assets/game/characters/enemies-special/enemy-shooter.svg",
+      {
+        scale: 1.4
+      }
     );
 
     // Load weapon sprites
@@ -561,15 +565,130 @@ const GameScene = Phaser.Class({
       }
     }
 
-    // Spawn new enemy
+    // Get spawn position
     const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
     const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
-    const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
     
-    const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
-      type: "basic",
-      scale: 0.3,
-    });
+    let enemy;
+    const roll = Math.random();
+
+    if (this.gameState.gameTimer < 45) {
+      // First 45 seconds - only basic enemies
+      const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+      enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+        type: "basic",
+        scale: 0.3,
+      });
+    } else if (this.gameState.gameTimer < 120) {
+      // 45-120 seconds - 60% basic, 30% shooter, 10% advanced
+      if (roll < 0.3) {
+        enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80,
+          moveSpeed: 1.4,
+          attackRange: 250,
+          projectileSpeed: 200
+        });
+      } else if (roll < 0.4) {
+        const randomAdvancedSprite = this.enemyAdvancedSprites[
+          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        ];
+        enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
+          maxHealth: 300,
+          moveSpeed: 2.0,
+          defense: 2,
+          attackDamage: 12,
+          scale: 0.5,
+        });
+      } else {
+        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+          type: "basic",
+          scale: 0.3,
+        });
+      }
+    } else if (this.gameState.gameTimer < 240) {
+      // 120-240 seconds - 35% basic, 25% shooter, 25% advanced, 15% epic
+      if (roll < 0.25) {
+        enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80,
+          moveSpeed: 1.4,
+          attackRange: 250,
+          projectileSpeed: 200
+        });
+      } else if (roll < 0.5) {
+        const randomAdvancedSprite = this.enemyAdvancedSprites[
+          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        ];
+        enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
+          maxHealth: 300,
+          moveSpeed: 2.0,
+          defense: 2,
+          attackDamage: 12,
+          scale: 0.5,
+        });
+      } else if (roll < 0.65) {
+        const randomEpicSprite = this.enemyEpicSprites[
+          Math.floor(Math.random() * this.enemyEpicSprites.length)
+        ];
+        enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
+          maxHealth: 600,
+          moveSpeed: 2.2,
+          defense: 4,
+          attackDamage: 16,
+          scale: 0.6,
+        });
+      } else {
+        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+          type: "basic",
+          scale: 0.3,
+        });
+      }
+    } else {
+      // After 240 seconds - 25% basic, 25% shooter, 25% advanced, 25% epic
+      if (roll < 0.25) {
+        enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80,
+          moveSpeed: 1.4,
+          attackRange: 250,
+          projectileSpeed: 200
+        });
+      } else if (roll < 0.5) {
+        const randomAdvancedSprite = this.enemyAdvancedSprites[
+          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        ];
+        enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
+          maxHealth: 300,
+          moveSpeed: 2.0,
+          defense: 2,
+          attackDamage: 12,
+          scale: 0.5,
+        });
+      } else if (roll < 0.75) {
+        const randomEpicSprite = this.enemyEpicSprites[
+          Math.floor(Math.random() * this.enemyEpicSprites.length)
+        ];
+        enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
+          maxHealth: 600,
+          moveSpeed: 2.2,
+          defense: 4,
+          attackDamage: 16,
+          scale: 0.6,
+        });
+      } else {
+        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
+          type: "basic",
+          scale: 0.3,
+        });
+      }
+    }
 
     enemy.sprite.once("destroy", () => {
       const index = this.enemies.indexOf(enemy);
