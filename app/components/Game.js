@@ -1089,10 +1089,15 @@ const GameScene = Phaser.Class({
 
     // Add header for stats
     const statsHeader = this.add
-      .text(statsX, uiRowY + 174, "--- Player Stats ---", {
-        ...statsStyle,
-        color: "#ffffff",
-      })
+      .text(
+        statsX,
+        uiRowY + 174,
+        "--- Player Stats ---",
+        {
+          ...statsStyle,
+          color: "#ffffff",
+        }
+      )
       .setOrigin(1, 0);
     uiContainer.add(statsHeader);
 
@@ -1971,23 +1976,27 @@ const GameScene = Phaser.Class({
     // Update all enemies
     if (this.enemies) {
       this.enemies.forEach((enemy, index) => {
-        if (enemy && enemy.update) {
+        if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === 'function') {
           try {
             enemy.update(time, delta);
-
-            // Remove dead enemies
-            if (enemy.isDead) {
-              enemy.sprite.destroy();
-              this.enemies[index] = null;
-            }
           } catch (error) {
             console.error("Error updating enemy:", error);
+            // Mark enemy for cleanup if there's an error
+            enemy.isDead = true;
           }
+        }
+        
+        // Remove dead enemies or enemies without sprites
+        if (enemy && (enemy.isDead || !enemy.sprite)) {
+          if (enemy.sprite) {
+            enemy.sprite.destroy();
+          }
+          this.enemies[index] = null;
         }
       });
 
       // Clean up null entries
-      this.enemies = this.enemies.filter((enemy) => enemy !== null);
+      this.enemies = this.enemies.filter(enemy => enemy !== null && enemy.sprite);
     }
 
     // Update all weapons with explicit debug
