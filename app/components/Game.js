@@ -14,6 +14,30 @@ import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 
+// Enemy sprite constants
+const ENEMY_SPRITES = [
+  'enemy-basic-one',
+  'enemy-basic-two',
+  'enemy-basic-three',
+  'enemy-basic-four',
+  'enemy-basic-five',
+  'enemy-basic-six'
+];
+
+const ENEMY_ADVANCED_SPRITES = [
+  'enemy-advanced-one',
+  'enemy-advanced-two',
+  'enemy-advanced-three',
+  'enemy-advanced-four',
+  'enemy-advanced-five',
+  'enemy-advanced-six'
+];
+
+const ENEMY_EPIC_SPRITES = [
+  'enemy-epic-one',
+  'enemy-epic-two'
+];
+
 const MenuScene = {
   key: "MenuScene",
   create: function () {
@@ -574,7 +598,7 @@ const GameScene = Phaser.Class({
 
     if (this.gameState.gameTimer < 45) {
       // First 45 seconds - only basic enemies
-      const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+      const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
       enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
         type: "basic",
         scale: 0.3,
@@ -591,8 +615,8 @@ const GameScene = Phaser.Class({
           projectileSpeed: 200
         });
       } else if (roll < 0.4) {
-        const randomAdvancedSprite = this.enemyAdvancedSprites[
-          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
+          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
         ];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -602,7 +626,7 @@ const GameScene = Phaser.Class({
           scale: 0.5,
         });
       } else {
-        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
         enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
           type: "basic",
           scale: 0.3,
@@ -620,8 +644,8 @@ const GameScene = Phaser.Class({
           projectileSpeed: 200
         });
       } else if (roll < 0.5) {
-        const randomAdvancedSprite = this.enemyAdvancedSprites[
-          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
+          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
         ];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -631,8 +655,8 @@ const GameScene = Phaser.Class({
           scale: 0.5,
         });
       } else if (roll < 0.65) {
-        const randomEpicSprite = this.enemyEpicSprites[
-          Math.floor(Math.random() * this.enemyEpicSprites.length)
+        const randomEpicSprite = ENEMY_EPIC_SPRITES[
+          Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)
         ];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
@@ -642,7 +666,7 @@ const GameScene = Phaser.Class({
           scale: 0.6,
         });
       } else {
-        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
         enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
           type: "basic",
           scale: 0.3,
@@ -660,8 +684,8 @@ const GameScene = Phaser.Class({
           projectileSpeed: 200
         });
       } else if (roll < 0.5) {
-        const randomAdvancedSprite = this.enemyAdvancedSprites[
-          Math.floor(Math.random() * this.enemyAdvancedSprites.length)
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
+          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
         ];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -671,8 +695,8 @@ const GameScene = Phaser.Class({
           scale: 0.5,
         });
       } else if (roll < 0.75) {
-        const randomEpicSprite = this.enemyEpicSprites[
-          Math.floor(Math.random() * this.enemyEpicSprites.length)
+        const randomEpicSprite = ENEMY_EPIC_SPRITES[
+          Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)
         ];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
@@ -682,7 +706,7 @@ const GameScene = Phaser.Class({
           scale: 0.6,
         });
       } else {
-        const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+        const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
         enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
           type: "basic",
           scale: 0.3,
@@ -705,7 +729,7 @@ const GameScene = Phaser.Class({
     for (let i = 0; i < 15; i++) {
       const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
       const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
-      const randomSprite = this.enemySprites[Phaser.Math.Between(0, this.enemySprites.length - 1)];
+      const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
       
       const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
         type: "basic",
@@ -740,6 +764,11 @@ const GameScene = Phaser.Class({
 
   create: function () {
     const { width, height } = this.scale;
+
+    // Initialize enemy sprite arrays
+    this.enemySprites = ENEMY_SPRITES;
+    this.enemyAdvancedSprites = ENEMY_ADVANCED_SPRITES;
+    this.enemyEpicSprites = ENEMY_EPIC_SPRITES;
 
     // Set world bounds (2x2 screens)
     const worldWidth = width * 2;
@@ -1287,14 +1316,9 @@ const GameScene = Phaser.Class({
     this.enemies = [];
 
     // Enemy sprite keys
-    this.enemySprites = [
-      "enemy-basic-one",
-      "enemy-basic-two",
-      "enemy-basic-three",
-      "enemy-basic-four",
-      "enemy-basic-five",
-      "enemy-basic-six",
-    ];
+    this.enemySprites = ENEMY_SPRITES;
+    this.enemyAdvancedSprites = ENEMY_ADVANCED_SPRITES;
+    this.enemyEpicSprites = ENEMY_EPIC_SPRITES;
 
     // Initialize weapons array but don't start them yet
     this.weapons = [
@@ -1404,44 +1428,9 @@ const GameScene = Phaser.Class({
         const x = spawnPos.x;
         const y = spawnPos.y;
 
-        const enemyAdvancedSprites = [
-          "enemy-advanced-one",
-          "enemy-advanced-two",
-          "enemy-advanced-three",
-          "enemy-advanced-four",
-          "enemy-advanced-five",
-          "enemy-advanced-six",
-        ];
-
-        const spriteKeyAdvanced =
-          enemyAdvancedSprites[
-            Math.floor(Math.random() * enemyAdvancedSprites.length)
-          ];
-
-        const enemyEpicSprites = [
-          "enemy-epic-one",
-          "enemy-epic-two",
-          "enemy-epic-three",
-          "enemy-epic-four",
-          "enemy-epic-five",
-          "enemy-epic-six",
-        ];
-
-        const spriteKeyEpic =
-          enemyEpicSprites[Math.floor(Math.random() * enemyEpicSprites.length)];
-
-        const enemySprites = [
-          "enemy-basic-one",
-          "enemy-basic-two",
-          "enemy-basic-three",
-          "enemy-basic-four",
-          "enemy-basic-five",
-          "enemy-basic-six",
-        ];
-
-        // Get random enemy sprite
-        const randomSprite =
-          enemySprites[Math.floor(Math.random() * enemyEpicSprites.length)];
+        const enemyAdvancedSprites = ENEMY_ADVANCED_SPRITES;
+        const enemyEpicSprites = ENEMY_EPIC_SPRITES;
+        const enemySprites = ENEMY_SPRITES;
 
         // Simplified enemy spawn system
         let enemy;
@@ -1449,7 +1438,7 @@ const GameScene = Phaser.Class({
 
         if (this.gameState.gameTimer < 45) {
           // Before 45 seconds - 100% basic
-          enemy = new EnemyBasic(this, x, y, randomSprite, {
+          enemy = new EnemyBasic(this, x, y, enemySprites[Math.floor(Math.random() * enemySprites.length)], {
             maxHealth: 100,
             moveSpeed: 1.8,
             defense: 0,
@@ -1459,7 +1448,7 @@ const GameScene = Phaser.Class({
         } else if (this.gameState.gameTimer < 200) {
           // 45-200 seconds - 70% advanced, 30% basic
           if (roll < 0.7) {
-            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+            enemy = new EnemyAdvanced(this, x, y, enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)], {
               maxHealth: 300,
               moveSpeed: 2.0,
               defense: 2,
@@ -1467,7 +1456,7 @@ const GameScene = Phaser.Class({
               scale: 0.5,
             });
           } else {
-            enemy = new EnemyBasic(this, x, y, randomSprite, {
+            enemy = new EnemyBasic(this, x, y, enemySprites[Math.floor(Math.random() * enemySprites.length)], {
               maxHealth: 100,
               moveSpeed: 1.8,
               defense: 0,
@@ -1478,7 +1467,7 @@ const GameScene = Phaser.Class({
         } else {
           // After 20 seconds - 50% epic, 30% advanced, 20% basic
           if (roll < 0.5) {
-            enemy = new EnemyEpic(this, x, y, spriteKeyEpic, {
+            enemy = new EnemyEpic(this, x, y, enemyEpicSprites[Math.floor(Math.random() * enemyEpicSprites.length)], {
               maxHealth: 600,
               moveSpeed: 2.2,
               defense: 4,
@@ -1486,7 +1475,7 @@ const GameScene = Phaser.Class({
               scale: 0.6,
             });
           } else if (roll < 0.8) {
-            enemy = new EnemyAdvanced(this, x, y, spriteKeyAdvanced, {
+            enemy = new EnemyAdvanced(this, x, y, enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)], {
               maxHealth: 300,
               moveSpeed: 2.0,
               defense: 2,
@@ -1494,7 +1483,7 @@ const GameScene = Phaser.Class({
               scale: 0.5,
             });
           } else {
-            enemy = new EnemyBasic(this, x, y, randomSprite, {
+            enemy = new EnemyBasic(this, x, y, enemySprites[Math.floor(Math.random() * enemySprites.length)], {
               maxHealth: 100,
               moveSpeed: 1.8,
               defense: 0,
