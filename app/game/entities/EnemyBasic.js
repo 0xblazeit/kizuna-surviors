@@ -13,7 +13,7 @@ class EnemyBasic extends BasePlayer {
       attackDamage: 8,
       scale: 0.4, // Fixed scale for basic enemies
       trailTint: 0x3498db, // Light blue trail
-      clickDamage: 25, // Add default click damage
+      attackRange: 80, // Base attack range for basic enemies
       ...config,
     };
 
@@ -25,7 +25,6 @@ class EnemyBasic extends BasePlayer {
     this.hitFlashDuration = 300; // Increased from 100 to 300ms
     this.staggerDuration = 500; // Added separate stagger duration
     this.knockbackForce = 30; // Reduced from 150 to 30
-    this.clickDamage = enemyConfig.clickDamage;
     this.isDead = false; // Add flag to track death state
 
     // Movement properties
@@ -37,7 +36,7 @@ class EnemyBasic extends BasePlayer {
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
 
     // Attack properties
-    this.attackRange = 50; // Range at which enemy can attack player
+    this.attackRange = enemyConfig.attackRange;
     this.lastAttackTime = 0; // Track last attack time
     this.attackCooldown = 1000; // Attack cooldown in milliseconds
 
@@ -96,26 +95,6 @@ class EnemyBasic extends BasePlayer {
   initEnemy() {
     // Add any enemy specific initialization
     // this.sprite.setTint(0x008080); // Give enemies a slight teal tint
-
-    // Make the enemy interactive
-    this.sprite.setInteractive();
-
-    // Handle click/tap events
-    this.sprite.on("pointerdown", (pointer) => {
-      // Only process click if the enemy is alive
-      if (this.stats.currentHealth > 0) {
-        // Get the player instance
-        const player = this.scene.player;
-        if (player) {
-          // Calculate damage from player's click
-          const damage = player.clickDamage;
-          this.takeDamage(damage, pointer.x, pointer.y);
-
-          // Create click effect
-          this.createClickEffect(pointer.x, pointer.y);
-        }
-      }
-    });
 
     // Find the player in the scene
     this.targetPlayer = this.scene.player;
@@ -199,16 +178,13 @@ class EnemyBasic extends BasePlayer {
       .text(
         this.sprite.x,
         this.sprite.y - 20,
-        Math.floor(damageDealt).toString(),
+        damageDealt.toString(),
         {
           fontSize: "16px",
-          fontFamily: "VT323",
-          fill: "#ffffff", // White color for normal hits
-          stroke: "#000000",
-          strokeThickness: 3,
+          fill: "#ff0000",
         }
       )
-      .setOrigin(0.5);
+      .setDepth(100);
 
     // Animate the damage text
     this.scene.tweens.add({
@@ -216,16 +192,29 @@ class EnemyBasic extends BasePlayer {
       y: damageText.y - 30,
       alpha: 0,
       duration: 800,
-      ease: "Cubic.Out",
-      onComplete: () => damageText.destroy(),
+      ease: "Power2",
+      onComplete: () => {
+        damageText.destroy();
+      },
     });
 
-    // Play hit effects with source position
-    this.playHitEffects(sourceX, sourceY);
+    // Flash red when hit
+    if (this.sprite) {
+      this.sprite.setTint(0xff0000);
+      this.scene.time.delayedCall(this.hitFlashDuration, () => {
+        if (this.sprite) {
+          this.sprite.clearTint();
+        }
+      });
+    }
+
+    // Apply knockback if source position is provided
+    if (sourceX !== undefined && sourceY !== undefined) {
+      this.applyKnockback(sourceX, sourceY);
+    }
 
     // Check for death
     if (this.stats.currentHealth <= 0) {
-      // console.log("Enemy health depleted, calling die()");
       this.die();
     }
 
@@ -308,27 +297,6 @@ class EnemyBasic extends BasePlayer {
       this.isStaggered = false;
       this.movementEnabled = true;
       this.sprite.alpha = 1;
-    });
-  }
-
-  createClickEffect(x, y) {
-    // Create a circle at the click position
-    const clickEffect = this.scene.add.circle(x, y, 5, 0xffffff);
-
-    // Add a white glow effect
-    clickEffect.setStrokeStyle(2, 0xffffff);
-    clickEffect.setAlpha(0.8);
-
-    // Animate the click effect
-    this.scene.tweens.add({
-      targets: clickEffect,
-      scale: 2,
-      alpha: 0,
-      duration: 200,
-      ease: "Power2",
-      onComplete: () => {
-        clickEffect.destroy();
-      },
     });
   }
 
