@@ -13,7 +13,7 @@ class EnemyBasic extends BasePlayer {
       attackDamage: 8,
       scale: 0.4, // Fixed scale for basic enemies
       trailTint: 0x3498db, // Light blue trail
-      attackRange: 80, // Base attack range for basic enemies
+      attackRange: 60, // Base attack range for basic enemies
       ...config,
     };
 
