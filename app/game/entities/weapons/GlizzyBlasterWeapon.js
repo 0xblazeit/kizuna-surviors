@@ -5,6 +5,18 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
 
     this.name = "Glizzy Blaster";
 
+    // Add key tracking for direction changes
+    this.justPressedKeys = {
+      up: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+      down: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+      left: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
+      right: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
+      W: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      S: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+      A: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      D: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    };
+
     // Level-up configurations
     this.levelConfigs = {
       1: {
