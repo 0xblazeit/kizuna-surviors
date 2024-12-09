@@ -402,15 +402,6 @@ const GameScene = Phaser.Class({
       scale: 0.5,
     });
 
-    // Verify coin sprite loaded
-    this.load.on("filecomplete-svg-coin", () => {
-      console.log("Coin sprite loaded successfully!");
-    });
-
-    this.load.on("loaderror", (file) => {
-      console.error("Error loading file:", file.key);
-    });
-
     // Load player sprite
     this.load.svg("player", "/assets/game/characters/player.svg", {
       scale: 0.1,
