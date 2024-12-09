@@ -123,14 +123,6 @@ export class MilkWeapon extends BaseWeapon {
 
     this.activePuddles = [];
     this.lastAttackTime = 0;
-
-    this.effectColors = {
-      primary: 0xff69b4, // Hot pink
-      glow: 0xff1493, // Deep pink
-      maxLevel: {
-        energy: 0xff00ff, // Magenta for crits
-      },
-    };
   }
 
   canAttack() {
@@ -161,6 +153,11 @@ export class MilkWeapon extends BaseWeapon {
     const puddle = this.scene.add.sprite(x, y, "weapon-magic-milk");
     this.scene.physics.add.existing(puddle, true);
     puddle.body.setCircle(this.stats.splashRadius);
+    // Center the physics body on the sprite
+    puddle.body.setOffset(
+      puddle.width / 2 - this.stats.splashRadius,
+      puddle.height / 2 - this.stats.splashRadius
+    );
     puddle.setScale(0);
     puddle.setAlpha(0.8);
     puddle.setBlendMode(Phaser.BlendModes.ADD);

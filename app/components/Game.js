@@ -2078,12 +2078,12 @@ export default function Game() {
           default: "arcade",
           arcade: {
             gravity: { y: 0 },
-            debug: false,
+            debug: true,
           },
         },
         input: {
           activePointers: 1,
-          pixelPerfect: true,
+          pixelPerfect: false,
         },
         scene: [MenuScene, GameScene, UpgradeMenuScene],
       };
