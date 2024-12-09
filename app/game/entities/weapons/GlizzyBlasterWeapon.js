@@ -5,6 +5,18 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
 
     this.name = "Glizzy Blaster";
 
+    // Add key tracking for direction changes
+    this.justPressedKeys = {
+      up: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+      down: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+      left: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
+      right: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
+      W: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      S: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+      A: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      D: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+    };
+
     // Level-up configurations
     this.levelConfigs = {
       1: {
@@ -12,7 +24,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         pierce: 1,
         projectileCount: 1,
         spreadAngle: 0,
-        cooldown: 1300, // Faster firing
+        cooldown: 1100, // Faster firing
         range: 800, // Much longer range
         speed: 200, // Faster projectiles
         scale: 0.4,
@@ -22,7 +34,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         pierce: 1,
         projectileCount: 2,
         spreadAngle: 15,
-        cooldown: 1200,
+        cooldown: 1100,
         range: 850,
         speed: 200,
         scale: 0.45,
@@ -32,7 +44,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 20,
-        cooldown: 1300,
+        cooldown: 1000,
         range: 900,
         speed: 300,
         scale: 0.5,
@@ -42,7 +54,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 25,
-        cooldown: 1300,
+        cooldown: 1000,
         range: 950,
         speed: 400,
         scale: 0.55,
@@ -78,7 +90,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         scale: 0.7,
       },
       8: {
-        damage: 18, // Increased damage
+        damage: 18,
         pierce: 4,
         projectileCount: 5,
         spreadAngle: 45,
@@ -87,9 +99,9 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         speed: 550,
         scale: 0.75,
         isMaxLevel: true,
-        mustardExplosion: true, // Enable mustard explosion
-        explosionDamage: 8, // Additional explosion damage
-        explosionRadius: 100, // Explosion radius
+        mustardExplosion: true,
+        explosionDamage: 8,
+        explosionRadius: 100,
       },
     };
 
@@ -112,6 +124,9 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     if (!super.update(time, delta)) {
       return;
     }
+
+    // Update player direction immediately
+    this.getPlayerDirection(); // Ensure direction is updated
 
     // Update active projectiles
     this.activeProjectiles.forEach((proj) => {

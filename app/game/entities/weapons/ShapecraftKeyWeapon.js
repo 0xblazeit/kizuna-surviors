@@ -185,16 +185,23 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
                 rotationSpeed: 4.4,
                 seekingSpeed: 250,
                 glowIntensity: 1.2,
-                isMaxLevel: true
+                isMaxLevel: true,
+                geometricConvergence: true,
+                convergenceBurstCount: 8,
+                convergenceDamage: 15,
+                convergenceRange: 200,
+                convergenceSpeed: 400,
+                convergenceScale: 0.5,
+                convergenceLifetime: 500
             }
         };
 
         // Initialize at level 1
         this.currentLevel = 1;
         this.maxLevel = 8;
-        this.stats = { ...this.levelConfigs[1] };
+        this.stats = { ...this.levelConfigs[this.currentLevel] };
 
-        this.maxProjectiles = 20;
+        this.maxProjectiles = 10;
         this.activeProjectiles = [];
         this.lastFiredTime = 0;
 
@@ -562,16 +569,64 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     }
 
     handleHit(enemy, projectile) {
-        // Apply damage with source position
-        enemy.takeDamage(this.stats.damage, projectile.sprite.x, projectile.sprite.y);
-        
-        // Create hit effect
+        // Apply damage and create hit effect
+        enemy.takeDamage(this.stats.damage);
         this.createHitEffect(enemy.sprite.x, enemy.sprite.y);
-
-        // Reduce pierce count
         projectile.pierceCount--;
-        
-        // Deactivate projectile if it has no more pierces
+
+        // Level 8 Geometric Convergence Effect
+        if (this.currentLevel === this.maxLevel && this.stats.geometricConvergence) {
+            const angleStep = (Math.PI * 2) / this.stats.convergenceBurstCount;
+            
+            for (let i = 0; i < this.stats.convergenceBurstCount; i++) {
+                const angle = angleStep * i;
+                const burst = this.scene.add.sprite(
+                    enemy.sprite.x,
+                    enemy.sprite.y,
+                    projectile.sprite.texture
+                );
+                
+                burst.setScale(this.stats.convergenceScale);
+                burst.setTint(this.maxLevelColors.primary);
+                burst.setAlpha(0.8);
+
+                // Add glow effect
+                burst.preFX.addGlow(0xffffff, 4, 0, false, 0.5, 16);
+
+                // Create geometric burst movement
+                this.scene.tweens.add({
+                    targets: burst,
+                    x: enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
+                    y: enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange,
+                    scale: 0.1,
+                    alpha: 0,
+                    duration: this.stats.convergenceLifetime,
+                    ease: 'Power2',
+                    onComplete: () => {
+                        burst.destroy();
+                    }
+                });
+
+                // Check for additional enemies in burst path
+                const burstLine = new Phaser.Geom.Line(
+                    enemy.sprite.x,
+                    enemy.sprite.y,
+                    enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
+                    enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange
+                );
+
+                this.scene.enemies.forEach(targetEnemy => {
+                    if (targetEnemy !== enemy && targetEnemy.sprite.active && !targetEnemy.isDead) {
+                        const enemyPoint = new Phaser.Geom.Point(targetEnemy.sprite.x, targetEnemy.sprite.y);
+                        if (Phaser.Geom.Line.DistancePoints(burstLine, enemyPoint) < 30) {
+                            targetEnemy.takeDamage(this.stats.convergenceDamage);
+                            this.createHitEffect(targetEnemy.sprite.x, targetEnemy.sprite.y);
+                        }
+                    }
+                });
+            }
+        }
+
         if (projectile.pierceCount <= 0) {
             this.deactivateProjectile(projectile);
         }

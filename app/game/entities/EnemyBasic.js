@@ -37,14 +37,6 @@ class EnemyBasic extends BasePlayer {
     this.separationRadius = 40; // Radius to check for nearby enemies
     this.separationForce = 0.5; // Strength of the separation force
 
-    // Movement properties
-    this.targetPlayer = null;
-    this.moveSpeed = enemyConfig.moveSpeed;
-    this.movementEnabled = true;
-    this.minDistance = 20; // Minimum distance to keep from player
-    this.lastMoveTime = 0; // Add timestamp for movement updates
-    this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
-
     // Attack properties
     this.attackRange = enemyConfig.attackRange;
     this.lastAttackTime = 0; // Track last attack time
@@ -110,10 +102,10 @@ class EnemyBasic extends BasePlayer {
     this.targetPlayer = this.scene.player;
   }
 
-  update() {
+  update(time, delta) {
     if (!this.sprite || this.isDead) return;
 
-    super.update();
+    super.update(time, delta);
 
     const currentTime = Date.now();
 
@@ -123,6 +115,21 @@ class EnemyBasic extends BasePlayer {
     }
 
     this.lastMoveTime = currentTime;
+
+    // Check if enemy is off screen
+    const camera = this.scene.cameras.main;
+    const margin = 100; // Add a small margin to prevent popping
+    const isOffScreen = 
+      this.sprite.x < camera.scrollX - margin ||
+      this.sprite.x > camera.scrollX + camera.width + margin ||
+      this.sprite.y < camera.scrollY - margin ||
+      this.sprite.y > camera.scrollY + camera.height + margin;
+
+    // Skip collision checks and most updates if off screen
+    if (isOffScreen) {
+      this.updateOffScreen(time, delta);
+      return;
+    }
 
     // Only check isDead for movement, not isDying
     if (
@@ -193,6 +200,22 @@ class EnemyBasic extends BasePlayer {
       if (distance <= this.attackRange && 
           currentTime - this.lastAttackTime >= this.attackCooldown) {
         this.attackPlayer();
+      }
+    }
+  }
+
+  updateOffScreen(time, delta) {
+    // Only do basic position updates when off screen
+    if (this.targetPlayer && this.targetPlayer.sprite && !this.isDead) {
+      const dx = this.targetPlayer.sprite.x - this.sprite.x;
+      const dy = this.targetPlayer.sprite.y - this.sprite.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > this.minDistance) {
+        const normalizedDx = dx / distance;
+        const normalizedDy = dy / distance;
+        this.sprite.x += normalizedDx * this.moveSpeed;
+        this.sprite.y += normalizedDy * this.moveSpeed;
       }
     }
   }

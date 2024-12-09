@@ -16,11 +16,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 8,
         pierce: 1,
         cooldown: 2500,
-        range: 350,
+        range: 400, // Updated range
         speed: 200,
         rotationSpeed: 4,
         scale: 0.5,
-        orbitRadius: 80,
+        orbitRadius: 120, // Increased orbit radius by 50
         orbitSpeed: 2.5,
         projectileCount: 1,
       },
@@ -28,11 +28,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 13,
         pierce: 1,
         cooldown: 2200,
-        range: 380,
+        range: 420, // Updated range
         speed: 220,
         rotationSpeed: 4.5,
         scale: 0.53,
-        orbitRadius: 90,
+        orbitRadius: 135, // Increased orbit radius by 50
         orbitSpeed: 2.7,
         projectileCount: 1,
       },
@@ -40,11 +40,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 21,
         pierce: 2,
         cooldown: 1900,
-        range: 410,
+        range: 450, // Updated range
         speed: 240,
         rotationSpeed: 5,
         scale: 0.56,
-        orbitRadius: 100,
+        orbitRadius: 145, // Increased orbit radius by 50
         orbitSpeed: 2.9,
         projectileCount: 2,
       },
@@ -52,11 +52,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 34,
         pierce: 2,
         cooldown: 1600,
-        range: 440,
+        range: 480, // Updated range
         speed: 260,
         rotationSpeed: 5.5,
         scale: 0.59,
-        orbitRadius: 110,
+        orbitRadius: 155, // Increased orbit radius by 50
         orbitSpeed: 3.1,
         projectileCount: 2,
       },
@@ -64,11 +64,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 55,
         pierce: 3,
         cooldown: 1300,
-        range: 470,
+        range: 510, // Updated range
         speed: 280,
         rotationSpeed: 6,
         scale: 0.62,
-        orbitRadius: 120,
+        orbitRadius: 165, // Increased orbit radius by 50
         orbitSpeed: 3.3,
         projectileCount: 3,
       },
@@ -76,11 +76,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 89,
         pierce: 3,
         cooldown: 1000,
-        range: 500,
+        range: 540, // Updated range
         speed: 300,
         rotationSpeed: 6.5,
         scale: 0.65,
-        orbitRadius: 130,
+        orbitRadius: 175, // Increased orbit radius by 50
         orbitSpeed: 3.5,
         projectileCount: 3,
       },
@@ -88,11 +88,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 144,
         pierce: 4,
         cooldown: 800,
-        range: 530,
+        range: 570, // Updated range
         speed: 320,
         rotationSpeed: 7,
         scale: 0.68,
-        orbitRadius: 140,
+        orbitRadius: 185, // Increased orbit radius by 50
         orbitSpeed: 3.7,
         projectileCount: 4,
       },
@@ -100,11 +100,11 @@ class FlyingAxeWeapon extends BaseWeapon {
         damage: 233,
         pierce: 4,
         cooldown: 600,
-        range: 560,
+        range: 600, // Updated range
         speed: 340,
         rotationSpeed: 7.5,
         scale: 0.71,
-        orbitRadius: 150,
+        orbitRadius: 195, // Increased orbit radius by 50
         orbitSpeed: 3.9,
         projectileCount: 5,
         orbitCount: 3,

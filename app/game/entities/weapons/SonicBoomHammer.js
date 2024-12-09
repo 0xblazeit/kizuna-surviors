@@ -17,7 +17,11 @@ export class SonicBoomHammer extends BaseWeapon {
             knockback: 100,      // Reduced from 150
             accuracy: 0.25,      // Reduced from 0.3
             scale: 0.7,          // Reduced from 0.8
-            criticalChance: 0.1  // Reduced from 0.15
+            criticalChance: 0.1, // Reduced from 0.15
+            shockRange: 150,     // Range for electric shock effect
+            shockDamage: 15,     // Additional damage from shock
+            stunDuration: 1000,  // Stun duration in milliseconds
+            lightningSegments: 6 // Number of segments in the lightning bolt
         };
 
         // Effect colors for sonic boom
@@ -25,7 +29,9 @@ export class SonicBoomHammer extends BaseWeapon {
             primary: 0xd4d4d4,    // Bright silver for regular hits
             secondary: 0xffd700,  // Bright gold for critical hits
             energy: 0x87ceeb,     // Sky blue for energy effects
-            maxLevel: 0xff4d4d    // Bright red for max level
+            maxLevel: 0xff4d4d,   // Bright red for max level
+            electric: 0x00ffff,   // Cyan for electric effects
+            lightning: 0x40e0ff   // Bright blue for lightning
         };
 
         // Initialize projectile pool
@@ -33,7 +39,7 @@ export class SonicBoomHammer extends BaseWeapon {
         this.activeProjectiles = [];
         
         // Initialize level configuration
-        this.currentLevel = 1;  // Start at level 1 to match levelConfigs
+        this.currentLevel = 8;  // Start at level 1 to match levelConfigs
         this.maxLevel = 8;
         this.levelConfigs = {
             1: { damage: 65,  pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.82 },
@@ -58,6 +64,16 @@ export class SonicBoomHammer extends BaseWeapon {
                 if (proj.sprite.shockwave) {
                     proj.sprite.shockwave.destroy();
                 }
+                if (proj.sprite.groundEffect) {
+                    proj.sprite.groundEffect.emitters.destroy();
+                    proj.sprite.groundEffect.destroy();
+                }
+                if (proj.sprite.electricEffect) {
+                    proj.sprite.electricEffect.destroy();
+                }
+                if (proj.sprite.lightningEffect) {
+                    proj.sprite.lightningEffect.destroy();
+                }
                 proj.sprite.destroy();
             }
         });
@@ -81,12 +97,147 @@ export class SonicBoomHammer extends BaseWeapon {
             
             sprite.shockwave = shockwave;
 
+            // Add electric effect for max level
+            if (this.currentLevel === 8) {
+                try {
+                    // Main electric field effect
+                    const electricEffect = this.scene.add.particles(0, 0, 'weapon-hammer-projectile', {
+                        speed: { min: 100, max: 200 },
+                        angle: { min: 0, max: 360 },
+                        scale: { start: 0.5, end: 0.2 },
+                        alpha: { start: 1, end: 0 },
+                        lifespan: 600,
+                        quantity: 4,
+                        frequency: 30,
+                        tint: this.effectColors.electric,
+                        blendMode: Phaser.BlendModes.ADD,
+                        on: false
+                    });
+                    
+                    // Lightning bolt effect
+                    const lightningEffect = this.scene.add.particles(0, 0, 'weapon-hammer-projectile', {
+                        speed: { min: 250, max: 350 },
+                        angle: { min: 0, max: 360 },
+                        scale: { start: 0.6, end: 0.1 },
+                        alpha: { start: 1, end: 0 },
+                        lifespan: 300,
+                        quantity: 2,
+                        frequency: 100,
+                        tint: this.effectColors.lightning,
+                        blendMode: Phaser.BlendModes.ADD,
+                        on: false
+                    });
+
+                    electricEffect.setVisible(false);
+                    lightningEffect.setVisible(false);
+                    sprite.electricEffect = electricEffect;
+                    sprite.lightningEffect = lightningEffect;
+                } catch (error) {
+                    console.error('Failed to create electric effect:', error);
+                }
+            }
+
+            // Add ground breaking effect for max level
+            if (this.currentLevel === 8) {
+                try {
+                    const groundEffect = this.scene.add.particles(0, 0, 'weapon-hammer-projectile', {
+                        speed: { min: 50, max: 150 },
+                        angle: { min: 0, max: 360 },
+                        scale: { start: 0.4, end: 0.1 },
+                        alpha: { start: 0.6, end: 0 },
+                        lifespan: 800,
+                        quantity: 1,
+                        tint: this.effectColors.maxLevel,
+                        blendMode: Phaser.BlendModes.ADD,
+                        on: false
+                    });
+                    groundEffect.setVisible(false);
+                    sprite.groundEffect = groundEffect;
+                } catch (error) {
+                    console.error('Failed to create ground effect:', error);
+                }
+            }
+
             this.activeProjectiles.push({
                 sprite: sprite,
                 active: false,
                 angle: 0,
-                pierceCount: this.stats.pierce
+                pierceCount: this.stats.pierce,
+                lastShockTime: 0
             });
+        }
+    }
+
+    createZigzagLightning(startX, startY, endX, endY) {
+        const points = [];
+        const segments = this.stats.lightningSegments;
+        
+        // Start point
+        points.push({ x: startX, y: startY });
+        
+        // Generate zigzag points
+        for (let i = 1; i < segments; i++) {
+            const t = i / segments;
+            const baseX = startX + (endX - startX) * t;
+            const baseY = startY + (endY - startY) * t;
+            
+            // Random offset perpendicular to the line
+            const angle = Math.atan2(endY - startY, endX - startX) + Math.PI / 2;
+            const offset = (Math.random() - 0.5) * 50; // Random offset up to 25 pixels in either direction
+            
+            points.push({
+                x: baseX + Math.cos(angle) * offset,
+                y: baseY + Math.sin(angle) * offset
+            });
+        }
+        
+        // End point
+        points.push({ x: endX, y: endY });
+        
+        // Create lightning segments
+        const lightningSegments = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            const line = this.scene.add.line(
+                0, 0,
+                points[i].x, points[i].y,
+                points[i + 1].x, points[i + 1].y,
+                this.effectColors.lightning
+            ).setLineWidth(2);
+            line.setAlpha(0.8);
+            lightningSegments.push(line);
+        }
+        
+        return lightningSegments;
+    }
+
+    updateZigzagLightning(segments, startX, startY, endX, endY) {
+        const points = [];
+        const numSegments = this.stats.lightningSegments;
+        
+        points.push({ x: startX, y: startY });
+        
+        for (let i = 1; i < numSegments; i++) {
+            const t = i / numSegments;
+            const baseX = startX + (endX - startX) * t;
+            const baseY = startY + (endY - startY) * t;
+            
+            const angle = Math.atan2(endY - startY, endX - startX) + Math.PI / 2;
+            const offset = (Math.random() - 0.5) * 50;
+            
+            points.push({
+                x: baseX + Math.cos(angle) * offset,
+                y: baseY + Math.sin(angle) * offset
+            });
+        }
+        
+        points.push({ x: endX, y: endY });
+        
+        // Update existing segments
+        for (let i = 0; i < segments.length; i++) {
+            segments[i].setTo(
+                points[i].x, points[i].y,
+                points[i + 1].x, points[i + 1].y
+            );
         }
     }
 
@@ -391,6 +542,106 @@ export class SonicBoomHammer extends BaseWeapon {
                     proj.sprite.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
                 }
 
+                // Update ground effect for max level
+                if (this.currentLevel === 8 && proj.sprite.groundEffect) {
+                    try {
+                        proj.sprite.groundEffect.x = proj.sprite.x;
+                        proj.sprite.groundEffect.y = proj.sprite.y;
+                        proj.sprite.groundEffect.setVisible(true);
+                        proj.sprite.groundEffect.start();
+                    } catch (error) {
+                        console.error('Failed to update ground effect:', error);
+                    }
+                }
+
+                // Update electric effect and check for nearby enemies
+                if (this.currentLevel === 8) {
+                    if (proj.sprite.electricEffect && proj.sprite.lightningEffect) {
+                        try {
+                            // Update main electric effect
+                            proj.sprite.electricEffect.setPosition(proj.sprite.x, proj.sprite.y);
+                            proj.sprite.electricEffect.setVisible(true);
+                            proj.sprite.electricEffect.start();
+
+                            // Update lightning effect
+                            proj.sprite.lightningEffect.setPosition(proj.sprite.x, proj.sprite.y);
+                            proj.sprite.lightningEffect.setVisible(true);
+                            proj.sprite.lightningEffect.start();
+
+                            // Apply electric shock to nearby enemies
+                            if (this.scene.enemies && this.scene.time.now - proj.lastShockTime > 200) {
+                                this.scene.enemies.forEach(enemy => {
+                                    if (enemy && enemy.sprite && !enemy.isDead) {
+                                        const dist = Phaser.Math.Distance.Between(
+                                            proj.sprite.x, proj.sprite.y,
+                                            enemy.sprite.x, enemy.sprite.y
+                                        );
+
+                                        if (dist <= this.stats.shockRange) {
+                                            // Apply shock damage
+                                            enemy.takeDamage(this.stats.shockDamage);
+                                            
+                                            // Apply stun effect
+                                            if (!enemy.isStunned) {
+                                                enemy.isStunned = true;
+                                                enemy.sprite.setTint(this.effectColors.electric);
+                                                
+                                                // Enhanced stun visual effect
+                                                const stunEffect = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, 'weapon-hammer-projectile', {
+                                                    speed: { min: 50, max: 100 },
+                                                    scale: { start: 0.4, end: 0.1 },
+                                                    alpha: { start: 1, end: 0 },
+                                                    lifespan: 500,
+                                                    quantity: 3,
+                                                    frequency: 50,
+                                                    tint: [this.effectColors.electric, this.effectColors.lightning],
+                                                    blendMode: Phaser.BlendModes.ADD
+                                                });
+
+                                                // Create zigzag lightning effect between projectile and enemy
+                                                const lightningSegments = this.createZigzagLightning(
+                                                    proj.sprite.x, proj.sprite.y,
+                                                    enemy.sprite.x, enemy.sprite.y
+                                                );
+
+                                                // Animate the lightning
+                                                const updateLightning = () => {
+                                                    if (!enemy.isStunned) return;
+                                                    this.updateZigzagLightning(
+                                                        lightningSegments,
+                                                        proj.sprite.x, proj.sprite.y,
+                                                        enemy.sprite.x, enemy.sprite.y
+                                                    );
+                                                };
+
+                                                // Update lightning position every frame
+                                                const lightningUpdate = this.scene.time.addEvent({
+                                                    delay: 50,  // Update every 50ms for smooth animation
+                                                    callback: updateLightning,
+                                                    callbackScope: this,
+                                                    loop: true
+                                                });
+
+                                                // Remove stun and effects after duration
+                                                this.scene.time.delayedCall(this.stats.stunDuration, () => {
+                                                    enemy.isStunned = false;
+                                                    enemy.sprite.clearTint();
+                                                    stunEffect.destroy();
+                                                    lightningUpdate.destroy();
+                                                    lightningSegments.forEach(segment => segment.destroy());
+                                                });
+                                            }
+                                        }
+                                    }
+                                });
+                                proj.lastShockTime = this.scene.time.now;
+                            }
+                        } catch (error) {
+                            console.error('Failed to update electric effect:', error);
+                        }
+                    }
+                }
+
                 // Check for enemy collisions
                 if (this.scene.enemies) {
                     this.scene.enemies.forEach(enemy => {
@@ -431,10 +682,24 @@ export class SonicBoomHammer extends BaseWeapon {
     }
 
     deactivateProjectile(proj) {
+        if (!proj.sprite) return;
+        
         proj.active = false;
         proj.sprite.setVisible(false);
         if (proj.sprite.shockwave) {
             proj.sprite.shockwave.setVisible(false);
+        }
+        if (proj.sprite.groundEffect) {
+            proj.sprite.groundEffect.setVisible(false);
+            proj.sprite.groundEffect.stop();
+        }
+        if (proj.sprite.electricEffect) {
+            proj.sprite.electricEffect.setVisible(false);
+            proj.sprite.electricEffect.stop();
+        }
+        if (proj.sprite.lightningEffect) {
+            proj.sprite.lightningEffect.setVisible(false);
+            proj.sprite.lightningEffect.stop();
         }
     }
 

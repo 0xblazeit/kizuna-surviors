@@ -402,15 +402,6 @@ const GameScene = Phaser.Class({
       scale: 0.5,
     });
 
-    // Verify coin sprite loaded
-    this.load.on("filecomplete-svg-coin", () => {
-      console.log("Coin sprite loaded successfully!");
-    });
-
-    this.load.on("loaderror", (file) => {
-      console.error("Error loading file:", file.key);
-    });
-
     // Load player sprite
     this.load.svg("player", "/assets/game/characters/player.svg", {
       scale: 0.1,
@@ -445,54 +436,66 @@ const GameScene = Phaser.Class({
     // Load advanced enemy sprites
     this.load.svg(
       "enemy-advanced-one",
-      "/assets/game/characters/enemies-advanced/advanced-one.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-one.svg", {
+        scale: 0.5,  
+      });
     this.load.svg(
       "enemy-advanced-two",
-      "/assets/game/characters/enemies-advanced/advanced-two.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-two.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-three",
-      "/assets/game/characters/enemies-advanced/advanced-three.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-three.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-four",
-      "/assets/game/characters/enemies-advanced/advanced-four.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-four.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-five",
-      "/assets/game/characters/enemies-advanced/advanced-five.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-five.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-six",
-      "/assets/game/characters/enemies-advanced/advanced-six.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-six.svg", {
+        scale: 0.5,
+      });
 
     // Load epic enemy sprites
     this.load.svg(
       "enemy-epic-one",
-      "/assets/game/characters/enemies-epic/epic-one.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-one.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-two",
-      "/assets/game/characters/enemies-epic/epic-two.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-two.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-three",
-      "/assets/game/characters/enemies-epic/epic-three.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-three.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-four",
-      "/assets/game/characters/enemies-epic/epic-four.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-four.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-five",
-      "/assets/game/characters/enemies-epic/epic-five.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-five.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-six",
-      "/assets/game/characters/enemies-epic/epic-six.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-six.svg", {
+        scale: 0.5,
+      });
 
     // Load special enemy sprites
     this.load.svg(
@@ -1900,6 +1903,25 @@ const GameScene = Phaser.Class({
       return;
     }
 
+    // Get camera bounds with margin for smoother transitions
+    const camera = this.cameras.main;
+    const margin = 100;
+    const bounds = {
+      left: camera.scrollX - margin,
+      right: camera.scrollX + camera.width + margin,
+      top: camera.scrollY - margin,
+      bottom: camera.scrollY + camera.height + margin
+    };
+
+    // Helper function to check if an object is on screen
+    const isOnScreen = (sprite) => {
+      if (!sprite || !sprite.active) return false;
+      return sprite.x >= bounds.left && 
+             sprite.x <= bounds.right && 
+             sprite.y >= bounds.top && 
+             sprite.y <= bounds.bottom;
+    };
+
     // Handle player movement using the new system
     const input = {
       left: this.cursors.left.isDown || this.wasd.left.isDown,
@@ -1966,15 +1988,21 @@ const GameScene = Phaser.Class({
       this.xpGems.forEach((gem) => gem.update(this.player));
     }
 
-    // Update all enemies
+    // Update all enemies with screen check optimization
     if (this.enemies) {
       this.enemies.forEach((enemy, index) => {
         if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === 'function') {
           try {
-            enemy.update(time, delta);
+            // Only perform full update if enemy is on screen
+            const onScreen = isOnScreen(enemy.sprite);
+            if (onScreen) {
+              enemy.update(time, delta);
+            } else {
+              // Minimal update for off-screen enemies
+              enemy.updateOffScreen(time, delta);
+            }
           } catch (error) {
             console.error("Error updating enemy:", error);
-            // Mark enemy for cleanup if there's an error
             enemy.isDead = true;
           }
         }
@@ -1992,12 +2020,13 @@ const GameScene = Phaser.Class({
       this.enemies = this.enemies.filter(enemy => enemy !== null && enemy.sprite);
     }
 
-    // Update all weapons with explicit debug
+    // Update all weapons with screen check optimization
     if (this.weapons && this.weapons.length > 0) {
       this.weapons.forEach((weapon, index) => {
         if (weapon && typeof weapon.update === "function") {
           try {
-            weapon.update(time, delta);
+            // Only check collisions for projectiles that are on screen
+            weapon.updateWithScreenCheck(time, delta, isOnScreen);
           } catch (error) {
             console.error(`Error updating weapon ${index}:`, error);
           }
@@ -2054,7 +2083,7 @@ export default function Game() {
         },
         input: {
           activePointers: 1,
-          pixelPerfect: true,
+          pixelPerfect: false,
         },
         scene: [MenuScene, GameScene, UpgradeMenuScene],
       };
