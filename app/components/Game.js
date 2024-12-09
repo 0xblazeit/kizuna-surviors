@@ -2078,7 +2078,7 @@ export default function Game() {
           default: "arcade",
           arcade: {
             gravity: { y: 0 },
-            debug: true,
+            debug: false,
           },
         },
         input: {
