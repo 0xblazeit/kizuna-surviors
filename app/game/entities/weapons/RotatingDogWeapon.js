@@ -2,8 +2,8 @@ import { BaseWeapon } from "./BaseWeapon.js";
 export class RotatingDogWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
-    this.name = "Taco Guard Doggie";
-    // Level-up configurations using Fibonacci sequence (1,1,2,3,5,8,13,21)
+    this.name = "Taco Doggie";
+    
     this.levelConfigs = {
       1: {
         damage: 4,
@@ -109,7 +109,7 @@ export class RotatingDogWeapon extends BaseWeapon {
 
     // Set initial stats from level 1 config
     this.stats = {
-      ...this.levelConfigs[1],
+      ...this.levelConfigs[this.currentLevel],
       attackDuration: 200,
       returnSpeed: 450,
     };
