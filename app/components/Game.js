@@ -445,54 +445,66 @@ const GameScene = Phaser.Class({
     // Load advanced enemy sprites
     this.load.svg(
       "enemy-advanced-one",
-      "/assets/game/characters/enemies-advanced/advanced-one.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-one.svg", {
+        scale: 0.5,  
+      });
     this.load.svg(
       "enemy-advanced-two",
-      "/assets/game/characters/enemies-advanced/advanced-two.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-two.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-three",
-      "/assets/game/characters/enemies-advanced/advanced-three.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-three.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-four",
-      "/assets/game/characters/enemies-advanced/advanced-four.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-four.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-five",
-      "/assets/game/characters/enemies-advanced/advanced-five.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-five.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-advanced-six",
-      "/assets/game/characters/enemies-advanced/advanced-six.svg"
-    );
+      "/assets/game/characters/enemies-advanced/advanced-six.svg", {
+        scale: 0.5,
+      });
 
     // Load epic enemy sprites
     this.load.svg(
       "enemy-epic-one",
-      "/assets/game/characters/enemies-epic/epic-one.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-one.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-two",
-      "/assets/game/characters/enemies-epic/epic-two.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-two.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-three",
-      "/assets/game/characters/enemies-epic/epic-three.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-three.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-four",
-      "/assets/game/characters/enemies-epic/epic-four.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-four.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-five",
-      "/assets/game/characters/enemies-epic/epic-five.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-five.svg", {
+        scale: 0.5,
+      });
     this.load.svg(
       "enemy-epic-six",
-      "/assets/game/characters/enemies-epic/epic-six.svg"
-    );
+      "/assets/game/characters/enemies-epic/epic-six.svg", {
+        scale: 0.5,
+      });
 
     // Load special enemy sprites
     this.load.svg(
