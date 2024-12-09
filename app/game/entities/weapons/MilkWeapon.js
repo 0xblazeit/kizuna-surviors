@@ -273,24 +273,61 @@ export class MilkWeapon extends BaseWeapon {
     // Clean up all effects for affected enemies
     puddleData.affectedEnemies.forEach((enemyId) => {
       const enemy = this.scene.enemies.find((e) => e.id === enemyId);
-      this.removeSlowEffect(enemy);
+      if (enemy) {
+        this.removeSlowEffect(enemy);
+      }
     });
 
-    // Kill any existing tweens
-    this.scene.tweens.killTweensOf([
-      puddleData.sprite,
-      puddleData.glowSprite,
-      puddleData.slowSprite,
-      ...puddleData.auraSprites
-    ]);
-
-    // Immediate cleanup
-    puddleData.sprite.destroy();
-    puddleData.glowSprite.destroy();
-    puddleData.slowSprite.destroy();
-    puddleData.auraSprites.forEach(aura => aura.destroy());
+    // Fade out animation for smoother cleanup
+    this.scene.tweens.add({
+      targets: [
+        puddleData.sprite,
+        puddleData.glowSprite,
+        puddleData.slowSprite,
+        ...puddleData.auraSprites
+      ],
+      alpha: 0,
+      scale: 0,
+      duration: 200,
+      ease: 'Power1',
+      onComplete: () => {
+        // Cleanup after fade
+        puddleData.sprite.destroy();
+        puddleData.glowSprite.destroy();
+        puddleData.slowSprite.destroy();
+        puddleData.auraSprites.forEach(aura => {
+          this.scene.tweens.killTweensOf(aura);
+          aura.destroy();
+        });
+      }
+    });
 
     this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
+  }
+
+  removeSlowEffect(enemy) {
+    if (!enemy) return;
+
+    if (enemy.originalMoveSpeed) {
+      enemy.moveSpeed = enemy.originalMoveSpeed;
+      delete enemy.originalMoveSpeed;
+    }
+
+    if (enemy.slowEffect) {
+      // Fade out the slow effect
+      this.scene.tweens.add({
+        targets: enemy.slowEffect,
+        alpha: 0,
+        scale: 0,
+        duration: 200,
+        ease: 'Power1',
+        onComplete: () => {
+          this.scene.tweens.killTweensOf(enemy.slowEffect);
+          enemy.slowEffect.destroy();
+          delete enemy.slowEffect;
+        }
+      });
+    }
   }
 
   applySlowEffect(enemy) {
@@ -321,22 +358,6 @@ export class MilkWeapon extends BaseWeapon {
         duration: 500,
         ease: 'Sine.easeInOut'
       });
-    }
-  }
-
-  removeSlowEffect(enemy) {
-    if (!enemy) return;
-
-    if (enemy.originalMoveSpeed) {
-      enemy.moveSpeed = enemy.originalMoveSpeed;
-      delete enemy.originalMoveSpeed;
-    }
-
-    if (enemy.slowEffect) {
-      // Stop any existing tweens on the slow effect
-      this.scene.tweens.killTweensOf(enemy.slowEffect);
-      enemy.slowEffect.destroy();
-      delete enemy.slowEffect;
     }
   }
 
