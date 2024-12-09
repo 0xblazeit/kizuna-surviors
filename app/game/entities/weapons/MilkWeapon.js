@@ -19,7 +19,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.05,
         splashRadius: 40,
         puddleCount: 2,
-        puddleDuration: 2500,
+        puddleDuration: 6000,
         slowAmount: 0.7, // Slow to 70% of original speed
       },
       2: {
@@ -32,7 +32,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.12,
         splashRadius: 60,
         puddleCount: 4,
-        puddleDuration: 3500,
+        puddleDuration: 7000,
         slowAmount: 0.65,
       },
       3: {
@@ -45,7 +45,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.14,
         splashRadius: 70,
         puddleCount: 5,
-        puddleDuration: 4000,
+        puddleDuration: 8000,
         slowAmount: 0.6,
       },
       4: {
@@ -58,7 +58,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.16,
         splashRadius: 80,
         puddleCount: 6,
-        puddleDuration: 4500,
+        puddleDuration: 9000,
         slowAmount: 0.55,
       },
       5: {
@@ -71,7 +71,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.18,
         splashRadius: 90,
         puddleCount: 7,
-        puddleDuration: 5000,
+        puddleDuration: 10000,
         slowAmount: 0.5,
       },
       6: {
@@ -84,7 +84,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.2,
         splashRadius: 100,
         puddleCount: 8,
-        puddleDuration: 5500,
+        puddleDuration: 11000,
         slowAmount: 0.45,
       },
       7: {
@@ -97,7 +97,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.22,
         splashRadius: 110,
         puddleCount: 9,
-        puddleDuration: 6000,
+        puddleDuration: 12000,
         slowAmount: 0.4,
       },
       8: {
@@ -110,7 +110,7 @@ export class MilkWeapon extends BaseWeapon {
         criticalChance: 0.25,
         splashRadius: 120,
         puddleCount: 10,
-        puddleDuration: 6500,
+        puddleDuration: 13000,
         slowAmount: 0.35,
         isMaxLevel: true,
       },
