@@ -396,8 +396,6 @@ const GameScene = Phaser.Class({
   },
 
   preload: function () {
-    // Load coin sprite first to ensure it's available
-    console.log("Loading coin sprite...");
     this.load.svg("coin", "/assets/game/powerups/coin.svg", {
       scale: 0.5,
     });
@@ -2052,7 +2050,7 @@ export default function Game() {
           default: "arcade",
           arcade: {
             gravity: { y: 0 },
-            debug: false,
+            debug: true,
           },
         },
         input: {
