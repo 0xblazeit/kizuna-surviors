@@ -34,8 +34,10 @@ class EnemyBasic extends BasePlayer {
     this.minDistance = 20; // Minimum distance to keep from player
     this.lastMoveTime = 0; // Add timestamp for movement updates
     this.moveUpdateInterval = 16; // Update movement every 16ms (60fps)
-    this.separationRadius = 40; // Radius to check for nearby enemies
-    this.separationForce = 0.5; // Strength of the separation force
+    this.separationRadius = 60; // Increased radius to check for nearby enemies
+    this.baseSeparationForce = 0.5; // Base separation force
+    this.maxSeparationForce = 2.0; // Maximum separation force when close to player
+    this.lastTrailTime = 0; // Timestamp for trail effect
 
     // Attack properties
     this.attackRange = enemyConfig.attackRange;
@@ -149,22 +151,35 @@ class EnemyBasic extends BasePlayer {
       let separationY = 0;
 
       if (Array.isArray(this.scene.enemies)) {
+        // Scale separation force based on distance to player
+        const distanceScale = Math.max(0, 1 - (distance / (this.attackRange * 2)));
+        const currentSeparationForce = this.baseSeparationForce + 
+          (this.maxSeparationForce - this.baseSeparationForce) * distanceScale;
+
         for (const otherEnemy of this.scene.enemies) {
           if (otherEnemy && 
               otherEnemy.sprite && 
               otherEnemy !== this && 
               !otherEnemy.isDead &&
-              otherEnemy.sprite.active) {  // Check if sprite is still active
+              otherEnemy.sprite.active) {
             const enemyDx = this.sprite.x - otherEnemy.sprite.x;
             const enemyDy = this.sprite.y - otherEnemy.sprite.y;
             const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
 
-            if (enemyDistance > 0 && enemyDistance < this.separationRadius) {  // Avoid division by zero
-              // Calculate normalized repulsion vector
-              separationX += (enemyDx / enemyDistance) * (1 - enemyDistance / this.separationRadius);
-              separationY += (enemyDy / enemyDistance) * (1 - enemyDistance / this.separationRadius);
+            if (enemyDistance > 0 && enemyDistance < this.separationRadius) {
+              // Calculate normalized repulsion vector with inverse square falloff
+              const repulsionStrength = Math.pow(1 - enemyDistance / this.separationRadius, 2);
+              separationX += (enemyDx / enemyDistance) * repulsionStrength;
+              separationY += (enemyDy / enemyDistance) * repulsionStrength;
             }
           }
+        }
+
+        // Normalize separation vector if it exists
+        const separationLength = Math.sqrt(separationX * separationX + separationY * separationY);
+        if (separationLength > 0) {
+          separationX = (separationX / separationLength) * currentSeparationForce;
+          separationY = (separationY / separationLength) * currentSeparationForce;
         }
       }
 
@@ -175,8 +190,8 @@ class EnemyBasic extends BasePlayer {
         const normalizedDy = dy / distance;
 
         // Apply movement with separation
-        this.sprite.x += (normalizedDx * this.moveSpeed) + (separationX * this.separationForce);
-        this.sprite.y += (normalizedDy * this.moveSpeed) + (separationY * this.separationForce);
+        this.sprite.x += (normalizedDx * this.moveSpeed) + separationX;
+        this.sprite.y += (normalizedDy * this.moveSpeed) + separationY;
 
         // Update sprite direction
         if (dx < 0) {
@@ -192,8 +207,8 @@ class EnemyBasic extends BasePlayer {
         }
       } else {
         // Apply only separation force when close to player
-        this.sprite.x += separationX * this.separationForce;
-        this.sprite.y += separationY * this.separationForce;
+        this.sprite.x += separationX;
+        this.sprite.y += separationY;
       }
 
       // Check if within attack range and cooldown is ready

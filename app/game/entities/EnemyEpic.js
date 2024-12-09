@@ -13,7 +13,7 @@ class EnemyEpic extends EnemyAdvanced {
       attackDamage: 18, // 50% more damage than advanced
       scale: 0.15, // Slightly larger than advanced (0.42)
       trailTint: 0xffa500, // Orange trail
-      attackRange: 200, // Double the basic enemy range
+      attackRange: 130, // Double the basic enemy range
       ...config,
     };
 
@@ -21,6 +21,11 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Epic enemy specific properties
     this.type = "epic";
+
+    // Custom separation parameters for epic enemies
+    this.separationRadius = 100; // Even larger separation radius for epic enemies
+    this.baseSeparationForce = 0.8; // Strongest base separation
+    this.maxSeparationForce = 3.0; // Strongest max separation
 
     // Create dark red aura
     this.createAura();

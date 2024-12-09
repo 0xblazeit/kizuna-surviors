@@ -20,6 +20,11 @@ class EnemyShooter extends EnemyBasic {
     // Shooter specific properties
     this.type = "shooter";
     
+    // Custom separation parameters for shooter enemies
+    this.separationRadius = 120; // Largest separation radius since they attack from range
+    this.baseSeparationForce = 0.7; // Strong base separation to maintain distance
+    this.maxSeparationForce = 2.5; // Strong max separation
+    
     // Projectile properties
     this.projectiles = new Set();
     this.projectileSpeed = 300; 
