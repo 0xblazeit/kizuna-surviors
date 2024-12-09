@@ -83,11 +83,26 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Determine drop type - 100% chance for any drop
     const dropChance = Math.random();
-    // 40% chance for coin, 60% chance for XP gem
+    // 40% chance for coins, 60% chance for XP gem
     if (dropChance < 0.4) {
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) {
-        this.scene.coins.push(coin);
+      // Epic enemies drop multiple coins in a pattern
+      const numCoins = 4; // Epic enemies drop more coins
+      const radius = 25; // Slightly larger spread radius for epic enemies
+      
+      for (let i = 0; i < numCoins; i++) {
+        const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
+        const offsetX = Math.cos(angle) * radius;
+        const offsetY = Math.sin(angle) * radius;
+        
+        const coin = new Coin(
+          this.scene,
+          this.sprite.x + offsetX,
+          this.sprite.y + offsetY,
+          coinValue
+        );
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
       }
     } else {
       const gem = new XPGem(

@@ -522,16 +522,32 @@ class EnemyBasic extends BasePlayer {
     // Determine drop type - 25% chance for any drop
     const dropChance = Math.random();
     if (dropChance < 0.25) {
-      // 40% chance for coin (10% total), 60% chance for XP gem (15% total)
+      // 40% chance for coins (10% total), 60% chance for XP gem (15% total)
       if (dropChance < 0.1) {
-        const coin = new Coin(
-          this.scene,
-          this.sprite.x,
-          this.sprite.y,
-          coinValue
-        );
-        if (coin) {
-          this.scene.coins.push(coin);
+        // Determine number of coins based on enemy type
+        let numCoins = 1;
+        if (this.type === "advanced") {
+          numCoins = 2;
+        } else if (this.type === "epic") {
+          numCoins = 3;
+        }
+
+        // Create coins in a spread pattern
+        const radius = 20; // Base radius for coin spread
+        for (let i = 0; i < numCoins; i++) {
+          const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
+          const offsetX = Math.cos(angle) * radius;
+          const offsetY = Math.sin(angle) * radius;
+          
+          const coin = new Coin(
+            this.scene,
+            this.sprite.x + offsetX,
+            this.sprite.y + offsetY,
+            coinValue
+          );
+          if (coin) {
+            this.scene.coins.push(coin);
+          }
         }
       } else {
         const gem = new XPGem(
