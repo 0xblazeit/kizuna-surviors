@@ -1903,6 +1903,25 @@ const GameScene = Phaser.Class({
       return;
     }
 
+    // Get camera bounds with margin for smoother transitions
+    const camera = this.cameras.main;
+    const margin = 100;
+    const bounds = {
+      left: camera.scrollX - margin,
+      right: camera.scrollX + camera.width + margin,
+      top: camera.scrollY - margin,
+      bottom: camera.scrollY + camera.height + margin
+    };
+
+    // Helper function to check if an object is on screen
+    const isOnScreen = (sprite) => {
+      if (!sprite || !sprite.active) return false;
+      return sprite.x >= bounds.left && 
+             sprite.x <= bounds.right && 
+             sprite.y >= bounds.top && 
+             sprite.y <= bounds.bottom;
+    };
+
     // Handle player movement using the new system
     const input = {
       left: this.cursors.left.isDown || this.wasd.left.isDown,
@@ -1969,15 +1988,21 @@ const GameScene = Phaser.Class({
       this.xpGems.forEach((gem) => gem.update(this.player));
     }
 
-    // Update all enemies
+    // Update all enemies with screen check optimization
     if (this.enemies) {
       this.enemies.forEach((enemy, index) => {
         if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === 'function') {
           try {
-            enemy.update(time, delta);
+            // Only perform full update if enemy is on screen
+            const onScreen = isOnScreen(enemy.sprite);
+            if (onScreen) {
+              enemy.update(time, delta);
+            } else {
+              // Minimal update for off-screen enemies
+              enemy.updateOffScreen(time, delta);
+            }
           } catch (error) {
             console.error("Error updating enemy:", error);
-            // Mark enemy for cleanup if there's an error
             enemy.isDead = true;
           }
         }
@@ -1995,12 +2020,13 @@ const GameScene = Phaser.Class({
       this.enemies = this.enemies.filter(enemy => enemy !== null && enemy.sprite);
     }
 
-    // Update all weapons with explicit debug
+    // Update all weapons with screen check optimization
     if (this.weapons && this.weapons.length > 0) {
       this.weapons.forEach((weapon, index) => {
         if (weapon && typeof weapon.update === "function") {
           try {
-            weapon.update(time, delta);
+            // Only check collisions for projectiles that are on screen
+            weapon.updateWithScreenCheck(time, delta, isOnScreen);
           } catch (error) {
             console.error(`Error updating weapon ${index}:`, error);
           }

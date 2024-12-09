@@ -102,10 +102,10 @@ class EnemyBasic extends BasePlayer {
     this.targetPlayer = this.scene.player;
   }
 
-  update() {
+  update(time, delta) {
     if (!this.sprite || this.isDead) return;
 
-    super.update();
+    super.update(time, delta);
 
     const currentTime = Date.now();
 
@@ -127,19 +127,7 @@ class EnemyBasic extends BasePlayer {
 
     // Skip collision checks and most updates if off screen
     if (isOffScreen) {
-      // Only do basic position updates when off screen
-      if (this.targetPlayer && this.targetPlayer.sprite) {
-        const dx = this.targetPlayer.sprite.x - this.sprite.x;
-        const dy = this.targetPlayer.sprite.y - this.sprite.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > this.minDistance) {
-          const normalizedDx = dx / distance;
-          const normalizedDy = dy / distance;
-          this.sprite.x += normalizedDx * this.moveSpeed;
-          this.sprite.y += normalizedDy * this.moveSpeed;
-        }
-      }
+      this.updateOffScreen(time, delta);
       return;
     }
 
@@ -212,6 +200,22 @@ class EnemyBasic extends BasePlayer {
       if (distance <= this.attackRange && 
           currentTime - this.lastAttackTime >= this.attackCooldown) {
         this.attackPlayer();
+      }
+    }
+  }
+
+  updateOffScreen(time, delta) {
+    // Only do basic position updates when off screen
+    if (this.targetPlayer && this.targetPlayer.sprite && !this.isDead) {
+      const dx = this.targetPlayer.sprite.x - this.sprite.x;
+      const dy = this.targetPlayer.sprite.y - this.sprite.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > this.minDistance) {
+        const normalizedDx = dx / distance;
+        const normalizedDy = dy / distance;
+        this.sprite.x += normalizedDx * this.moveSpeed;
+        this.sprite.y += normalizedDy * this.moveSpeed;
       }
     }
   }
