@@ -1,18 +1,21 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Loading from './components/Loading';
 
 // Dynamically import the game component to avoid SSR issues
-const Game = dynamic(() => import('./components/Game'), { 
-  ssr: false,
-  loading: () => (
-    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
-      <div className="w-[800px] h-[600px] bg-black border border-white flex items-center justify-center">
-        <p className="text-2xl text-white">loading...</p>
-      </div>
-    </div>
-  )
-});
+const Game = dynamic(() => 
+  new Promise((resolve) => {
+    // Force a minimum delay of 2.20 seconds
+    setTimeout(() => {
+      resolve(import('./components/Game'));
+    }, 2200);
+  }), 
+  { 
+    ssr: false,
+    loading: () => <Loading />
+  }
+);
 
 export default function Home() {
   return <Game />;
