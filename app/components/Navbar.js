@@ -62,7 +62,7 @@ export default function Navbar() {
         if (user?.twitter) {
           return user?.twitter?.profilePictureUrl;
         } else {
-          if (user.wallet) return generateAvatar(user?.wallet?.address || '');
+          if (user?.wallet) return generateAvatar(user?.wallet?.address || '');
         }
     }, [user?.wallet?.address, user?.twitter?.profilePictureUrl]);
 
