@@ -20,7 +20,7 @@ export function Providers({ children }) {
                 appearance: {
                     theme: 'dark',
                     accentColor: '#f39c12',
-                    logo: process.env.NODE_ENV === 'development' ? 'http://localhost:3000/kizuna-logo-combo.png' : `${process.env.NEXT_PUBLIC_APP_URL}/kizuna-logo-combo.png`,
+                    logo: process.env.NODE_ENV === 'development' ? 'http://localhost:3000/assets/game/menu/menu-background.png' : `${process.env.NEXT_PUBLIC_APP_URL}/kizuna-logo-combo.png`,
                 },
                 embeddedWallets: {
                     createOnLogin: 'users-without-wallets' // defaults to 'off'

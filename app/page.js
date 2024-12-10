@@ -23,7 +23,7 @@ export default function Home() {
     <main className="min-h-screen bg-black">
       <Navbar />
       <div className="pt-16">
-        <Game />
+        {/* <Game /> */}
       </div>
     </main>
   );
