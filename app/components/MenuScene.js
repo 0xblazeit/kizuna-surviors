@@ -1,48 +1,64 @@
-const MenuScene = {
-  key: "MenuScene",
+const MenuScene = Phaser.Class({
+  Extends: Phaser.Scene,
+
+  initialize: function MenuScene() {
+    Phaser.Scene.call(this, { key: "MenuScene" });
+  },
+
+  preload: function() {
+    this.load.image('menu-background', '/assets/game/menu/menu-background.png');
+  },
+
   create: function () {
     const { width, height } = this.scale;
 
-    // Create a simple background
-    const background = this.add.graphics();
-    background.fillGradientStyle(0x000033, 0x000033, 0x000066, 0x000066, 1);
-    background.fillRect(0, 0, width, height);
+    // Add background skull
+    const background = this.add.image(width / 2, height / 2, 'menu-background');
+    const scale = Math.min(width / background.width, height / background.height) * 1;
+    background.setScale(scale);
+    // background.setAlpha(0.2); // Make it semi-transparent
+    // background.setTint(0x000066); // Give it a blue tint
+
+    // Add dark overlay for better text readability
+    // const overlay = this.add.graphics();
+    // overlay.fillStyle(0x000033, 0.7);
+    // overlay.fillRect(0, 0, width, height);
 
     // Add title text
-    this.add
-      .text(width / 2, height / 3, "KIZUNA\nSURVIVORS", {
-        fontFamily: "VT323",
-        fontSize: "64px",
-        color: "#ffffff",
-        align: "center",
-        stroke: "#000000",
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+    // this.add
+    //   .text(width / 2, height / 3, "KIZUNA\nSURVIVORS", {
+    //     fontFamily: "VT323",
+    //     fontSize: "64px",
+    //     color: "#ffffff",
+    //     align: "center",
+    //     stroke: "#000000",
+    //     strokeThickness: 4,
+    //   })
+    //   .setOrigin(0.5);
 
     // Add subtitle text
-    this.add
-      .text(width / 2, height / 3 + 80, "collect gold, survive, become strong", {
-        fontFamily: "VT323",
-        fontSize: "24px",
-        color: "#ffffff",
-        align: "center",
-        stroke: "#000000",
-        strokeThickness: 2,
-      })
-      .setOrigin(0.5);
+    // this.add
+    //   .text(width / 2, height / 3 + 80, "collect gold, survive, become strong", {
+    //     fontFamily: "VT323",
+    //     fontSize: "24px",
+    //     color: "#ffffff",
+    //     align: "center",
+    //     stroke: "#000000",
+    //     strokeThickness: 2,
+    //   })
+    //   .setOrigin(0.5);
 
     // Add controls text
-    this.add
-      .text(width / 2, height / 3 + 140, "Controls: Arrow Keys or WASD", {
-        fontFamily: "VT323",
-        fontSize: "24px",
-        color: "#ffffff",
-        align: "center",
-        stroke: "#000000",
-        strokeThickness: 2,
-      })
-      .setOrigin(0.5);
+    // this.add
+    //   .text(width / 2, height / 3 + 140, "Controls: Arrow Keys or WASD", {
+    //     fontFamily: "VT323",
+    //     fontSize: "24px",
+    //     color: "#ffffff",
+    //     align: "center",
+    //     stroke: "#000000",
+    //     strokeThickness: 2,
+    //   })
+    //   .setOrigin(0.5);
 
     // Add start text
     const startText = this.add
@@ -82,6 +98,6 @@ const MenuScene = {
     this.input.keyboard.addKey("DOWN").on("down", startGame);
     this.input.keyboard.addKey("RIGHT").on("down", startGame);
   },
-};
+});
 
 export default MenuScene;
