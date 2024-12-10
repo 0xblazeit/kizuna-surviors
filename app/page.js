@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Loading from './components/Loading';
+import Navbar from './components/Navbar';
 
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(() => 
@@ -18,5 +19,12 @@ const Game = dynamic(() =>
 );
 
 export default function Home() {
-  return <Game />;
+  return (
+    <main className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-16">
+        <Game />
+      </div>
+    </main>
+  );
 }
