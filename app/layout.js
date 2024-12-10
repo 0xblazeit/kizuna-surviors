@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 import "./globals.css";
-
+import { Providers } from "@/providers";
 const vt323 = localFont({
   src: "./fonts/VT323-Regular.ttf",
   variable: "--font-vt323",
@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${vt323.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
