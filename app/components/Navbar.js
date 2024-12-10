@@ -10,7 +10,6 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLab
 import { useLogin, usePrivy, useLogout } from "@privy-io/react-auth";
 import { Wallet, SignOut, ShieldWarning } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
-
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast"
 import { generateAvatar } from '@/utils/utils';
@@ -63,7 +62,7 @@ export default function Navbar() {
         if (user?.twitter) {
           return user?.twitter?.profilePictureUrl;
         } else {
-          return generateAvatar(user?.wallet?.address || '');
+          if (!user?.wallet) return generateAvatar(user?.wallet?.address || '');
         }
     }, [user?.wallet?.address, user?.twitter?.profilePictureUrl]);
 
@@ -76,9 +75,9 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="fixed top-0 z-50 w-full">
+            <nav className="fixed top-0 z-50 w-full font-[family-name:var(--font-vt323)]">
                 <div className="absolute inset-0 bg-gradient-to-b from-black to-transparent pointer-events-none via-black/50"></div>
-                <div className="container flex relative justify-between items-center px-4 py-4 mx-auto">
+                <div className="container flex relative justify-between items-center px-4 py-4 mx-auto font-vt323">
                     <div className="flex items-center space-x-2">
                         <Link href="/" className="flex items-center space-x-2">
                             <div className="relative size-14 md:size-18">
@@ -90,7 +89,7 @@ export default function Navbar() {
                                     priority
                                 /> */}
                             </div>
-                            <h1 className="text-3xl font-bold md:text-4xl gradient-text">ShapeCraft Survivors</h1>
+                            <h1 className="text-3xl font-bold text-white md:text-4xl">ShapeCraft Survivors</h1>
                         </Link>
                     </div>
                     <div className="flex items-center space-x-4">
