@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import Loading from './components/Loading';
 import Navbar from './components/Navbar';
+import AnimateBackground from "./components/AnimateBackground";
 
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(() => 
@@ -20,10 +21,11 @@ const Game = dynamic(() =>
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-transparent">
+      <AnimateBackground />
       <Navbar />
       <div className="pt-16">
-        <Game />
+        {/* <Game /> */}
       </div>
     </main>
   );
