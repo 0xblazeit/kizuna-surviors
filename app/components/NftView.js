@@ -61,7 +61,13 @@ export function NftView({ walletAddress }) {
       },
     }));
   }
-  
+
+  function formatTokenId(tokenId) {
+    // Convert hex to decimal
+    const decimal = parseInt(tokenId, 16);
+    return '#' + decimal;
+  }
+
   if (isLoading) {
     return null;
   }
@@ -84,7 +90,7 @@ export function NftView({ walletAddress }) {
 
           return (
             <Link
-              href={`https://highlight.xyz/mint/shape:${nft.contractAddress}`}
+              href={`https://highlight.xyz/mint/shape:0x05aA491820662b131d285757E5DA4b74BD0F0e5F:31b18ae4b8b0b0be466ec33560d51935?tokenId=${parseInt(nft.tokenId, 16)}`}
               key={nftId}
               className="block"
               target="_blank"
@@ -117,7 +123,7 @@ export function NftView({ walletAddress }) {
                   </p>
                 </CardContent>
                 <CardFooter className="p-1 pt-0">
-                  <p className="text-[10px] text-white/50">{nft.tokenType}</p>
+                  <p className="text-[10px] text-white/50">{formatTokenId(nft.tokenId)}</p>
                 </CardFooter>
               </Card>
             </Link>
