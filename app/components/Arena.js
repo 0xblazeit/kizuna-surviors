@@ -41,7 +41,7 @@ export function Arena() {
   return (
     <div className="p-3 bg-transparent rounded-lg w-full max-w-[800px] mx-auto">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex flex-col w-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
+        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
@@ -52,12 +52,19 @@ export function Arena() {
                 Welcome, {user?.twitter?.username}
               </h3>
               <div className="space-y-1 text-sm md:text-lg">
-                <p className="flex items-center gap-1 text-white/50">
+                <p className="flex gap-1 items-center text-white/50">
                   Wallet:{" "}
                   {user?.wallet?.address ? (
-                    <span className="flex items-center gap-2 text-white">
-                      0x{user?.wallet?.address.slice(2, 6)}...
-                      {user?.wallet?.address.slice(-5)}
+                    <span className="flex gap-2 items-center text-white">
+                      <a
+                        href={`https://shapescan.xyz/address/${user?.wallet?.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer hover:underline"
+                      >
+                        0x{user?.wallet?.address.slice(2, 6)}...
+                        {user?.wallet?.address.slice(-5)}
+                      </a>
                       <button
                         onClick={() => copyToClipboard(user?.wallet?.address)}
                         className="transition-opacity hover:opacity-70"
@@ -97,7 +104,7 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex items-center justify-center w-full p-4 text-center text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
+        <div className="flex justify-center items-center p-4 w-full text-center text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
           Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
           nisi ut aliquip ex ea commodo.
         </div>

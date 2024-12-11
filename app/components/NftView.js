@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const IPFS_GATEWAYS = [
   'https://ipfs.io/ipfs/',
@@ -82,37 +83,44 @@ export function NftView({ walletAddress }) {
             nft.image.replace('ipfs://', IPFS_GATEWAYS[0]);
 
           return (
-            <Card
+            <Link
+              href={`https://highlight.xyz/mint/shape:${nft.contractAddress}`}
               key={nftId}
-              className="overflow-hidden text-white border-0 transition-all duration-300 backdrop-blur-xs bg-black/40 hover:bg-black/50"
+              className="block"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <CardHeader className="p-0">
-                <div className="relative w-full aspect-square">
-                  <Image
-                    src={imageUrl}
-                    alt={nft.title}
-                    fill
-                    className="object-cover opacity-90 transition-opacity duration-300 hover:opacity-100"
-                    sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16.666vw, 12.5vw"
-                    priority={index < 4}
-                    onError={() => {
-                      if (imageErrors[nftId]?.attempts < IPFS_GATEWAYS.length) {
-                        handleImageError(nftId, imageUrl);
-                      }
-                    }}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="p-1">
-                <h3 className="text-xs font-medium truncate text-white/90">{nft.title}</h3>
-                <p className="text-[10px] text-white/50 line-clamp-2 break-words">
-                  {nft.description}
-                </p>
-              </CardContent>
-              <CardFooter className="p-1 pt-0">
-                <p className="text-[10px] text-white/50">{nft.tokenType}</p>
-              </CardFooter>
-            </Card>
+              <Card
+                className="overflow-hidden text-white border-0 transition-all duration-300 backdrop-blur-xs bg-black/40 hover:bg-black/50"
+              >
+                <CardHeader className="p-0">
+                  <div className="relative w-full aspect-square">
+                    <Image
+                      src={imageUrl}
+                      alt={nft.title}
+                      fill
+                      className="object-cover opacity-90 transition-opacity duration-300 hover:opacity-100"
+                      sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16.666vw, 12.5vw"
+                      priority={index < 4}
+                      onError={() => {
+                        if (imageErrors[nftId]?.attempts < IPFS_GATEWAYS.length) {
+                          handleImageError(nftId, imageUrl);
+                        }
+                      }}
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-1">
+                  <h3 className="text-xs font-medium truncate text-white/90">{nft.title}</h3>
+                  <p className="text-[10px] text-white/50 line-clamp-2 break-words">
+                    {nft.description}
+                  </p>
+                </CardContent>
+                <CardFooter className="p-1 pt-0">
+                  <p className="text-[10px] text-white/50">{nft.tokenType}</p>
+                </CardFooter>
+              </Card>
+            </Link>
           );
         })}
       </div>
