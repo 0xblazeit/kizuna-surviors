@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Loading from "./components/Loading";
 
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(
