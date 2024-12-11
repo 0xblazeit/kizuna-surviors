@@ -6,7 +6,6 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
@@ -61,17 +60,9 @@ export function NftView({ walletAddress }) {
       },
     }));
   }
-
+  
   if (isLoading) {
-    return (
-      <div className="w-full p-2">
-        <Card className="h-24 overflow-hidden backdrop-blur-xs bg-black/40">
-          <CardContent className="flex items-center justify-center h-full">
-            <Skeleton className="w-1/3 h-4" />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null;
   }
 
   if (nfts.length === 0) {
@@ -83,7 +74,7 @@ export function NftView({ walletAddress }) {
   }
 
   return (
-    <div className="w-full p-2">
+    <div className="p-2 w-full">
       <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
         {nfts.map((nft, index) => {
           const nftId = `${nft.contractAddress}-${nft.tokenId}`;
@@ -93,7 +84,7 @@ export function NftView({ walletAddress }) {
           return (
             <Card
               key={nftId}
-              className="overflow-hidden text-white transition-all duration-300 border-0 backdrop-blur-xs bg-black/40 hover:bg-black/50"
+              className="overflow-hidden text-white border-0 transition-all duration-300 backdrop-blur-xs bg-black/40 hover:bg-black/50"
             >
               <CardHeader className="p-0">
                 <div className="relative w-full aspect-square">
@@ -101,7 +92,7 @@ export function NftView({ walletAddress }) {
                     src={imageUrl}
                     alt={nft.title}
                     fill
-                    className="object-cover transition-opacity duration-300 opacity-90 hover:opacity-100"
+                    className="object-cover opacity-90 transition-opacity duration-300 hover:opacity-100"
                     sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16.666vw, 12.5vw"
                     priority={index < 4}
                     onError={() => {
