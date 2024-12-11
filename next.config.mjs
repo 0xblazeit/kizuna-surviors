@@ -8,6 +8,9 @@ const nextConfig = {
       "@alch/alchemy-web3",
     ],
   },
+  images: {
+    domains: ["ipfs.io", "gateway.ipfs.io", "cf-ipfs.com"],
+  },
 };
 
 export default nextConfig;

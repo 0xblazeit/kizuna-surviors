@@ -10,9 +10,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
+const IPFS_GATEWAYS = [
+  'https://ipfs.io/ipfs/',
+  'https://gateway.ipfs.io/ipfs/',
+  'https://cf-ipfs.com/ipfs/',
+];
+
 export function NftView({ walletAddress }) {
   const [nfts, setNfts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState({});
 
   useEffect(() => {
     async function fetchNFTs() {
@@ -34,78 +41,89 @@ export function NftView({ walletAddress }) {
     }
   }, [walletAddress]);
 
+  function getNextGatewayUrl(currentUrl) {
+    const ipfsHash = currentUrl.split('ipfs://')[1];
+    if (!ipfsHash) return currentUrl; // Return original if not IPFS
+    
+    const currentGateway = IPFS_GATEWAYS.find(gateway => currentUrl.includes(gateway));
+    const currentIndex = IPFS_GATEWAYS.indexOf(currentGateway);
+    const nextIndex = (currentIndex + 1) % IPFS_GATEWAYS.length;
+    
+    return `${IPFS_GATEWAYS[nextIndex]}${ipfsHash}`;
+  }
+
+  function handleImageError(nftId, currentSrc) {
+    setImageErrors(prev => ({
+      ...prev,
+      [nftId]: {
+        attempts: (prev[nftId]?.attempts || 0) + 1,
+        currentSrc: getNextGatewayUrl(currentSrc),
+      },
+    }));
+  }
+
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return (
+      <div className="w-full p-2">
+        <Card className="h-24 overflow-hidden backdrop-blur-xs bg-black/40">
+          <CardContent className="flex items-center justify-center h-full">
+            <Skeleton className="w-1/3 h-4" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (nfts.length === 0) {
     return (
-      <div className="py-10 text-center">
-        <p className="text-muted-foreground">No NFTs found for this wallet</p>
+      <div className="py-4 text-center text-white">
+        <p className="text-sm text-white/50">No NFTs found</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full p-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {nfts.map((nft, index) => (
-          <Card
-            key={`${nft.contractAddress}-${nft.tokenId}`}
-            className="overflow-hidden transition-shadow duration-300 hover:shadow-lg"
-          >
-            <CardHeader className="p-0">
-              <div className="relative w-full aspect-square">
-                <Image
-                  src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
-                  alt={nft.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={index < 4}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold truncate">{nft.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {nft.description}
-              </p>
-            </CardContent>
-            <CardFooter className="flex flex-col items-start gap-1 p-4 pt-0">
-              <p className="text-xs text-muted-foreground">
-                Type: {nft.tokenType}
-              </p>
-              <p className="w-full text-xs truncate text-muted-foreground">
-                Token ID: {nft.tokenId}
-              </p>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
+    <div className="w-full p-2">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {nfts.map((nft, index) => {
+          const nftId = `${nft.contractAddress}-${nft.tokenId}`;
+          const imageUrl = imageErrors[nftId]?.currentSrc || 
+            nft.image.replace('ipfs://', IPFS_GATEWAYS[0]);
 
-function LoadingSkeleton() {
-  return (
-    <div className="w-full p-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="overflow-hidden">
-            <CardHeader className="p-0">
-              <Skeleton className="w-full aspect-square" />
-            </CardHeader>
-            <CardContent className="p-4">
-              <Skeleton className="w-3/4 h-6 mb-2" />
-              <Skeleton className="w-full h-4" />
-              <Skeleton className="w-5/6 h-4 mt-1" />
-            </CardContent>
-            <CardFooter className="p-4 pt-0">
-              <Skeleton className="w-1/2 h-4" />
-            </CardFooter>
-          </Card>
-        ))}
+          return (
+            <Card
+              key={nftId}
+              className="overflow-hidden text-white transition-all duration-300 border-0 backdrop-blur-xs bg-black/40 hover:bg-black/50"
+            >
+              <CardHeader className="p-0">
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={imageUrl}
+                    alt={nft.title}
+                    fill
+                    className="object-cover transition-opacity duration-300 opacity-90 hover:opacity-100"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    priority={index < 4}
+                    onError={() => {
+                      if (imageErrors[nftId]?.attempts < IPFS_GATEWAYS.length) {
+                        handleImageError(nftId, imageUrl);
+                      }
+                    }}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="p-2">
+                <h3 className="text-sm font-medium truncate text-white/90">{nft.title}</h3>
+                <p className="text-xs text-white/50 line-clamp-1">
+                  {nft.description}
+                </p>
+              </CardContent>
+              <CardFooter className="p-2 pt-0">
+                <p className="text-xs text-white/50">{nft.tokenType}</p>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

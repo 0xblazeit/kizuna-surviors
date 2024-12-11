@@ -5,6 +5,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Check } from "@phosphor-icons/react";
 import { NftView } from "./NftView";
+
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
   const response = await fetch(`/api/eth-balance?wallet=${walletAddress}`);
@@ -101,7 +102,7 @@ export function Arena() {
           nisi ut aliquip ex ea commodo.
         </div>
       </div>
-      <NftView />
+      <NftView walletAddress={user?.wallet?.address} />
       <div className="grid grid-cols-1">
         <div className="backdrop-blur-xs bg-black/40 rounded-xl aspect-[2/1] w-full flex items-center justify-center text-white p-4 text-center">
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
