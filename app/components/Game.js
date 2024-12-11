@@ -1819,7 +1819,7 @@ export default function Game() {
     <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
       <div
         ref={gameRef}
-        className="w-[800px] h-[600px] bg-black border-2 border-white"
+        className="w-[800px] h-[600px] bg-black"
       />
     </div>
   );
