@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Arena } from "../components/Arena";
 
 export const metadata = {
-  title: "ShapeCraft Surviors Areana",
+  title: "ShapeCraft Surviors arena",
   description: "Prepare for Battle",
 };
 
