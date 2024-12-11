@@ -84,7 +84,7 @@ export function NftView({ walletAddress }) {
 
   return (
     <div className="w-full p-2">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
         {nfts.map((nft, index) => {
           const nftId = `${nft.contractAddress}-${nft.tokenId}`;
           const imageUrl = imageErrors[nftId]?.currentSrc || 
@@ -102,7 +102,7 @@ export function NftView({ walletAddress }) {
                     alt={nft.title}
                     fill
                     className="object-cover transition-opacity duration-300 opacity-90 hover:opacity-100"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16.666vw, 12.5vw"
                     priority={index < 4}
                     onError={() => {
                       if (imageErrors[nftId]?.attempts < IPFS_GATEWAYS.length) {
@@ -112,14 +112,14 @@ export function NftView({ walletAddress }) {
                   />
                 </div>
               </CardHeader>
-              <CardContent className="p-2">
-                <h3 className="text-sm font-medium truncate text-white/90">{nft.title}</h3>
-                <p className="text-xs text-white/50 line-clamp-1">
+              <CardContent className="p-1">
+                <h3 className="text-xs font-medium truncate text-white/90">{nft.title}</h3>
+                <p className="text-[10px] text-white/50 line-clamp-1">
                   {nft.description}
                 </p>
               </CardContent>
-              <CardFooter className="p-2 pt-0">
-                <p className="text-xs text-white/50">{nft.tokenType}</p>
+              <CardFooter className="p-1 pt-0">
+                <p className="text-[10px] text-white/50">{nft.tokenType}</p>
               </CardFooter>
             </Card>
           );
