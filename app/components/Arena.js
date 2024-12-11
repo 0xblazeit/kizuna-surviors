@@ -4,7 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Check } from "@phosphor-icons/react";
-import NftView from "./NftView";
+import { NftView } from "./NftView";
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
   const response = await fetch(`/api/eth-balance?wallet=${walletAddress}`);
