@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { generateAvatar } from "@/lib/utils";
 import { Trophy, Medal, MedalMilitary, User } from "@phosphor-icons/react";
-import { useLogin, usePrivy, useLogout } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 
 function LeaderboardTable({ data }) {
   const [imageErrors, setImageErrors] = useState({});
