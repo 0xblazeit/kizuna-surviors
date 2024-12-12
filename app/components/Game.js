@@ -65,17 +65,26 @@ const GameScene = Phaser.Class({
       kills: 0,
       selectedWeaponIndex: 0,
       isGameOver: false,
-      coins: 0, // Add coin counter
-      maxEnemies: 15, // Maximum enemies allowed at once
-      spawnRate: 1000, // Base spawn rate in milliseconds
-      minSpawnRate: 300, // Minimum spawn rate (fastest spawn rate allowed)
+      coins: 0,
+      maxEnemies: 15,
+      spawnRate: 1000,
+      minSpawnRate: 300,
       enemyWaveTimer: 0,
       waveNumber: 1,
       difficultyMultiplier: 1,
-      // Enemy spawn thresholds (in seconds)
       spawnThresholds: {
-        advanced: 5, // Advanced enemies after 5 seconds
-        epic: 10, // Epic enemies after 10 seconds
+        advanced: 5,
+        epic: 10,
+      },
+      userInfo: {
+        userAddress: (() => {
+          console.log("Debug - userAddress:", this.game.config.userInfo?.userAddress);
+          return this.game.config.userInfo?.userAddress;
+        })(),
+        username: (() => {
+          console.log("Debug - username:", this.game.config.userInfo?.username);
+          return this.game.config.userInfo?.username;
+        })(),
       },
     };
 
@@ -107,8 +116,8 @@ const GameScene = Phaser.Class({
     this.weaponInitialized = false;
     this.enemies = [];
     this.projectiles = [];
-    this.coins = []; // Add coins array
-    this.xpGems = []; // Add XP gems array
+    this.coins = [];
+    this.xpGems = [];
     this.score = 0;
     this.gameOver = false;
   },
