@@ -53,11 +53,8 @@ const GameScene = Phaser.Class({
   },
 
   init: function () {
-    // Store user info in game state
     console.log(
-      "Debug - Initial userInfo:",
-      this.game.config.userInfo?.userAddress,
-      this.game.config.userInfo?.username
+      "Debug - YOYOYOYO", this.userInfo
     );
     // Initialize game state
     this.gameState = {
@@ -83,16 +80,6 @@ const GameScene = Phaser.Class({
       spawnThresholds: {
         advanced: 5,
         epic: 10,
-      },
-      userInfo: {
-        userAddress: (() => {
-          console.log("Debug - userAddress:", this.game.config.userInfo?.userAddress);
-          return this.game.config.userInfo?.userAddress;
-        })(),
-        username: (() => {
-          console.log("Debug - username:", this.game.config.userInfo?.username);
-          return this.game.config.userInfo?.username;
-        })(),
       },
     };
 
@@ -1287,11 +1274,11 @@ const GameScene = Phaser.Class({
           gold: this.gameState.gold,
           kills: this.gameState.kills,
           timestamp: new Date().toISOString(),
-          userAddress: this.game.config.userInfo?.userAddress,
-          username: this.game.config.userInfo?.username,
+          userAddress: this.userInfo.userAddress,
+          username: this.userInfo.username,
         }),
       }).catch((error) => console.error("Error posting game stats:", error));
-      console.log("debug - results posted:", this.game.config.userInfo);
+      console.log("debug - results posted:", this.userInfo);
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1624,6 +1611,22 @@ export default function Game() {
     if (!ready || !userAddress || !username) return;
 
     if (typeof window !== "undefined" && window.Phaser) {
+
+      const userInfo = {
+        userAddress: user.wallet.address,
+        username: user.twitter.username,
+      };
+
+      console.log("Debug - Creating game with userInfo:", userInfo);
+
+      // Create a custom scene class that includes the user info
+      class CustomGameScene extends GameScene {
+        constructor() {
+          super();
+          this.userInfo = userInfo;
+        }
+      }
+
       const config = {
         type: Phaser.AUTO,
         parent: gameRef.current,
@@ -1642,17 +1645,7 @@ export default function Game() {
           activePointers: 1,
           pixelPerfect: false,
         },
-        scene: [MenuScene, GameScene, UpgradeMenuScene],
-        userInfo: {
-          userAddress: (() => {
-            console.log("Debug - userAddress:", userAddress);
-            return userAddress;
-          })(),
-          username: (() => {
-            console.log("Debug - username:", username);
-            return username;
-          })(),
-        },
+        scene: [MenuScene, CustomGameScene, UpgradeMenuScene],
       };
 
       const game = new Phaser.Game(config);
