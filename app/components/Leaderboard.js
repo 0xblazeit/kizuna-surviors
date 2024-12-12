@@ -139,10 +139,11 @@ function LoadingSpinner() {
 }
 
 async function fetchLeaderboard() {
-  const response = await fetch("/api/leaderboard", {
-    next: { revalidate: 60 }, // Revalidate every minute
-  });
-  if (!response.ok) throw new Error("Failed to fetch leaderboard");
+  const response = await fetch("/api/leaderboard");
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Failed to fetch leaderboard');
+  }
   return response.json();
 }
 
@@ -151,19 +152,37 @@ export default function Leaderboard() {
     data: response,
     isLoading,
     isError,
+    error,
+    refetch
   } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 3,
+    staleTime: 10000, // Consider data stale after 10 seconds
+    gcTime: 300000, // Keep unused data in cache for 5 minutes
   });
 
   if (isLoading) return <LoadingSpinner />;
-  if (isError) return <div className="text-xs text-red-500">Error loading leaderboard</div>;
+  if (isError) return (
+    <div className="flex flex-col items-center gap-2 p-4">
+      <div className="text-sm text-red-500">Failed to load leaderboard</div>
+      <div className="text-xs text-red-400/80">{error?.message}</div>
+      <button 
+        onClick={() => refetch()} 
+        className="px-3 py-1 text-xs text-white bg-red-500/20 rounded-md hover:bg-red-500/30 transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+  );
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <div className="" suppressHydrationWarning>
         <h2 className="mb-2 text-sm font-bold text-white">Leaderboard</h2>
-        <LeaderboardTable data={response.data} />
+        <LeaderboardTable data={response?.data || []} />
       </div>
     </Suspense>
   );
