@@ -180,19 +180,19 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         shapeTypes: ["triangle", "square", "pentagon", "hexagon", "octagon"],
         trailAlpha: 0.95,
         trailScale: 0.97,
-        trailSpacing: 0.025,
-        trailLength: 13,
+        trailSpacing: 0.04,
+        trailLength: 8,
         rotationSpeed: 4.4,
         seekingSpeed: 250,
         glowIntensity: 1.2,
         isMaxLevel: true,
         geometricConvergence: true,
-        convergenceBurstCount: 8,
-        convergenceDamage: 15,
+        convergenceBurstCount: 6,
+        convergenceDamage: 20,
         convergenceRange: 200,
         convergenceSpeed: 400,
         convergenceScale: 0.5,
-        convergenceLifetime: 500,
+        convergenceLifetime: 400,
       },
     };
 
@@ -403,26 +403,27 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
               x: Math.cos(angle) * this.stats.seekingSpeed,
               y: Math.sin(angle) * this.stats.seekingSpeed,
             };
-            if (proj.sprite.body) {
-              proj.sprite.body.setVelocity(velocity.x, velocity.y);
-            }
+            proj.sprite.body.setVelocity(velocity.x, velocity.y);
           } else {
             // No valid target, continue in current direction
             const currentAngle = proj.sprite.rotation;
-            if (proj.sprite.body) {
-              proj.sprite.body.setVelocity(
-                Math.cos(currentAngle) * this.stats.speed,
-                Math.sin(currentAngle) * this.stats.speed
-              );
-            }
+            proj.sprite.body.setVelocity(
+              Math.cos(currentAngle) * this.stats.speed,
+              Math.sin(currentAngle) * this.stats.speed
+            );
             proj.targetEnemy = null;
           }
           break;
         }
       }
 
-      // Update trail
+      // Update trail with performance optimizations
       if (time - proj.lastTrailTime >= this.stats.trailSpacing * 1000) {
+        // Remove old positions before adding new ones
+        while (proj.trailPositions.length >= this.stats.trailLength) {
+          proj.trailPositions.pop();
+        }
+
         proj.trailPositions.unshift({
           x: proj.sprite.x,
           y: proj.sprite.y,
@@ -430,34 +431,30 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
           time: time,
         });
         proj.lastTrailTime = time;
-
-        // Limit trail length
-        if (proj.trailPositions.length > this.stats.trailLength) {
-          proj.trailPositions.pop();
-        }
       }
 
-      // Update trail sprites
+      // Update trail sprites with optimized batch updates
       const trailSprites = this.trailPools[index];
+      const shapeType = this.stats.shapeTypes[index % this.stats.shapeTypes.length];
+      const glowColor = this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
+
       trailSprites.forEach((trailSprite, i) => {
         if (i < proj.trailPositions.length) {
           const pos = proj.trailPositions[i];
-          trailSprite.setActive(true).setVisible(true);
+          if (!trailSprite.visible) {
+            trailSprite.setActive(true).setVisible(true);
+          }
           trailSprite.setPosition(pos.x, pos.y);
           trailSprite.setRotation(pos.rotation);
 
-          // Calculate fade and scale based on position in trail
+          // Batch the visual updates
           const fadeRatio = 1 - i / this.stats.trailLength;
           const scaleRatio = Math.pow(this.stats.trailScale, i);
-          trailSprite.setAlpha(this.stats.trailAlpha * fadeRatio);
-          trailSprite.setScale(proj.sprite.scale * scaleRatio);
-
-          // Set glow effect
-          const shapeType = this.stats.shapeTypes[index % this.stats.shapeTypes.length];
-          const glowColor =
-            this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
-          trailSprite.setTint(glowColor);
-        } else {
+          trailSprite
+            .setAlpha(this.stats.trailAlpha * fadeRatio)
+            .setScale(proj.sprite.scale * scaleRatio)
+            .setTint(glowColor);
+        } else if (trailSprite.visible) {
           trailSprite.setActive(false).setVisible(false);
         }
       });
@@ -532,9 +529,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
       x: Math.cos(startAngle) * this.stats.speed,
       y: Math.sin(startAngle) * this.stats.speed,
     };
-    if (proj.sprite.body) {
-      proj.sprite.body.setVelocity(velocity.x, velocity.y);
-    }
+    proj.sprite.body.setVelocity(velocity.x, velocity.y);
 
     // Add glow effect
     const shapeType = this.stats.shapeTypes[0];
