@@ -132,12 +132,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     this.activeProjectiles.forEach((proj) => {
       if (proj.active && proj.sprite) {
         // Check if projectile is out of range
-        const distance = Phaser.Math.Distance.Between(
-          proj.startX,
-          proj.startY,
-          proj.sprite.x,
-          proj.sprite.y
-        );
+        const distance = Phaser.Math.Distance.Between(proj.startX, proj.startY, proj.sprite.x, proj.sprite.y);
 
         if (distance > this.stats.range) {
           this.deactivateProjectile(proj);
@@ -198,12 +193,8 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     const baseAngle = Math.atan2(direction.y, direction.x);
 
     // Calculate spread angles based on projectile count
-    const angleStep =
-      this.stats.projectileCount > 1
-        ? this.stats.spreadAngle / (this.stats.projectileCount - 1)
-        : 0;
-    const startAngle =
-      baseAngle - (this.stats.spreadAngle / 2) * (Math.PI / 180);
+    const angleStep = this.stats.projectileCount > 1 ? this.stats.spreadAngle / (this.stats.projectileCount - 1) : 0;
+    const startAngle = baseAngle - (this.stats.spreadAngle / 2) * (Math.PI / 180);
 
     // Fire multiple projectiles in a spread pattern
     for (let i = 0; i < this.stats.projectileCount; i++) {
@@ -337,9 +328,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     if (this.currentLevel < this.maxLevel) {
       this.currentLevel++;
       // Create a deep copy of the new level config
-      this.stats = JSON.parse(
-        JSON.stringify(this.levelConfigs[this.currentLevel])
-      );
+      this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
       this.createProjectiles(); // Recreate projectiles with new stats
       return true;
     }
@@ -378,11 +367,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
 
   createHitEffect(enemy, proj) {
     // Create a small sprite burst effect
-    const hitSprite = this.scene.add.sprite(
-      proj.sprite.x,
-      proj.sprite.y,
-      "weapon-hotdog-projectile"
-    );
+    const hitSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
     hitSprite.setScale(0.3);
     hitSprite.setAlpha(0.8);
     hitSprite.setTint(0xffd700); // Golden tint
@@ -401,11 +386,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     });
 
     // Add a small rotation effect
-    const rotationSprite = this.scene.add.sprite(
-      proj.sprite.x,
-      proj.sprite.y,
-      "weapon-hotdog-projectile"
-    );
+    const rotationSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
     rotationSprite.setScale(0.4);
     rotationSprite.setAlpha(0.5);
     rotationSprite.setTint(0xff6b6b); // Reddish tint
@@ -466,11 +447,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       const angle = (i / particleCount) * Math.PI * 2;
       const innerRadius = explosionRadius * 0.5;
 
-      const mustardDrop = this.scene.add.sprite(
-        x,
-        y,
-        "weapon-hotdog-projectile"
-      );
+      const mustardDrop = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
       mustardDrop.setScale(0.4);
       mustardDrop.setAlpha(0.9);
       mustardDrop.setTint(0xffdb58);
@@ -504,11 +481,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       trail.setAlpha(0.6);
       trail.setTint(0xffa500); // Orange tint for trail
 
-      const mustardParticle = this.scene.add.sprite(
-        x,
-        y,
-        "weapon-hotdog-projectile"
-      );
+      const mustardParticle = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
       mustardParticle.setScale(0.3);
       mustardParticle.setAlpha(1);
       mustardParticle.setTint(0xffdb58);
@@ -592,8 +565,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         e.sprite &&
         e.sprite.active &&
         !e.isDead &&
-        Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <=
-          explosionRadius
+        Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <= explosionRadius
     );
 
     enemies.forEach((enemy) => {
