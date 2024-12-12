@@ -273,16 +273,16 @@ const UpgradeMenuScene = Phaser.Class({
       this.tweens.add({
         targets: glow,
         alpha: 0.5,
-        duration: 200,
+        duration: 100,
         yoyo: true,
-        repeat: 2,
+        repeat: 1,
         onComplete: () => {
           // After flash, scale up the card
           this.tweens.add({
             targets: card,
             scaleX: 1.1,
             scaleY: 1.1,
-            duration: 300,
+            duration: 150,
             ease: "Back.easeOut",
             onComplete: () => {
               // Finally scale down and complete selection
@@ -290,7 +290,7 @@ const UpgradeMenuScene = Phaser.Class({
                 targets: card,
                 scaleX: 1,
                 scaleY: 1,
-                duration: 200,
+                duration: 100,
                 ease: "Back.easeIn",
                 onComplete: () => {
                   weapon.levelUp();
