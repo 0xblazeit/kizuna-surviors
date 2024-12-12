@@ -6,53 +6,55 @@ import { useQuery } from "@tanstack/react-query";
 
 function LeaderboardTable({ data }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" suppressHydrationWarning>
       <table className="w-full bg-transparent rounded-lg shadow-lg">
-        <thead className="bg-gray-100">
+        <thead className="bg-gray-100 dark:bg-gray-800">
           <tr>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Rank
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Player
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Gold
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Kills
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Wave
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
               Time Alive
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
           {data.map((player, index) => (
             <tr
               key={player.walletAddress}
-              className="transition-colors hover:bg-gray-50"
+              className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              suppressHydrationWarning
             >
               <td className="px-6 py-4 whitespace-nowrap">
-                <span
+                <div
                   className={`
-                  inline-flex items-center justify-center w-8 h-8 rounded-full 
-                  ${
-                    index === 0
-                      ? "bg-yellow-400 text-white"
-                      : index === 1
-                      ? "bg-gray-300 text-gray-800"
-                      : index === 2
-                      ? "bg-amber-600 text-white"
-                      : "bg-gray-100 text-gray-600"
-                  }
-                `}
+                    inline-flex items-center justify-center w-8 h-8 rounded-full
+                    ${
+                      index === 0
+                        ? "bg-yellow-400 text-white"
+                        : index === 1
+                        ? "bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-200"
+                        : index === 2
+                        ? "bg-amber-600 text-white"
+                        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    }
+                  `}
+                  suppressHydrationWarning
                 >
                   {index + 1}
-                </span>
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
@@ -66,10 +68,10 @@ function LeaderboardTable({ data }) {
                     />
                   </div>
                   <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {player.userName}
                     </div>
-                    <div className="text-sm text-gray-500">{`${player.walletAddress.slice(
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{`${player.walletAddress.slice(
                       0,
                       6
                     )}...${player.walletAddress.slice(-4)}`}</div>
@@ -77,22 +79,22 @@ function LeaderboardTable({ data }) {
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {player.gold.toLocaleString()}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {player.kills.toLocaleString()}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {player.waveNumber}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {player.timeAlive}
                 </span>
               </td>
@@ -106,8 +108,8 @@ function LeaderboardTable({ data }) {
 
 function LoadingSpinner() {
   return (
-    <div className="flex justify-center items-center min-h-[400px]">
-      <div className="w-12 h-12 rounded-full border-b-2 border-gray-900 animate-spin"></div>
+    <div className="flex justify-center items-center h-64" suppressHydrationWarning>
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-gray-100"></div>
     </div>
   );
 }
@@ -121,26 +123,20 @@ async function fetchLeaderboard() {
 }
 
 export default function Leaderboard() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
-    staleTime: 60 * 1000, // Consider data fresh for 1 minute
   });
 
-  if (error) {
-    return (
-      <div className="py-8 text-center text-red-500">
-        Failed to load leaderboard. Please try again later.
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner />;
+  if (isError) return <div className="text-red-500">Error loading leaderboard</div>;
 
   return (
-    <div className="container px-4 py-8 mx-auto">
-      <h2 className="mb-8 text-3xl font-bold text-center">Leaderboard</h2>
-      <Suspense fallback={<LoadingSpinner />}>
-        {isLoading ? <LoadingSpinner /> : <LeaderboardTable data={data} />}
-      </Suspense>
-    </div>
+    <Suspense fallback={<LoadingSpinner />}>
+      <div className="p-4" suppressHydrationWarning>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Leaderboard</h2>
+        <LeaderboardTable data={data} />
+      </div>
+    </Suspense>
   );
 }
