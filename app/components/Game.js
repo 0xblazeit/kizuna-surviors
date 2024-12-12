@@ -53,8 +53,16 @@ const GameScene = Phaser.Class({
   },
 
   init: function () {
+    // Store user info in game state
+    console.log(
+      "Debug - Initial userInfo:",
+      this.game.config.userInfo?.userAddress,
+      this.game.config.userInfo?.username
+    );
     // Initialize game state
     this.gameState = {
+      userAddress: this.game.config.userInfo?.userAddress,
+      username: this.game.config.userInfo?.username,
       gameStarted: false,
       timerStarted: false,
       gameTimer: 0,
@@ -87,6 +95,10 @@ const GameScene = Phaser.Class({
         })(),
       },
     };
+
+    // Store user info in scene data instead of accessing from config
+    this.userAddress = this.game.config.userInfo?.userAddress;
+    this.username = this.game.config.userInfo?.username;
 
     // Debug log initial state
     console.log("Initial game state:", {
@@ -1279,7 +1291,7 @@ const GameScene = Phaser.Class({
           username: this.game.config.userInfo?.username,
         }),
       }).catch((error) => console.error("Error posting game stats:", error));
-      console.log("results posted:", this.game.config.userInfo?.userAddress, this.game.config.userInfo?.username);
+      console.log("debug - results posted:", this.game.config.userInfo);
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1609,6 +1621,8 @@ export default function Game() {
   const gameRef = useRef(null);
 
   useEffect(() => {
+    if (!ready || !userAddress || !username) return;
+
     if (typeof window !== "undefined" && window.Phaser) {
       const config = {
         type: Phaser.AUTO,
@@ -1647,7 +1661,15 @@ export default function Game() {
         game.destroy(true);
       };
     }
-  }, [user, userAddress, username]);
+  }, [ready, user, userAddress, username]);
+
+  if (!ready || !userAddress || !username) {
+    return (
+      <div className="flex justify-center items-center w-screen h-screen bg-transparent">
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center w-screen h-screen bg-transparent">
