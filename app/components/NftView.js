@@ -1,20 +1,11 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://gateway.ipfs.io/ipfs/',
-  'https://cf-ipfs.com/ipfs/',
-];
+const IPFS_GATEWAYS = ["https://ipfs.io/ipfs/", "https://gateway.ipfs.io/ipfs/", "https://cf-ipfs.com/ipfs/"];
 
 export function NftView({ walletAddress }) {
   const [nfts, setNfts] = useState([]);
@@ -24,9 +15,7 @@ export function NftView({ walletAddress }) {
   useEffect(() => {
     async function fetchNFTs() {
       try {
-        const response = await fetch(
-          `/api/wallet-nfts?wallet=${walletAddress}`
-        );
+        const response = await fetch(`/api/wallet-nfts?wallet=${walletAddress}`);
         const data = await response.json();
         setNfts(data.nfts);
       } catch (error) {
@@ -42,18 +31,18 @@ export function NftView({ walletAddress }) {
   }, [walletAddress]);
 
   function getNextGatewayUrl(currentUrl) {
-    const ipfsHash = currentUrl.split('ipfs://')[1];
+    const ipfsHash = currentUrl.split("ipfs://")[1];
     if (!ipfsHash) return currentUrl; // Return original if not IPFS
-    
-    const currentGateway = IPFS_GATEWAYS.find(gateway => currentUrl.includes(gateway));
+
+    const currentGateway = IPFS_GATEWAYS.find((gateway) => currentUrl.includes(gateway));
     const currentIndex = IPFS_GATEWAYS.indexOf(currentGateway);
     const nextIndex = (currentIndex + 1) % IPFS_GATEWAYS.length;
-    
+
     return `${IPFS_GATEWAYS[nextIndex]}${ipfsHash}`;
   }
 
   function handleImageError(nftId, currentSrc) {
-    setImageErrors(prev => ({
+    setImageErrors((prev) => ({
       ...prev,
       [nftId]: {
         attempts: (prev[nftId]?.attempts || 0) + 1,
@@ -65,7 +54,7 @@ export function NftView({ walletAddress }) {
   function formatTokenId(tokenId) {
     // Convert hex to decimal
     const decimal = parseInt(tokenId, 16);
-    return '#' + decimal;
+    return "#" + decimal;
   }
 
   if (isLoading) {
@@ -85,20 +74,20 @@ export function NftView({ walletAddress }) {
       <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
         {nfts.map((nft, index) => {
           const nftId = `${nft.contractAddress}-${nft.tokenId}`;
-          const imageUrl = imageErrors[nftId]?.currentSrc || 
-            nft.image.replace('ipfs://', IPFS_GATEWAYS[0]);
+          const imageUrl = imageErrors[nftId]?.currentSrc || nft.image.replace("ipfs://", IPFS_GATEWAYS[0]);
 
           return (
             <Link
-              href={`https://highlight.xyz/mint/shape:0x05aA491820662b131d285757E5DA4b74BD0F0e5F:31b18ae4b8b0b0be466ec33560d51935?tokenId=${parseInt(nft.tokenId, 16)}`}
-              key={nftId}
+              href={`https://highlight.xyz/mint/shape:0x05aA491820662b131d285757E5DA4b74BD0F0e5F:31b18ae4b8b0b0be466ec33560d51935?tokenId=${parseInt(
+                nft.tokenId,
+                16
+              )}`}
+              key={`${nftId}`}
               className="block"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Card
-                className="overflow-hidden text-white border-0 transition-all duration-300 backdrop-blur-xs bg-black/40 hover:bg-black/50"
-              >
+              <Card className="overflow-hidden text-white border-0 transition-all duration-300 backdrop-blur-xs bg-black/40 hover:bg-black/50">
                 <CardHeader className="p-0">
                   <div className="relative w-full aspect-square">
                     <Image
@@ -118,9 +107,7 @@ export function NftView({ walletAddress }) {
                 </CardHeader>
                 <CardContent className="p-1">
                   <h3 className="text-xs font-medium truncate text-white/90">{nft.title}</h3>
-                  <p className="text-[10px] text-white/50 line-clamp-2 break-words">
-                    {nft.description}
-                  </p>
+                  <p className="text-[10px] text-white/50 line-clamp-2 break-words">{nft.description}</p>
                 </CardContent>
                 <CardFooter className="p-1 pt-0">
                   <p className="text-[10px] text-white/50">{formatTokenId(nft.tokenId)}</p>

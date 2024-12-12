@@ -73,7 +73,7 @@ function LeaderboardTable({ data }) {
             const isYou = isCurrentUser(player);
             return (
               <tr
-                key={player.walletAddress}
+                key={`${player.walletAddress}-${player.userName}-${index}`}
                 className={`transition-colors ${isYou ? "bg-white/10 hover:bg-white/15" : "hover:bg-white/5"}`}
                 suppressHydrationWarning
               >

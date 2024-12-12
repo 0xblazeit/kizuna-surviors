@@ -62,9 +62,7 @@ export function Arena() {
             <p>Please connect your wallet</p>
           ) : (
             <>
-              <h3 className="mb-2 text-lg">
-                Welcome, {user?.twitter?.username}
-              </h3>
+              <h3 className="mb-2 text-lg">Welcome, {user?.twitter?.username}</h3>
               <div className="space-y-1 text-sm md:text-lg">
                 <p className="flex gap-1 items-center text-white/50">
                   Wallet:{" "}
@@ -84,11 +82,7 @@ export function Arena() {
                         className="transition-opacity hover:opacity-70"
                       >
                         {hasCopied ? (
-                          <Check
-                            className="text-green-400"
-                            size={16}
-                            weight="bold"
-                          />
+                          <Check className="text-green-400" size={16} weight="bold" />
                         ) : (
                           <Copy size={16} weight="bold" />
                         )}
@@ -118,7 +112,7 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex flex-col w-full h-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square overflow-auto">
+        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
           <Leaderboard />
         </div>
       </div>

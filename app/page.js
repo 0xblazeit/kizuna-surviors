@@ -27,7 +27,7 @@ export default function Home() {
           <p className="text-xl tracking-tight text-slate-200">
             2D rouguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off endless
             waves of enemies while upgrading weapons used from on-chain assets living on{" "}
-            <a href="https://shape.network/" className="text-blue-400 hover:text-blue-300">
+            <a href="https://shape.network/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
               Shape L2
             </a>
             .
