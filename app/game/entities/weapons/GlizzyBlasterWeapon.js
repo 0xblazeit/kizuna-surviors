@@ -106,7 +106,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     };
 
     // Initialize at level 1
-    this.currentLevel = 8;
+    this.currentLevel = 1;
     this.maxLevel = 8;
     // Create a deep copy of the current level config
     this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
