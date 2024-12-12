@@ -20,93 +20,93 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     // Level-up configurations
     this.levelConfigs = {
       1: {
-        damage: 5, // Lower base damage
+        damage: 8, // Higher base damage for better early game
         pierce: 1,
         projectileCount: 1,
         spreadAngle: 0,
-        cooldown: 1100, // Faster firing
-        range: 800, // Much longer range
-        speed: 200, // Faster projectiles
+        cooldown: 1000, // Slightly faster base firing
+        range: 800,
+        speed: 250, // Better base projectile speed
         scale: 0.4,
       },
       2: {
-        damage: 6,
+        damage: 10,
         pierce: 1,
         projectileCount: 2,
         spreadAngle: 15,
-        cooldown: 1100,
+        cooldown: 950, // Gradually improving cooldown
         range: 850,
-        speed: 200,
+        speed: 275,
         scale: 0.45,
       },
       3: {
-        damage: 7,
+        damage: 12,
         pierce: 2,
-        projectileCount: 3,
+        projectileCount: 2,
         spreadAngle: 20,
-        cooldown: 1000,
+        cooldown: 900,
         range: 900,
         speed: 300,
         scale: 0.5,
       },
       4: {
-        damage: 8,
+        damage: 14,
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 25,
-        cooldown: 1000,
+        cooldown: 850,
         range: 950,
-        speed: 400,
+        speed: 350,
         scale: 0.55,
       },
       5: {
-        damage: 9,
+        damage: 16,
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 30,
-        cooldown: 1200,
+        cooldown: 800, // Significant cooldown improvement
         range: 1000,
-        speed: 480,
+        speed: 400,
         scale: 0.6,
       },
       6: {
-        damage: 10,
+        damage: 18,
         pierce: 3,
         projectileCount: 4,
         spreadAngle: 35,
-        cooldown: 100,
+        cooldown: 700,
         range: 1050,
-        speed: 500,
+        speed: 450,
         scale: 0.65,
       },
       7: {
-        damage: 12,
+        damage: 20,
         pierce: 3,
         projectileCount: 4,
         spreadAngle: 40,
-        cooldown: 1100,
+        cooldown: 600,
         range: 1100,
-        speed: 520,
+        speed: 500,
         scale: 0.7,
       },
       8: {
-        damage: 18,
+        damage: 25, // Significant damage boost
         pierce: 4,
         projectileCount: 5,
         spreadAngle: 45,
         range: 1200,
-        cooldown: 300,
+        cooldown: 500, // Much faster firing at max level
         speed: 550,
         scale: 0.75,
         isMaxLevel: true,
         mustardExplosion: true,
-        explosionDamage: 8,
-        explosionRadius: 100,
+        explosionDamage: 15, // Increased explosion damage
+        explosionRadius: 120, // Larger explosion radius
       },
     };
 
     // Initialize at level 1
-    this.currentLevel = 1;
+    this.currentLevel = 8;
     this.maxLevel = 8;
     // Create a deep copy of the level 1 config to avoid reference issues
     this.stats = JSON.parse(JSON.stringify(this.levelConfigs[1]));

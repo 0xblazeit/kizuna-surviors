@@ -871,29 +871,29 @@ const GameScene = Phaser.Class({
     );
 
     // Create new debug text with smaller font and transparent background
-    // const debugConfig = {
-    //   fontFamily: "VT323",
-    //   fontSize: "16px",
-    //   color: "#ffffff",
-    //   backgroundColor: "#00000088",
-    //   padding: { x: 5, y: 3 },
-    //   lineSpacing: 3,
-    // };
+    const debugConfig = {
+      fontFamily: "VT323",
+      fontSize: "16px",
+      color: "#ffffff",
+      backgroundColor: "#00000088",
+      padding: { x: 5, y: 3 },
+      lineSpacing: 3,
+    };
 
     // Position below the existing inventory grid
-    // const gridBottom = uiRowY + gridRows * gridCellSize;
-    // this.debugText = this.add
-    //   .text(
-    //     gridX, // Same X as inventory grid
-    //     gridBottom + 10, // 10px spacing below grid
-    //     "Initializing game.... Press Arrow Keys / WASD to start",
-    //     debugConfig
-    //   )
-    //   .setScrollFactor(0)
-    //   .setDepth(9999)
-    //   .setOrigin(0, 0)
-    //   .setAlpha(0.8);
-    // uiContainer.add(this.debugText);
+    const gridBottom = uiRowY + gridRows * gridCellSize;
+    this.debugText = this.add
+      .text(
+        gridX, // Same X as inventory grid
+        gridBottom + 10, // 10px spacing below grid
+        "Initializing game.... Press Arrow Keys / WASD to start",
+        debugConfig
+      )
+      .setScrollFactor(0)
+      .setDepth(9999)
+      .setOrigin(0, 0)
+      .setAlpha(0.8);
+    uiContainer.add(this.debugText);
 
     // Create array to store enemies
     this.enemies = [];
@@ -1470,41 +1470,41 @@ const GameScene = Phaser.Class({
     }
 
     // Update debug text first
-    // if (this.debugText && this.player && this.weapons) {
-    //   try {
-    //     const weapon = this.weapons[this.gameState.selectedWeaponIndex];
-    //     const stats = weapon?.stats || {};
+    if (this.debugText && this.player && this.weapons) {
+      try {
+        const weapon = this.weapons[this.gameState.selectedWeaponIndex];
+        const stats = weapon?.stats || {};
 
-    //     // Create level progress bar
-    //     const maxBoxes = 8;
-    //     const filledBoxes = weapon?.currentLevel || 1;
-    //     const progressBar = Array(maxBoxes).fill("░").fill("█", 0, filledBoxes).join("");
+        // Create level progress bar
+        const maxBoxes = 8;
+        const filledBoxes = weapon?.currentLevel || 1;
+        const progressBar = Array(maxBoxes).fill("░").fill("█", 0, filledBoxes).join("");
 
-    //     const text = [
-    //       `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
-    //       `Active Weapons: ${this.weapons.length}`,
-    //       `Weapon Stats:`,
-    //       `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
-    //       `  Damage: ${stats.damage || 0}`,
-    //       `  Pierce: ${stats.pierce || 0}`,
-    //       `  Range: ${stats.range || 0}`,
-    //       `  Speed: ${stats.speed || 0}`,
-    //       ...(stats.magicPower
-    //         ? [
-    //             `  Magic Power: ${stats.magicPower}`,
-    //             `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
-    //             `  Elemental Damage: ${stats.elementalDamage}`,
-    //           ]
-    //         : []),
-    //       `FPS: ${Math.round(1000 / delta)}`,
-    //       `Time: ${Math.round(time / 1000)}s`,
-    //     ].join("\n");
+        const text = [
+          `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
+          `Active Weapons: ${this.weapons.length}`,
+          `Weapon Stats:`,
+          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
+          `  Damage: ${stats.damage || 0}`,
+          `  Pierce: ${stats.pierce || 0}`,
+          `  Range: ${stats.range || 0}`,
+          `  Speed: ${stats.speed || 0}`,
+          ...(stats.magicPower
+            ? [
+                `  Magic Power: ${stats.magicPower}`,
+                `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
+                `  Elemental Damage: ${stats.elementalDamage}`,
+              ]
+            : []),
+          `FPS: ${Math.round(1000 / delta)}`,
+          `Time: ${Math.round(time / 1000)}s`,
+        ].join("\n");
 
-    //     this.debugText.setText(text);
-    //   } catch (error) {
-    //     console.error("Error updating debug text:", error);
-    //   }
-    // }
+        this.debugText.setText(text);
+      } catch (error) {
+        console.error("Error updating debug text:", error);
+      }
+    }
 
     // Update coins
     if (this.coins) {
