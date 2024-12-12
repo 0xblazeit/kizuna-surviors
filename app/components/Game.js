@@ -15,6 +15,7 @@ import FlyingAxeWeapon from "../game/entities/weapons/FlyingAxeWeapon";
 import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
+import { usePrivy } from "@privy-io/react-auth";
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
@@ -1265,9 +1266,11 @@ const GameScene = Phaser.Class({
           gold: this.gameState.gold,
           kills: this.gameState.kills,
           timestamp: new Date().toISOString(),
+          userAddress: this.game.config.userInfo?.userAddress,
+          username: this.game.config.userInfo?.username,
         }),
       }).catch((error) => console.error("Error posting game stats:", error));
-
+      console.log("results posted:", this.game.config.userInfo?.userAddress, this.game.config.userInfo?.username);
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1591,6 +1594,9 @@ const GameScene = Phaser.Class({
 });
 
 export default function Game() {
+  const { ready, user } = usePrivy();
+  const userAddress = user?.wallet?.address;
+  const username = user?.twitter?.username;
   const gameRef = useRef(null);
 
   useEffect(() => {
@@ -1614,6 +1620,16 @@ export default function Game() {
           pixelPerfect: false,
         },
         scene: [MenuScene, GameScene, UpgradeMenuScene],
+        userInfo: {
+          userAddress: (() => {
+            console.log("Debug - userAddress:", userAddress);
+            return userAddress;
+          })(),
+          username: (() => {
+            console.log("Debug - username:", username);
+            return username;
+          })(),
+        },
       };
 
       const game = new Phaser.Game(config);
@@ -1622,7 +1638,7 @@ export default function Game() {
         game.destroy(true);
       };
     }
-  }, []);
+  }, [user, userAddress, username]);
 
   return (
     <div className="flex justify-center items-center w-screen h-screen bg-transparent">
