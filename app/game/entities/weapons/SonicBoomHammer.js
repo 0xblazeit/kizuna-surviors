@@ -423,9 +423,6 @@ export class SonicBoomHammer extends BaseWeapon {
         if (proj.pierceCount <= 0) {
             this.deactivateProjectile(proj);
         }
-
-        // Debug log for hit confirmation
-        // console.log(`Hammer hit enemy! Damage: ${finalDamage}, Critical: ${isCritical}`);
     }
 
     createHitEffect(enemy, proj, isCritical) {

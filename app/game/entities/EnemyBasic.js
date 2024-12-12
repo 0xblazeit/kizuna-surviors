@@ -121,7 +121,7 @@ class EnemyBasic extends BasePlayer {
     // Check if enemy is off screen
     const camera = this.scene.cameras.main;
     const margin = 100; // Add a small margin to prevent popping
-    const isOffScreen = 
+    const isOffScreen =
       this.sprite.x < camera.scrollX - margin ||
       this.sprite.x > camera.scrollX + camera.width + margin ||
       this.sprite.y < camera.scrollY - margin ||
@@ -134,13 +134,7 @@ class EnemyBasic extends BasePlayer {
     }
 
     // Only check isDead for movement, not isDying
-    if (
-      this.movementEnabled &&
-      !this.isStaggered &&
-      this.targetPlayer &&
-      this.targetPlayer.sprite &&
-      !this.isDead
-    ) {
+    if (this.movementEnabled && !this.isStaggered && this.targetPlayer && this.targetPlayer.sprite && !this.isDead) {
       // Calculate distance to player
       const dx = this.targetPlayer.sprite.x - this.sprite.x;
       const dy = this.targetPlayer.sprite.y - this.sprite.y;
@@ -152,16 +146,18 @@ class EnemyBasic extends BasePlayer {
 
       if (Array.isArray(this.scene.enemies)) {
         // Scale separation force based on distance to player
-        const distanceScale = Math.max(0, 1 - (distance / (this.attackRange * 2)));
-        const currentSeparationForce = this.baseSeparationForce + 
-          (this.maxSeparationForce - this.baseSeparationForce) * distanceScale;
+        const distanceScale = Math.max(0, 1 - distance / (this.attackRange * 2));
+        const currentSeparationForce =
+          this.baseSeparationForce + (this.maxSeparationForce - this.baseSeparationForce) * distanceScale;
 
         for (const otherEnemy of this.scene.enemies) {
-          if (otherEnemy && 
-              otherEnemy.sprite && 
-              otherEnemy !== this && 
-              !otherEnemy.isDead &&
-              otherEnemy.sprite.active) {
+          if (
+            otherEnemy &&
+            otherEnemy.sprite &&
+            otherEnemy !== this &&
+            !otherEnemy.isDead &&
+            otherEnemy.sprite.active
+          ) {
             const enemyDx = this.sprite.x - otherEnemy.sprite.x;
             const enemyDy = this.sprite.y - otherEnemy.sprite.y;
             const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
@@ -190,8 +186,8 @@ class EnemyBasic extends BasePlayer {
         const normalizedDy = dy / distance;
 
         // Apply movement with separation
-        this.sprite.x += (normalizedDx * this.moveSpeed) + separationX;
-        this.sprite.y += (normalizedDy * this.moveSpeed) + separationY;
+        this.sprite.x += normalizedDx * this.moveSpeed + separationX;
+        this.sprite.y += normalizedDy * this.moveSpeed + separationY;
 
         // Update sprite direction
         if (dx < 0) {
@@ -212,8 +208,7 @@ class EnemyBasic extends BasePlayer {
       }
 
       // Check if within attack range and cooldown is ready
-      if (distance <= this.attackRange && 
-          currentTime - this.lastAttackTime >= this.attackCooldown) {
+      if (distance <= this.attackRange && currentTime - this.lastAttackTime >= this.attackCooldown) {
         this.attackPlayer();
       }
     }
@@ -225,7 +220,7 @@ class EnemyBasic extends BasePlayer {
       const dx = this.targetPlayer.sprite.x - this.sprite.x;
       const dy = this.targetPlayer.sprite.y - this.sprite.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (distance > this.minDistance) {
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
@@ -251,15 +246,10 @@ class EnemyBasic extends BasePlayer {
 
     // Show damage number for every hit
     const damageText = this.scene.add
-      .text(
-        this.sprite.x,
-        this.sprite.y - 20,
-        damageDealt.toString(),
-        {
-          fontSize: "16px",
-          fill: "#ffffff",
-        }
-      )
+      .text(this.sprite.x, this.sprite.y - 20, damageDealt.toString(), {
+        fontSize: "16px",
+        fill: "#ffffff",
+      })
       .setDepth(100);
 
     // Animate the damage text
@@ -277,10 +267,10 @@ class EnemyBasic extends BasePlayer {
     // Flash white when hit
     if (this.sprite) {
       // Apply a more intense white flash
-      this.sprite.setAlpha(1);  // Ensure full opacity
-      this.sprite.setBlendMode(Phaser.BlendModes.ADD);  // Make the white more vibrant
+      this.sprite.setAlpha(1); // Ensure full opacity
+      this.sprite.setBlendMode(Phaser.BlendModes.ADD); // Make the white more vibrant
       this.sprite.setTint(0xffffff);
-      
+
       // Clear the flash effect after duration
       this.scene.time.delayedCall(this.hitFlashDuration, () => {
         if (this.sprite && !this.isDead) {
@@ -358,17 +348,12 @@ class EnemyBasic extends BasePlayer {
 
     // Update health bar container position to follow enemy
     if (this.healthBar) {
-      this.healthBar.container.setPosition(
-        this.sprite.x,
-        this.sprite.y + this.healthBar.spacing
-      );
+      this.healthBar.container.setPosition(this.sprite.x, this.sprite.y + this.healthBar.spacing);
     }
   }
 
   playDeathAnimation() {
     return new Promise((resolve) => {
-      // console.log('Setting up death animation');
-      // Create a flash effect
       this.sprite.setTint(0xffffff); // White flash
 
       // Create a fade out and scale down effect
@@ -379,7 +364,6 @@ class EnemyBasic extends BasePlayer {
         duration: 300,
         ease: "Power2",
         onComplete: () => {
-          //console.log('Tween complete, creating particles');
           try {
             // Create custom particle effects
             const numParticles = 12;
@@ -451,7 +435,6 @@ class EnemyBasic extends BasePlayer {
 
             // Resolve after particles are done
             this.scene.time.delayedCall(500, () => {
-              console.log("Animation complete");
               resolve();
             });
           } catch (error) {
@@ -466,14 +449,11 @@ class EnemyBasic extends BasePlayer {
   onDeath() {
     // Only check isDead
     if (this.isDead) {
-      console.log("Death already being processed, skipping");
       return;
     }
 
-    console.log("Enemy death triggered");
     // Clean up health bar
     if (this.healthBar) {
-      console.log("Cleaning up health bar");
       this.healthBar.container.destroy();
     }
 
@@ -482,11 +462,8 @@ class EnemyBasic extends BasePlayer {
     this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
 
     // Play death animation
-    console.log("Starting death animation");
     this.playDeathAnimation().then(() => {
-      console.log("Death animation completed");
       if (this.sprite) {
-        console.log("Destroying sprite");
         this.sprite.destroy();
       }
       // Emit any necessary events or handle additional cleanup
@@ -538,25 +515,14 @@ class EnemyBasic extends BasePlayer {
           const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
           const offsetX = Math.cos(angle) * radius;
           const offsetY = Math.sin(angle) * radius;
-          
-          const coin = new Coin(
-            this.scene,
-            this.sprite.x + offsetX,
-            this.sprite.y + offsetY,
-            coinValue
-          );
+
+          const coin = new Coin(this.scene, this.sprite.x + offsetX, this.sprite.y + offsetY, coinValue);
           if (coin) {
             this.scene.coins.push(coin);
           }
         }
       } else {
-        const gem = new XPGem(
-          this.scene,
-          this.sprite.x,
-          this.sprite.y,
-          50,
-          0.12
-        );
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
         if (gem) {
           this.scene.xpGems.push(gem);
         }
