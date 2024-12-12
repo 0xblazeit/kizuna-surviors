@@ -93,7 +93,15 @@ export function Arena() {
                   )}
                 </p>
                 <p className="text-white/50">
-                  Chain: <span className="text-white">Shape L2</span>
+                  Chain:{" "}
+                  <a
+                    href="https://chainlist.org/?search=shape"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cursor-pointer hover:underline"
+                  >
+                    <span className="text-white">Shape L2</span>
+                  </a>
                 </p>
                 <div className="text-sm md:text-lg">
                   <span className="text-white/50">Balance: </span>
@@ -116,7 +124,7 @@ export function Arena() {
           <Leaderboard />
         </div>
       </div>
-      <div className="flex flex-col items-center w-full gap-4">
+      <div className="flex flex-col gap-4 items-center w-full">
         <NftView walletAddress={user?.wallet?.address} />
         <div className="flex justify-center w-full">
           <Game />

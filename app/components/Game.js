@@ -891,7 +891,7 @@ const GameScene = Phaser.Class({
       .text(
         gridX, // Same X as inventory grid
         gridBottom + 10, // 10px spacing below grid
-        "Initializing game.... Press Arrow Keys / WASD to start",
+        "Press Arrow Keys / WASD to start",
         debugConfig
       )
       .setScrollFactor(0)
@@ -1520,40 +1520,43 @@ const GameScene = Phaser.Class({
 
     // Update debug text first
     if (this.debugText && this.player && this.weapons) {
-      try {
-        const weapon = this.weapons[this.gameState.selectedWeaponIndex];
-        const stats = weapon?.stats || {};
-
-        // Create level progress bar
-        const maxBoxes = 8;
-        const filledBoxes = weapon?.currentLevel || 1;
-        const progressBar = Array(maxBoxes).fill("░").fill("█", 0, filledBoxes).join("");
-
-        const text = [
-          `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
-          `Active Weapons: ${this.weapons.length}`,
-          `Weapon Stats:`,
-          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
-          `  Damage: ${stats.damage || 0}`,
-          `  Pierce: ${stats.pierce || 0}`,
-          `  Range: ${stats.range || 0}`,
-          `  Speed: ${stats.speed || 0}`,
-          ...(stats.magicPower
-            ? [
-                `  Magic Power: ${stats.magicPower}`,
-                `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
-                `  Elemental Damage: ${stats.elementalDamage}`,
-              ]
-            : []),
-          `FPS: ${Math.round(1000 / delta)}`,
-          `Time: ${Math.round(time / 1000)}s`,
-        ].join("\n");
-
-        this.debugText.setText(text);
-      } catch (error) {
-        console.error("Error updating debug text:", error);
-      }
+      this.debugText.setVisible(false);
     }
+    // if (this.debugText && this.player && this.weapons) {
+    //   try {
+    //     const weapon = this.weapons[this.gameState.selectedWeaponIndex];
+    //     const stats = weapon?.stats || {};
+
+    //     // Create level progress bar
+    //     const maxBoxes = 8;
+    //     const filledBoxes = weapon?.currentLevel || 1;
+    //     const progressBar = Array(maxBoxes).fill("░").fill("█", 0, filledBoxes).join("");
+
+    //     const text = [
+    //       `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
+    //       `Active Weapons: ${this.weapons.length}`,
+    //       `Weapon Stats:`,
+    //       `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
+    //       `  Damage: ${stats.damage || 0}`,
+    //       `  Pierce: ${stats.pierce || 0}`,
+    //       `  Range: ${stats.range || 0}`,
+    //       `  Speed: ${stats.speed || 0}`,
+    //       ...(stats.magicPower
+    //         ? [
+    //             `  Magic Power: ${stats.magicPower}`,
+    //             `  Critical Chance: ${Math.round(stats.criticalChance * 100)}%`,
+    //             `  Elemental Damage: ${stats.elementalDamage}`,
+    //           ]
+    //         : []),
+    //       `FPS: ${Math.round(1000 / delta)}`,
+    //       `Time: ${Math.round(time / 1000)}s`,
+    //     ].join("\n");
+
+    //     this.debugText.setText(text);
+    //   } catch (error) {
+    //     console.error("Error updating debug text:", error);
+    //   }
+    // }
 
     // Update coins
     if (this.coins) {
