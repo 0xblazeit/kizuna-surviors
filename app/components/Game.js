@@ -18,21 +18,21 @@ import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
-  'enemy-basic-one',
-  'enemy-basic-two',
-  'enemy-basic-three',
-  'enemy-basic-four',
-  'enemy-basic-five',
-  'enemy-basic-six'
+  "enemy-basic-one",
+  "enemy-basic-two",
+  "enemy-basic-three",
+  "enemy-basic-four",
+  "enemy-basic-five",
+  "enemy-basic-six",
 ];
 
 const ENEMY_ADVANCED_SPRITES = [
-  'enemy-advanced-one',
-  'enemy-advanced-two',
-  'enemy-advanced-three',
-  'enemy-advanced-four',
-  'enemy-advanced-five',
-  'enemy-advanced-six'
+  "enemy-advanced-one",
+  "enemy-advanced-two",
+  "enemy-advanced-three",
+  "enemy-advanced-four",
+  "enemy-advanced-five",
+  "enemy-advanced-six",
 ];
 
 const ENEMY_EPIC_SPRITES = [
@@ -100,9 +100,7 @@ const GameScene = Phaser.Class({
       this.xpBarFill.clear();
       this.xpBarFill.fillStyle(0x4444ff, 0.8);
       this.xpBarFill.fillRect(22, 22, progress * fillWidth, 16);
-      this.xpText.setText(
-        `Level ${this.gameState.level} (${this.gameState.xp}/${this.gameState.xpToNextLevel} XP)`
-      );
+      this.xpText.setText(`Level ${this.gameState.level} (${this.gameState.xp}/${this.gameState.xpToNextLevel} XP)`);
     };
 
     this.weaponInitialized = false;
@@ -127,174 +125,92 @@ const GameScene = Phaser.Class({
     });
 
     // Load enemy sprites
-    this.load.svg(
-      "enemy-basic-one",
-      "/assets/game/characters/enemies-basic/basic-one.svg"
-    );
-    this.load.svg(
-      "enemy-basic-two",
-      "/assets/game/characters/enemies-basic/basic-two.svg"
-    );
-    this.load.svg(
-      "enemy-basic-three",
-      "/assets/game/characters/enemies-basic/basic-three.svg"
-    );
-    this.load.svg(
-      "enemy-basic-four",
-      "/assets/game/characters/enemies-basic/basic-four.svg"
-    );
-    this.load.svg(
-      "enemy-basic-five",
-      "/assets/game/characters/enemies-basic/basic-five.svg"
-    );
-    this.load.svg(
-      "enemy-basic-six",
-      "/assets/game/characters/enemies-basic/basic-six.svg"
-    );
+    this.load.svg("enemy-basic-one", "/assets/game/characters/enemies-basic/basic-one.svg");
+    this.load.svg("enemy-basic-two", "/assets/game/characters/enemies-basic/basic-two.svg");
+    this.load.svg("enemy-basic-three", "/assets/game/characters/enemies-basic/basic-three.svg");
+    this.load.svg("enemy-basic-four", "/assets/game/characters/enemies-basic/basic-four.svg");
+    this.load.svg("enemy-basic-five", "/assets/game/characters/enemies-basic/basic-five.svg");
+    this.load.svg("enemy-basic-six", "/assets/game/characters/enemies-basic/basic-six.svg");
 
     // Load advanced enemy sprites
-    this.load.svg(
-      "enemy-advanced-one",
-      "/assets/game/characters/enemies-advanced/advanced-one.svg", {
-        scale: 0.5,  
-      });
-    this.load.svg(
-      "enemy-advanced-two",
-      "/assets/game/characters/enemies-advanced/advanced-two.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-advanced-three",
-      "/assets/game/characters/enemies-advanced/advanced-three.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-advanced-four",
-      "/assets/game/characters/enemies-advanced/advanced-four.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-advanced-five",
-      "/assets/game/characters/enemies-advanced/advanced-five.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-advanced-six",
-      "/assets/game/characters/enemies-advanced/advanced-six.svg", {
-        scale: 0.5,
-      });
+    this.load.svg("enemy-advanced-one", "/assets/game/characters/enemies-advanced/advanced-one.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-advanced-two", "/assets/game/characters/enemies-advanced/advanced-two.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-advanced-three", "/assets/game/characters/enemies-advanced/advanced-three.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-advanced-four", "/assets/game/characters/enemies-advanced/advanced-four.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-advanced-five", "/assets/game/characters/enemies-advanced/advanced-five.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-advanced-six", "/assets/game/characters/enemies-advanced/advanced-six.svg", {
+      scale: 0.5,
+    });
 
     // Load epic enemy sprites
-    this.load.svg(
-      "enemy-epic-one",
-      "/assets/game/characters/enemies-epic/epic-one.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-epic-two",
-      "/assets/game/characters/enemies-epic/epic-two.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-epic-three",
-      "/assets/game/characters/enemies-epic/epic-three.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-epic-four",
-      "/assets/game/characters/enemies-epic/epic-four.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-epic-five",
-      "/assets/game/characters/enemies-epic/epic-five.svg", {
-        scale: 0.5,
-      });
-    this.load.svg(
-      "enemy-epic-six",
-      "/assets/game/characters/enemies-epic/epic-six.svg", {
-        scale: 0.5,
-      });
+    this.load.svg("enemy-epic-one", "/assets/game/characters/enemies-epic/epic-one.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-epic-two", "/assets/game/characters/enemies-epic/epic-two.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-epic-three", "/assets/game/characters/enemies-epic/epic-three.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-epic-four", "/assets/game/characters/enemies-epic/epic-four.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-epic-five", "/assets/game/characters/enemies-epic/epic-five.svg", {
+      scale: 0.5,
+    });
+    this.load.svg("enemy-epic-six", "/assets/game/characters/enemies-epic/epic-six.svg", {
+      scale: 0.5,
+    });
 
     // Load special enemy sprites
-    this.load.svg(
-      "enemy-shooter",
-      "/assets/game/characters/enemies-special/enemy-shooter.svg",
-      {
-        scale: 1.4
-      }
-    );
+    this.load.svg("enemy-shooter", "/assets/game/characters/enemies-special/enemy-shooter.svg", {
+      scale: 1.4,
+    });
 
     // Load weapon sprites
-    this.load.svg(
-      "weapon-dog-projectile",
-      "/assets/game/weapons/weapon-dog-projectile.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-wand-icon",
-      "/assets/game/weapons/weapon-wand-icon.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-wand-projectile",
-      "/assets/game/weapons/weapon-wand-projectile.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-hotdog-projectile",
-      "/assets/game/weapons/weapon-hotdog-projectile.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-axe-projectile",
-      "/assets/game/weapons/weapon-axe-projectile.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-hammer-projectile",
-      "/assets/game/weapons/weapon-hammer-projectile.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-magic-milk",
-      "/assets/game/weapons/weapon-magic-milk.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-shapecraft-key",
-      "/assets/game/weapons/weapon-shapecraft-key.svg?v=1",
-      {
-        scale: 0.5,
-      }
-    );
-    this.load.svg(
-      "weapon-skull-projectile",
-      "/assets/game/weapons/weapon-skull-projectile.svg?v=1",
-      {
-        scale: 1.2,
-      }
-    );
+    this.load.svg("weapon-dog-projectile", "/assets/game/weapons/weapon-dog-projectile.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-wand-icon", "/assets/game/weapons/weapon-wand-icon.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-wand-projectile", "/assets/game/weapons/weapon-wand-projectile.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-hotdog-projectile", "/assets/game/weapons/weapon-hotdog-projectile.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-axe-projectile", "/assets/game/weapons/weapon-axe-projectile.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-hammer-projectile", "/assets/game/weapons/weapon-hammer-projectile.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-magic-milk", "/assets/game/weapons/weapon-magic-milk.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-shapecraft-key", "/assets/game/weapons/weapon-shapecraft-key.svg?v=1", {
+      scale: 0.5,
+    });
+    this.load.svg("weapon-skull-projectile", "/assets/game/weapons/weapon-skull-projectile.svg?v=1", {
+      scale: 1.2,
+    });
 
     // Load XP gem with correct path
     this.load.image("powerup-xp-gem", "/assets/game/powerups/xp-gem.svg");
   },
 
-  spawnEnemies: function() {
+  spawnEnemies: function () {
     if (!this.gameState.gameStarted || this.enemies.length >= this.gameState.maxEnemies) return;
 
     // Calculate game progress (0 to 1) based on 30-minute max time
@@ -318,7 +234,7 @@ const GameScene = Phaser.Class({
     // Get spawn position
     const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
     const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
-    
+
     let enemy;
     const roll = Math.random();
 
@@ -338,12 +254,10 @@ const GameScene = Phaser.Class({
           maxHealth: 80,
           moveSpeed: 1.4,
           attackRange: 250,
-          projectileSpeed: 200
+          projectileSpeed: 200,
         });
       } else if (roll < 0.4) {
-        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
-          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
-        ];
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
           moveSpeed: 2.0,
@@ -367,12 +281,10 @@ const GameScene = Phaser.Class({
           maxHealth: 80,
           moveSpeed: 1.4,
           attackRange: 250,
-          projectileSpeed: 200
+          projectileSpeed: 200,
         });
       } else if (roll < 0.5) {
-        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
-          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
-        ];
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
           moveSpeed: 2.0,
@@ -381,9 +293,7 @@ const GameScene = Phaser.Class({
           scale: 0.5,
         });
       } else if (roll < 0.65) {
-        const randomEpicSprite = ENEMY_EPIC_SPRITES[
-          Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)
-        ];
+        const randomEpicSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
           moveSpeed: 2.2,
@@ -407,12 +317,10 @@ const GameScene = Phaser.Class({
           maxHealth: 80,
           moveSpeed: 1.4,
           attackRange: 250,
-          projectileSpeed: 200
+          projectileSpeed: 200,
         });
       } else if (roll < 0.5) {
-        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[
-          Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)
-        ];
+        const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
           moveSpeed: 2.0,
@@ -421,9 +329,7 @@ const GameScene = Phaser.Class({
           scale: 0.5,
         });
       } else if (roll < 0.75) {
-        const randomEpicSprite = ENEMY_EPIC_SPRITES[
-          Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)
-        ];
+        const randomEpicSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
           moveSpeed: 2.2,
@@ -450,13 +356,13 @@ const GameScene = Phaser.Class({
     this.enemies.push(enemy);
   },
 
-  startGame: function() {
+  startGame: function () {
     // Initial enemy spawn
     for (let i = 0; i < 15; i++) {
       const randomX = Phaser.Math.Between(100, this.scale.width * 2 - 100);
       const randomY = Phaser.Math.Between(100, this.scale.height * 2 - 100);
       const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
-      
+
       const enemy = new EnemyBasic(this, randomX, randomY, randomSprite, {
         type: "basic",
         scale: 0.3,
@@ -481,7 +387,7 @@ const GameScene = Phaser.Class({
     });
 
     // Initialize weapons
-    this.weapons.forEach(weapon => {
+    this.weapons.forEach((weapon) => {
       if (weapon.initialize) {
         weapon.initialize();
       }
@@ -567,13 +473,7 @@ const GameScene = Phaser.Class({
     const xpBarY = 20;
 
     // XP Bar background
-    const xpBarBg = this.add.rectangle(
-      20,
-      xpBarY,
-      xpBarWidth,
-      xpBarHeight,
-      0x000000
-    );
+    const xpBarBg = this.add.rectangle(20, xpBarY, xpBarWidth, xpBarHeight, 0x000000);
     xpBarBg.setOrigin(0, 0);
     xpBarBg.setStrokeStyle(2, 0x666666);
     uiContainer.add(xpBarBg);
@@ -654,10 +554,7 @@ const GameScene = Phaser.Class({
         );
 
         // Set initial stroke style with white highlight instead of green
-        const strokeColor =
-          cellIndex === this.gameState.selectedWeaponIndex
-            ? 0xffffff
-            : 0x666666;
+        const strokeColor = cellIndex === this.gameState.selectedWeaponIndex ? 0xffffff : 0x666666;
         cell.setStrokeStyle(2, strokeColor);
 
         // Make cell interactive and ensure it stays interactive
@@ -844,32 +741,19 @@ const GameScene = Phaser.Class({
 
     // Add header for stats
     const statsHeader = this.add
-      .text(
-        statsX,
-        uiRowY + 174,
-        "--- Player Stats ---",
-        {
-          ...statsStyle,
-          color: "#ffffff",
-        }
-      )
+      .text(statsX, uiRowY + 174, "--- Player Stats ---", {
+        ...statsStyle,
+        color: "#ffffff",
+      })
       .setOrigin(1, 0);
     uiContainer.add(statsHeader);
 
     // Create stats text objects (adjusted spacing)
     this.statsTexts = {
-      health: this.add
-        .text(statsX, uiRowY + 200, "", statsStyle)
-        .setOrigin(1, 0),
-      attack: this.add
-        .text(statsX, uiRowY + 222, "", statsStyle)
-        .setOrigin(1, 0),
-      defense: this.add
-        .text(statsX, uiRowY + 244, "", statsStyle)
-        .setOrigin(1, 0),
-      speed: this.add
-        .text(statsX, uiRowY + 266, "", statsStyle)
-        .setOrigin(1, 0),
+      health: this.add.text(statsX, uiRowY + 200, "", statsStyle).setOrigin(1, 0),
+      attack: this.add.text(statsX, uiRowY + 222, "", statsStyle).setOrigin(1, 0),
+      defense: this.add.text(statsX, uiRowY + 244, "", statsStyle).setOrigin(1, 0),
+      speed: this.add.text(statsX, uiRowY + 266, "", statsStyle).setOrigin(1, 0),
       // Add leaderboard section
       leaderboardHeader: this.add
         .text(statsX, uiRowY + 306, "--- Leaderboard ---", {
@@ -883,11 +767,9 @@ const GameScene = Phaser.Class({
           color: "#ffff00",
         })
         .setOrigin(1, 0),
-      leaderboardEntries: Array(5).fill(null).map((_, i) => 
-        this.add
-          .text(statsX, uiRowY + 354 + (i * 22), "", statsStyle)
-          .setOrigin(1, 0)
-      ),
+      leaderboardEntries: Array(5)
+        .fill(null)
+        .map((_, i) => this.add.text(statsX, uiRowY + 354 + i * 22, "", statsStyle).setOrigin(1, 0)),
     };
     uiContainer.add(Object.values(this.statsTexts).flat());
 
@@ -896,10 +778,7 @@ const GameScene = Phaser.Class({
       if (!this.player) return;
 
       const stats = this.player.stats;
-      console.log(
-        "Current selectedWeaponIndex:",
-        this.gameState.selectedWeaponIndex
-      );
+      console.log("Current selectedWeaponIndex:", this.gameState.selectedWeaponIndex);
       console.log("Available weapons:", this.weapons.length);
       console.log(
         "Weapons array:",
@@ -926,31 +805,19 @@ const GameScene = Phaser.Class({
             : null;
 
           // Use level-specific stats if available, otherwise use base stats
-          const currentDamage = levelConfig
-            ? levelConfig.damage
-            : weaponStats.damage;
-          const currentPierce = levelConfig
-            ? levelConfig.pierce
-            : weaponStats.pierce;
-          const currentCooldown = levelConfig
-            ? levelConfig.cooldown
-            : weaponStats.cooldown;
+          const currentDamage = levelConfig ? levelConfig.damage : weaponStats.damage;
+          const currentPierce = levelConfig ? levelConfig.pierce : weaponStats.pierce;
+          const currentCooldown = levelConfig ? levelConfig.cooldown : weaponStats.cooldown;
 
-          displayStats.attack = `ATK: ${(stats.damage + currentDamage).toFixed(
-            1
-          )}`;
+          displayStats.attack = `ATK: ${(stats.damage + currentDamage).toFixed(1)}`;
           displayStats.attack += ` Pierce: ${currentPierce}`;
           if (currentCooldown) {
-            displayStats.attack += ` (${(1000 / currentCooldown).toFixed(
-              1
-            )}/s)`;
+            displayStats.attack += ` (${(1000 / currentCooldown).toFixed(1)}/s)`;
           }
 
           // Add additional weapon stats if available
           if (weaponStats.criticalChance) {
-            displayStats.attack += ` Crit: ${(
-              weaponStats.criticalChance * 100
-            ).toFixed(0)}%`;
+            displayStats.attack += ` Crit: ${(weaponStats.criticalChance * 100).toFixed(0)}%`;
           }
         }
       }
@@ -963,22 +830,20 @@ const GameScene = Phaser.Class({
     };
 
     // Fetch and display leaderboard data
-    fetch('/api/game-results')
-      .then(response => response.json())
-      .then(data => {
+    fetch("/api/game-results")
+      .then((response) => response.json())
+      .then((data) => {
         data.data.forEach((entry, index) => {
           if (index < 5) {
             // Format each entry with proper spacing for columns
             const rank = `#${index + 1}`.padEnd(8);
             const gold = `${entry.gold}`.padEnd(9);
             const kills = `${entry.kills}`;
-            this.statsTexts.leaderboardEntries[index].setText(
-              `${rank}${gold}${kills}`
-            );
+            this.statsTexts.leaderboardEntries[index].setText(`${rank}${gold}${kills}`);
           }
         });
       })
-      .catch(error => console.error('Error fetching leaderboard:', error));
+      .catch((error) => console.error("Error fetching leaderboard:", error));
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -1065,10 +930,7 @@ const GameScene = Phaser.Class({
 
         // Calculate game progress (0 to 1) based on 30-minute max time
         const maxGameTime = 1800; // 30 minutes in seconds
-        const gameProgress = Math.min(
-          this.gameState.gameTimer / maxGameTime,
-          1
-        );
+        const gameProgress = Math.min(this.gameState.gameTimer / maxGameTime, 1);
 
         // Update wave timer and check for new wave
         this.gameState.enemyWaveTimer += this.gameState.spawnRate / 1000;
@@ -1085,18 +947,13 @@ const GameScene = Phaser.Class({
 
           // Announce new wave
           const waveText = this.add
-            .text(
-              this.cameras.main.centerX,
-              100,
-              `Wave ${this.gameState.waveNumber}`,
-              {
-                fontFamily: "VT323",
-                fontSize: "48px",
-                color: "#ff0000",
-                stroke: "#000000",
-                strokeThickness: 4,
-              }
-            )
+            .text(this.cameras.main.centerX, 100, `Wave ${this.gameState.waveNumber}`, {
+              fontFamily: "VT323",
+              fontSize: "48px",
+              color: "#ff0000",
+              stroke: "#000000",
+              strokeThickness: 4,
+            })
             .setOrigin(0.5);
           waveText.setScrollFactor(0);
 
@@ -1121,10 +978,7 @@ const GameScene = Phaser.Class({
           const baseAngle = this.gameState.waveNumber * goldenAngle;
 
           // Get random distance between min and max
-          const distance = Phaser.Math.Between(
-            minSpawnDistance,
-            maxSpawnDistance
-          );
+          const distance = Phaser.Math.Between(minSpawnDistance, maxSpawnDistance);
 
           // Calculate angle using golden ratio for better distribution
           const angle = baseAngle + Math.random() * Math.PI * 2;
@@ -1136,16 +990,8 @@ const GameScene = Phaser.Class({
           // Clamp to world bounds with padding
           const padding = 50;
           return {
-            x: Phaser.Math.Clamp(
-              spawnX,
-              padding,
-              this.physics.world.bounds.width - padding
-            ),
-            y: Phaser.Math.Clamp(
-              spawnY,
-              padding,
-              this.physics.world.bounds.height - padding
-            ),
+            x: Phaser.Math.Clamp(spawnX, padding, this.physics.world.bounds.width - padding),
+            y: Phaser.Math.Clamp(spawnY, padding, this.physics.world.bounds.height - padding),
           };
         };
 
@@ -1174,13 +1020,19 @@ const GameScene = Phaser.Class({
         } else if (this.gameState.gameTimer < 200) {
           // 45-200 seconds - 70% advanced, 30% basic
           if (roll < 0.7) {
-            enemy = new EnemyAdvanced(this, x, y, enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)], {
-              maxHealth: 300,
-              moveSpeed: 2.0,
-              defense: 2,
-              attackDamage: 12,
-              scale: 0.5,
-            });
+            enemy = new EnemyAdvanced(
+              this,
+              x,
+              y,
+              enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)],
+              {
+                maxHealth: 300,
+                moveSpeed: 2.0,
+                defense: 2,
+                attackDamage: 12,
+                scale: 0.5,
+              }
+            );
           } else {
             enemy = new EnemyBasic(this, x, y, enemySprites[Math.floor(Math.random() * enemySprites.length)], {
               maxHealth: 100,
@@ -1201,13 +1053,19 @@ const GameScene = Phaser.Class({
               scale: 0.6,
             });
           } else if (roll < 0.8) {
-            enemy = new EnemyAdvanced(this, x, y, enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)], {
-              maxHealth: 300,
-              moveSpeed: 2.0,
-              defense: 2,
-              attackDamage: 12,
-              scale: 0.5,
-            });
+            enemy = new EnemyAdvanced(
+              this,
+              x,
+              y,
+              enemyAdvancedSprites[Math.floor(Math.random() * enemyAdvancedSprites.length)],
+              {
+                maxHealth: 300,
+                moveSpeed: 2.0,
+                defense: 2,
+                attackDamage: 12,
+                scale: 0.5,
+              }
+            );
           } else {
             enemy = new EnemyBasic(this, x, y, enemySprites[Math.floor(Math.random() * enemySprites.length)], {
               maxHealth: 100,
@@ -1232,14 +1090,8 @@ const GameScene = Phaser.Class({
         });
 
         // Increase max enemies and decrease spawn rate based on wave number
-        this.gameState.maxEnemies = Math.min(
-          50,
-          15 + Math.floor(this.gameState.waveNumber / 2)
-        );
-        this.gameState.spawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          1000 - this.gameState.waveNumber * 50
-        );
+        this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
+        this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 1000 - this.gameState.waveNumber * 50);
         this.enemySpawnTimer.delay = this.gameState.spawnRate;
 
         // Enhanced enemy movement behavior
@@ -1278,10 +1130,8 @@ const GameScene = Phaser.Class({
               // 1 second sidestep
               const perpAngle = angle + Math.PI / 2;
               const sideStepSpeed = speed * 0.5;
-              this.sprite.body.velocity.x +=
-                Math.cos(perpAngle) * sideStepSpeed;
-              this.sprite.body.velocity.y +=
-                Math.sin(perpAngle) * sideStepSpeed;
+              this.sprite.body.velocity.x += Math.cos(perpAngle) * sideStepSpeed;
+              this.sprite.body.velocity.y += Math.sin(perpAngle) * sideStepSpeed;
             }
           }
 
@@ -1408,19 +1258,14 @@ const GameScene = Phaser.Class({
     this.wastedOverlay.add(blackOverlay);
 
     // WASTED text (positioned at camera center)
-    const wastedText = this.add.text(
-      this.scale.width / 2,
-      this.scale.height / 2,
-      "WASTED",
-      {
-        fontFamily: "Arial Black",
-        fontSize: "128px",
-        color: "#FF0000",
-        stroke: "#000000",
-        strokeThickness: 8,
-        align: "center",
-      }
-    );
+    const wastedText = this.add.text(this.scale.width / 2, this.scale.height / 2, "WASTED", {
+      fontFamily: "Arial Black",
+      fontSize: "128px",
+      color: "#FF0000",
+      stroke: "#000000",
+      strokeThickness: 8,
+      align: "center",
+    });
     wastedText.setOrigin(0.5);
     wastedText.setAlpha(0);
     this.wastedOverlay.add(wastedText);
@@ -1529,18 +1374,7 @@ const GameScene = Phaser.Class({
       const keyHandler = (event) => {
         const key = event.key.toUpperCase();
         // Check for WASD or Arrow keys
-        if (
-          [
-            "W",
-            "A",
-            "S",
-            "D",
-            "ARROWUP",
-            "ARROWLEFT",
-            "ARROWDOWN",
-            "ARROWRIGHT",
-          ].includes(key)
-        ) {
+        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
           restartGame();
         }
       };
@@ -1583,21 +1417,14 @@ const GameScene = Phaser.Class({
     this.timerEvent = this.time.addEvent({
       delay: 1000,
       callback: () => {
-        if (
-          !scene.gameState.timerStarted ||
-          scene.gameState.gameTimer >= 1800
-        ) {
+        if (!scene.gameState.timerStarted || scene.gameState.gameTimer >= 1800) {
           return; // 30 minutes = 1800 seconds
         }
 
         scene.gameState.gameTimer++;
         const minutes = Math.floor(scene.gameState.gameTimer / 60);
         const seconds = Math.floor(scene.gameState.gameTimer % 60);
-        scene.timerText.setText(
-          `${minutes.toString().padStart(2, "0")}:${seconds
-            .toString()
-            .padStart(2, "0")}`
-        );
+        scene.timerText.setText(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
       },
       callbackScope: this,
       loop: true,
@@ -1608,14 +1435,22 @@ const GameScene = Phaser.Class({
     if (!this.gameState.gameStarted) {
       const keys = this.input.keyboard.createCursorKeys();
       const wasd = {
-        up: this.input.keyboard.addKey('W'),
-        down: this.input.keyboard.addKey('S'),
-        left: this.input.keyboard.addKey('A'),
-        right: this.input.keyboard.addKey('D')
+        up: this.input.keyboard.addKey("W"),
+        down: this.input.keyboard.addKey("S"),
+        left: this.input.keyboard.addKey("A"),
+        right: this.input.keyboard.addKey("D"),
       };
-      
-      if (keys.left.isDown || keys.right.isDown || keys.up.isDown || keys.down.isDown ||
-          wasd.left.isDown || wasd.right.isDown || wasd.up.isDown || wasd.down.isDown) {
+
+      if (
+        keys.left.isDown ||
+        keys.right.isDown ||
+        keys.up.isDown ||
+        keys.down.isDown ||
+        wasd.left.isDown ||
+        wasd.right.isDown ||
+        wasd.up.isDown ||
+        wasd.down.isDown
+      ) {
         this.gameState.gameStarted = true;
         this.startGame();
       }
@@ -1629,16 +1464,13 @@ const GameScene = Phaser.Class({
       left: camera.scrollX - margin,
       right: camera.scrollX + camera.width + margin,
       top: camera.scrollY - margin,
-      bottom: camera.scrollY + camera.height + margin
+      bottom: camera.scrollY + camera.height + margin,
     };
 
     // Helper function to check if an object is on screen
     const isOnScreen = (sprite) => {
       if (!sprite || !sprite.active) return false;
-      return sprite.x >= bounds.left && 
-             sprite.x <= bounds.right && 
-             sprite.y >= bounds.top && 
-             sprite.y <= bounds.bottom;
+      return sprite.x >= bounds.left && sprite.x <= bounds.right && sprite.y >= bounds.top && sprite.y <= bounds.bottom;
     };
 
     // Handle player movement using the new system
@@ -1662,20 +1494,13 @@ const GameScene = Phaser.Class({
         // Create level progress bar
         const maxBoxes = 8;
         const filledBoxes = weapon?.currentLevel || 1;
-        const progressBar = Array(maxBoxes)
-          .fill("░")
-          .fill("█", 0, filledBoxes)
-          .join("");
+        const progressBar = Array(maxBoxes).fill("░").fill("█", 0, filledBoxes).join("");
 
         const text = [
-          `Position: (${Math.round(this.player.x)}, ${Math.round(
-            this.player.y
-          )})`,
+          `Position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`,
           `Active Weapons: ${this.weapons.length}`,
           `Weapon Stats:`,
-          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${
-            weapon?.maxLevel || 8
-          }`,
+          `  Level: [${progressBar}] ${weapon?.currentLevel || 1}/${weapon?.maxLevel || 8}`,
           `  Damage: ${stats.damage || 0}`,
           `  Pierce: ${stats.pierce || 0}`,
           `  Range: ${stats.range || 0}`,
@@ -1710,7 +1535,7 @@ const GameScene = Phaser.Class({
     // Update all enemies with screen check optimization
     if (this.enemies) {
       this.enemies.forEach((enemy, index) => {
-        if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === 'function') {
+        if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === "function") {
           try {
             // Only perform full update if enemy is on screen
             const onScreen = isOnScreen(enemy.sprite);
@@ -1725,7 +1550,7 @@ const GameScene = Phaser.Class({
             enemy.isDead = true;
           }
         }
-        
+
         // Remove dead enemies or enemies without sprites
         if (enemy && (enemy.isDead || !enemy.sprite)) {
           if (enemy.sprite) {
@@ -1736,7 +1561,7 @@ const GameScene = Phaser.Class({
       });
 
       // Clean up null entries
-      this.enemies = this.enemies.filter(enemy => enemy !== null && enemy.sprite);
+      this.enemies = this.enemies.filter((enemy) => enemy !== null && enemy.sprite);
     }
 
     // Update all weapons with screen check optimization
@@ -1816,11 +1641,8 @@ export default function Game() {
   }, []);
 
   return (
-    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
-      <div
-        ref={gameRef}
-        className="w-[800px] h-[600px] bg-black"
-      />
+    <div className="flex justify-center items-center w-screen h-screen bg-transparent">
+      <div ref={gameRef} className="w-[800px] h-[600px] bg-transparent" />
     </div>
   );
 }
