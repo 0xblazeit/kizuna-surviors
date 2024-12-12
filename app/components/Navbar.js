@@ -44,11 +44,7 @@ export default function Navbar() {
         toast({
           title: "Welcome to ShapeCraft Survivors!",
         });
-        if (
-          user.twitter &&
-          user.twitter.profilePictureUrl &&
-          user.twitter.username
-        ) {
+        if (user.twitter && user.twitter.profilePictureUrl && user.twitter.username) {
           // await insertNewLogin(user.twitter.username, user.twitter.profilePictureUrl);
           // queryClient.invalidateQueries({ queryKey: ["memberCount"] });
         }
@@ -79,9 +75,7 @@ export default function Navbar() {
 
   // Add check for embedded wallet
   const hasEmbeddedWallet = useMemo(() => {
-    return user?.linkedAccounts?.some(
-      (account) => account.type === "wallet" && account.walletClient === "privy"
-    );
+    return user?.linkedAccounts?.some((account) => account.type === "wallet" && account.walletClient === "privy");
   }, [user?.linkedAccounts]);
 
   return (
@@ -100,9 +94,7 @@ export default function Navbar() {
                   priority
                 />
               </div>
-              <h1 className="text-3xl font-bold text-white md:text-4xl">
-                ShapeCraft Survivors
-              </h1>
+              <h1 className="text-3xl font-bold text-white md:text-4xl">ShapeCraft Survivors</h1>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
@@ -111,34 +103,22 @@ export default function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Avatar className="size-8 md:size-12 cursor-pointer ring-2 ring-[#F5A190] transition-all hover:ring-[#f39c12]">
                     <AvatarImage src={avatarImage} alt="" />
-                    <AvatarFallback>
-                      {user?.wallet?.address
-                        ? user.wallet.address.slice(0, 4)
-                        : "gm"}
-                    </AvatarFallback>
+                    <AvatarFallback>{user?.wallet?.address ? user.wallet.address.slice(0, 4) : "gm"}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 z-[60]">
-                  {user?.twitter && (
-                    <DropdownMenuLabel>{`@${user?.twitter?.username}`}</DropdownMenuLabel>
-                  )}
+                  {user?.twitter && <DropdownMenuLabel>{`@${user?.twitter?.username}`}</DropdownMenuLabel>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <Wallet className="mr-2 w-4 h-4" />
                     <span>
                       {user?.wallet?.address
-                        ? `${user.wallet.address.slice(
-                            0,
-                            4
-                          )}...${user.wallet.address.slice(-5)}`
+                        ? `${user.wallet.address.slice(0, 4)}...${user.wallet.address.slice(-5)}`
                         : ""}
                     </span>
                   </DropdownMenuItem>
                   {hasEmbeddedWallet && (
-                    <DropdownMenuItem
-                      onClick={exportWallet}
-                      className="cursor-pointer"
-                    >
+                    <DropdownMenuItem onClick={exportWallet} className="cursor-pointer">
                       <ShieldWarning className="mr-2 w-4 h-4" />
                       <span>Export Private Key</span>
                     </DropdownMenuItem>
