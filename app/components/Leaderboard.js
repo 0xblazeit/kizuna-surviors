@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { generateAvatar } from "@/lib/utils";
-import { Trophy, Medal, MedalMilitary, User } from "@phosphor-icons/react";
+import { Trophy, Medal, MedalMilitary, PawPrint } from "@phosphor-icons/react";
 import { usePrivy } from "@privy-io/react-auth";
 
 function LeaderboardTable({ data }) {
@@ -99,8 +99,7 @@ function LeaderboardTable({ data }) {
                       <span className="text-base font-medium text-white">{player.userName}</span>
                       {isYou && (
                         <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
-                          <User weight="duotone" className="w-3 h-3" />
-                          You
+                          <PawPrint weight="duotone" className="w-3 h-3" />
                         </span>
                       )}
                     </div>
