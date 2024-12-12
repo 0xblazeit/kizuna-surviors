@@ -60,8 +60,8 @@ export class BaseWeapon {
 
               // Check if projectile is out of range
               const distance = Phaser.Math.Distance.Between(
-                proj.startX || this.player.x,
-                proj.startY || this.player.y,
+                proj.startX || this.player.sprite.x,
+                proj.startY || this.player.sprite.y,
                 proj.sprite.x,
                 proj.sprite.y
               );
