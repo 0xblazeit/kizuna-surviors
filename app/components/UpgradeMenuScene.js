@@ -29,7 +29,6 @@ const UpgradeMenuScene = Phaser.Class({
     weaponIcons.forEach(({ key, file }) => {
       const path = `/assets/game/weapons/${file}?v=${Date.now()}`;
       this.load.svg(key, path, { scale: 0.5 });
-      console.log(`Loading weapon icon: ${key} from ${path}`);
     });
   },
 
@@ -49,18 +48,6 @@ const UpgradeMenuScene = Phaser.Class({
       "weapon-magic-milk",
       "weapon-shapecraft-key",
     ];
-
-    const missingTextures = requiredTextures.filter((key) => !this.textures.exists(key));
-    if (missingTextures.length > 0) {
-      console.error("Missing weapon textures:", missingTextures);
-      // Use a default texture for missing ones
-      missingTextures.forEach((key) => {
-        this.textures.on(`addtexture-${key}`, () => {
-          console.log(`Texture ${key} loaded successfully`);
-        });
-      });
-    }
-
     // Create dark overlay
     const overlay = this.add.rectangle(
       this.cameras.main.centerX,
@@ -163,7 +150,6 @@ const UpgradeMenuScene = Phaser.Class({
 
       // Create and size icon uniformly
       const icon = this.add.image(x, y - 80, iconKey);
-      console.log(`Creating weapon icon for ${weapon.name} with key ${iconKey}`);
       const targetSize = 48; // Target size for all icons
       const scale = targetSize / Math.max(icon.width, icon.height);
       icon.setScale(scale);
