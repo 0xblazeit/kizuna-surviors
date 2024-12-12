@@ -1700,8 +1700,8 @@ export default function Game() {
   }
 
   return (
-    <div className="flex justify-center items-center w-screen h-screen bg-transparent">
-      <div ref={gameRef} className="w-[800px] h-[600px] bg-transparent" />
+    <div className="flex justify-center items-center bg-transparent rounded-xl w-fit h-fit">
+      <div ref={gameRef} className="w-[800px] h-[600px] bg-transparent rounded-xl" />
     </div>
   );
 }
