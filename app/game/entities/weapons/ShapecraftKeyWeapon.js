@@ -170,29 +170,29 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         seekingSpeed: 240,
       },
       8: {
-        damage: 25,
+        damage: 30,
         pierce: 5,
         cooldown: 500,
         range: 525,
         speed: 320,
         scale: 0.75,
-        projectileCount: 5,
-        shapeTypes: ["triangle", "square", "pentagon", "hexagon", "octagon"],
-        trailAlpha: 0.95,
+        projectileCount: 4,
+        shapeTypes: ["triangle", "square", "pentagon", "octagon"],
+        trailAlpha: 0.9,
         trailScale: 0.97,
-        trailSpacing: 0.04,
-        trailLength: 8,
+        trailSpacing: 0.06,
+        trailLength: 6,
         rotationSpeed: 4.4,
         seekingSpeed: 250,
         glowIntensity: 1.2,
         isMaxLevel: true,
         geometricConvergence: true,
-        convergenceBurstCount: 6,
-        convergenceDamage: 20,
+        convergenceBurstCount: 4,
+        convergenceDamage: 25,
         convergenceRange: 200,
         convergenceSpeed: 400,
         convergenceScale: 0.5,
-        convergenceLifetime: 400,
+        convergenceLifetime: 300,
       },
     };
 
@@ -563,68 +563,51 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     // Level 8 Geometric Convergence Effect
     if (this.currentLevel === this.maxLevel && this.stats.geometricConvergence) {
       const angleStep = (Math.PI * 2) / this.stats.convergenceBurstCount;
+      const startPoint = { x: enemy.sprite.x, y: enemy.sprite.y };
+
+      // Pre-calculate common values
+      const range = this.stats.convergenceRange;
+      const damage = this.stats.convergenceDamage;
 
       for (let i = 0; i < this.stats.convergenceBurstCount; i++) {
         const angle = angleStep * i;
-        const burst = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, projectile.sprite.texture);
+        const endPoint = {
+          x: startPoint.x + Math.cos(angle) * range,
+          y: startPoint.y + Math.sin(angle) * range
+        };
 
+        // Simplified burst effect
+        const burst = this.scene.add.sprite(startPoint.x, startPoint.y, projectile.sprite.texture);
         burst.setScale(this.stats.convergenceScale);
         burst.setTint(this.maxLevelColors.primary);
-        burst.setAlpha(0.8);
+        burst.setAlpha(0.7);
 
-        // Add glow effect
-        burst.preFX.addGlow(0xffffff, 4, 0, false, 0.5, 16);
-
-        // Create geometric burst movement
+        // Faster, simpler animation
         this.scene.tweens.add({
           targets: burst,
-          x: enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
-          y: enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange,
+          x: endPoint.x,
+          y: endPoint.y,
           scale: 0.1,
           alpha: 0,
           duration: this.stats.convergenceLifetime,
-          ease: "Power2",
+          ease: "Power1",
           onComplete: () => {
             burst.destroy();
           },
         });
 
-        // Create geometric burst movement
-        const startPoint = { x: enemy.sprite.x, y: enemy.sprite.y };
-        const endPoint = {
-          x: enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
-          y: enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange
-        };
+        // Optimized enemy damage check
+        const enemies = this.scene.enemies?.filter(
+          e => e !== enemy && e.sprite && e.sprite.active && !e.isDead
+        ) || [];
 
-        this.scene.enemies.forEach((targetEnemy) => {
-          if (targetEnemy !== enemy && targetEnemy.sprite.active && !targetEnemy.isDead) {
-            const point = { x: targetEnemy.sprite.x, y: targetEnemy.sprite.y };
-            
-            // Calculate distance from point to line segment
-            const lineLength = Phaser.Math.Distance.Between(
-              startPoint.x, startPoint.y,
-              endPoint.x, endPoint.y
-            );
-            
-            if (lineLength === 0) return;
-
-            const t = Math.max(0, Math.min(1, (
-              ((point.x - startPoint.x) * (endPoint.x - startPoint.x)) +
-              ((point.y - startPoint.y) * (endPoint.y - startPoint.y))
-            ) / (lineLength * lineLength)));
-
-            const nearestX = startPoint.x + t * (endPoint.x - startPoint.x);
-            const nearestY = startPoint.y + t * (endPoint.y - startPoint.y);
-
-            const distance = Phaser.Math.Distance.Between(
-              point.x, point.y,
-              nearestX, nearestY
-            );
-
-            if (distance < 30) {
-              targetEnemy.takeDamage(this.stats.convergenceDamage);
-              this.createHitEffect(targetEnemy.sprite.x, targetEnemy.sprite.y);
-            }
+        enemies.forEach(targetEnemy => {
+          const dx = targetEnemy.sprite.x - startPoint.x;
+          const dy = targetEnemy.sprite.y - startPoint.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < range * 0.5) { // Reduced damage range
+            targetEnemy.takeDamage(damage);
           }
         });
       }
@@ -636,27 +619,39 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
   }
 
   createHitEffect(x, y) {
+    // Skip visual effects for off-screen hits
+    const camera = this.scene.cameras.main;
+    const margin = 50;
+    if (
+      x < camera.scrollX - margin ||
+      x > camera.scrollX + camera.width + margin ||
+      y < camera.scrollY - margin ||
+      y > camera.scrollY + camera.height + margin
+    ) {
+      return;
+    }
+
     const graphics = this.scene.add.graphics();
     const shapeType = this.stats.shapeTypes[Math.floor(Math.random() * this.stats.shapeTypes.length)];
-    const glowColor = this.stats.isMaxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
+    const glowColor = this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
 
-    // Draw the hit effect circle
+    // Simplified hit effect
     graphics.lineStyle(2, glowColor, 0.8);
     graphics.fillStyle(glowColor, 0.5);
     graphics.beginPath();
-    graphics.arc(x, y, 15, 0, Math.PI * 2);
+    graphics.arc(x, y, 12, 0, Math.PI * 2); // Reduced size
     graphics.closePath();
     graphics.strokePath();
     graphics.fillPath();
 
-    // Animate and clean up
+    // Faster animation
     this.scene.tweens.add({
       targets: graphics,
-      scaleX: 1.5,
-      scaleY: 1.5,
+      scaleX: 1.3, // Reduced scale
+      scaleY: 1.3,
       alpha: 0,
-      duration: 200,
-      ease: "Power2",
+      duration: 150, // Faster animation
+      ease: "Power1",
       onComplete: () => {
         graphics.destroy();
       },
