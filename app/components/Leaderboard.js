@@ -10,37 +10,31 @@ function LeaderboardTable({ data }) {
       <table className="w-full rounded-lg shadow-lg bg-black/55">
         <thead className="border-b border-white/20">
           <tr>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
-              Rank
+            <th className="p-2 text-[10px] font-medium tracking-wider text-left uppercase text-white/70">
+              #
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
+            <th className="p-2 text-[10px] font-medium tracking-wider text-left uppercase text-white/70">
               Player
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
+            <th className="p-2 text-[10px] font-medium tracking-wider text-right uppercase text-white/70">
               Gold
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
-              Kills
-            </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
+            <th className="p-2 text-[10px] font-medium tracking-wider text-right uppercase text-white/70">
               Wave
-            </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
-              Time Alive
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
-          {data.map((player, index) => (
+          {data.slice(0, 8).map((player, index) => (
             <tr
               key={player.walletAddress}
               className="transition-colors hover:bg-white/5"
               suppressHydrationWarning
             >
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="p-2 whitespace-nowrap">
                 <div
                   className={`
-                    inline-flex items-center justify-center w-8 h-8 rounded-full backdrop-blur-sm
+                    inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-medium backdrop-blur-sm
                     ${
                       index === 0
                         ? "bg-yellow-400/90 text-white"
@@ -56,46 +50,36 @@ function LeaderboardTable({ data }) {
                   {index + 1}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="p-2 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 w-10 h-10">
+                  <div className="flex-shrink-0 w-6 h-6">
                     <Image
-                      className="w-10 h-10 rounded-full"
-                      src={player.profileImage}
-                      alt={player.userName}
-                      width={40}
-                      height={40}
+                      className="w-6 h-6 rounded-full"
+                      src={player.avatarUrl || "/default-avatar.png"}
+                      alt=""
+                      width={24}
+                      height={24}
                     />
                   </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-white">
+                  <div className="ml-2">
+                    <div className="text-xs font-medium text-white">
                       {player.userName}
                     </div>
-                    <div className="text-sm text-white/60">{`${player.walletAddress.slice(
+                    <div className="text-[10px] text-white/60">{`${player.walletAddress.slice(
                       0,
-                      6
-                    )}...${player.walletAddress.slice(-4)}`}</div>
+                      4
+                    )}...${player.walletAddress.slice(-3)}`}</div>
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-white/90">
+              <td className="p-2 text-right whitespace-nowrap">
+                <span className="text-xs text-white/90">
                   {player.gold.toLocaleString()}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-white/90">
-                  {player.kills.toLocaleString()}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-white/90">
+              <td className="p-2 text-right whitespace-nowrap">
+                <span className="text-xs text-white/90">
                   {player.waveNumber}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-white/90">
-                  {player.timeAlive}
                 </span>
               </td>
             </tr>
@@ -109,10 +93,10 @@ function LeaderboardTable({ data }) {
 function LoadingSpinner() {
   return (
     <div
-      className="flex justify-center items-center h-64"
+      className="flex justify-center items-center h-32"
       suppressHydrationWarning
     >
-      <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-gray-900 animate-spin dark:border-gray-100"></div>
+      <div className="w-8 h-8 rounded-full border-t-2 border-b-2 border-gray-900 animate-spin dark:border-gray-100"></div>
     </div>
   );
 }
@@ -133,12 +117,12 @@ export default function Leaderboard() {
 
   if (isLoading) return <LoadingSpinner />;
   if (isError)
-    return <div className="text-red-500">Error loading leaderboard</div>;
+    return <div className="text-xs text-red-500">Error loading leaderboard</div>;
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <div className="p-4" suppressHydrationWarning>
-        <h2 className="mb-4 text-2xl font-bold text-white">Leaderboard</h2>
+      <div className="p-2" suppressHydrationWarning>
+        <h2 className="mb-2 text-sm font-bold text-white">Leaderboard</h2>
         <LeaderboardTable data={data} />
       </div>
     </Suspense>

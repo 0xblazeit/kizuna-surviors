@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Copy, Check } from "@phosphor-icons/react";
 import { NftView } from "./NftView";
 import dynamic from "next/dynamic";
+import Leaderboard from "./Leaderboard";
 
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
@@ -117,9 +118,8 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex items-center justify-center w-full p-4 text-center text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
-          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-          nisi ut aliquip ex ea commodo.
+        <div className="flex items-start w-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square overflow-hidden">
+          <Leaderboard />
         </div>
       </div>
       <NftView walletAddress={user?.wallet?.address} />
