@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { generateAvatar } from "@/lib/utils";
 import { Trophy, Medal, MedalMilitary, User } from "@phosphor-icons/react";
-import { usePrivy } from "@privy-io/react-auth";
+import { useLogin, usePrivy, useLogout } from "@privy-io/react-auth";
 
 function LeaderboardTable({ data }) {
   const [imageErrors, setImageErrors] = useState({});
-  const { user } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
 
   const getAvatarSrc = (player) => {
     if (imageErrors[player.walletAddress]) {
@@ -19,13 +19,14 @@ function LeaderboardTable({ data }) {
   };
 
   const isCurrentUser = (player) => {
+    if (!ready || !authenticated || !user) return false;
+
     // Check wallet address
     const isWalletMatch = user.wallet?.address?.toLowerCase() === player.walletAddress?.toLowerCase();
 
     // Check username
-    const isUsernameMatch = user.username?.toLowerCase() === player.userName?.toLowerCase();
+    const isUsernameMatch = user.twitter?.username?.toLowerCase() === player.userName?.toLowerCase();
 
-    console.log("PLAYER: ", user.username?.toLowerCase(), player.userName?.toLowerCase(), isUsernameMatch);
     return isWalletMatch || isUsernameMatch;
   };
 
@@ -95,6 +96,12 @@ function LeaderboardTable({ data }) {
                     </div>
                     <div className="flex gap-2 items-center">
                       <span className="text-base font-medium text-white">{player.userName}</span>
+                      {isYou && (
+                        <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
+                          <User weight="duotone" className="w-3 h-3" />
+                          You
+                        </span>
+                      )}
                     </div>
                   </div>
                 </td>
