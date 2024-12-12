@@ -117,7 +117,7 @@ export class MilkWeapon extends BaseWeapon {
     };
 
     // Initialize at level 1
-    this.currentLevel = 1;
+    this.currentLevel = 8;
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
@@ -153,63 +153,18 @@ export class MilkWeapon extends BaseWeapon {
     const puddle = this.scene.add.sprite(x, y, "weapon-magic-milk");
     this.scene.physics.add.existing(puddle, true);
     puddle.body.setCircle(this.stats.splashRadius);
-    puddle.body.setOffset(
-      puddle.width / 2 - this.stats.splashRadius,
-      puddle.height / 2 - this.stats.splashRadius
-    );
+    puddle.body.setOffset(puddle.width / 2 - this.stats.splashRadius, puddle.height / 2 - this.stats.splashRadius);
     puddle.setScale(0);
-    puddle.setAlpha(0.8);
-    puddle.setBlendMode(Phaser.BlendModes.ADD);
-
-    const glow = this.scene.add.sprite(x, y, "weapon-magic-milk");
-    glow.setScale(0);
-    glow.setAlpha(0.4);
-    glow.setBlendMode(Phaser.BlendModes.ADD);
+    puddle.setAlpha(0.6);
 
     const slowIndicator = this.scene.add.sprite(x, y, "weapon-magic-milk");
     slowIndicator.setScale(0);
     slowIndicator.setAlpha(0.3);
     slowIndicator.setTint(0x00ffff);
-    slowIndicator.setBlendMode(Phaser.BlendModes.ADD);
-
-    let auraSprites = [];
-    if (this.currentLevel === 8) {
-      // Create multiple aura rings
-      for (let i = 0; i < 3; i++) {
-        const aura = this.scene.add.sprite(x, y, "weapon-magic-milk");
-        aura.setScale(0);
-        aura.setAlpha(0.15);
-        aura.setBlendMode(Phaser.BlendModes.ADD);
-        aura.setTint(0x00ffff);
-        auraSprites.push(aura);
-        
-        // Create unique rotating animation for each ring
-        this.scene.tweens.add({
-          targets: aura,
-          angle: 360,
-          duration: 3000 + i * 1000,
-          repeat: -1,
-          ease: 'Linear'
-        });
-      }
-
-      // Pulse animation for aura rings
-      this.scene.tweens.add({
-        targets: auraSprites,
-        scale: { from: this.stats.scale * 1.2, to: this.stats.scale * 1.5 },
-        alpha: { from: 0.15, to: 0.05 },
-        duration: 1500,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-    }
 
     const puddleData = {
       sprite: puddle,
-      glowSprite: glow,
       slowSprite: slowIndicator,
-      auraSprites: auraSprites,
       x: x,
       y: y,
       createdAt: this.scene.time.now,
@@ -220,7 +175,7 @@ export class MilkWeapon extends BaseWeapon {
     this.activePuddles.push(puddleData);
 
     this.scene.tweens.add({
-      targets: [puddle, glow, slowIndicator],
+      targets: [puddle, slowIndicator],
       scaleX: this.stats.scale,
       scaleY: this.stats.scale,
       duration: 200,
@@ -258,11 +213,10 @@ export class MilkWeapon extends BaseWeapon {
 
     // Initial damage on overlap
     const currentTime = this.scene.time.now;
-    if (!puddle.lastDamageTime[enemy.id] || 
-        currentTime - puddle.lastDamageTime[enemy.id] >= 500) {
+    if (!puddle.lastDamageTime[enemy.id] || currentTime - puddle.lastDamageTime[enemy.id] >= 500) {
       const isCritical = Math.random() < this.stats.criticalChance;
       const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
-      
+
       enemy.takeDamage(damage);
       puddle.lastDamageTime[enemy.id] = currentTime;
       this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
@@ -280,26 +234,16 @@ export class MilkWeapon extends BaseWeapon {
 
     // Fade out animation for smoother cleanup
     this.scene.tweens.add({
-      targets: [
-        puddleData.sprite,
-        puddleData.glowSprite,
-        puddleData.slowSprite,
-        ...puddleData.auraSprites
-      ],
+      targets: [puddleData.sprite, puddleData.slowSprite],
       alpha: 0,
       scale: 0,
       duration: 200,
-      ease: 'Power1',
+      ease: "Power1",
       onComplete: () => {
         // Cleanup after fade
         puddleData.sprite.destroy();
-        puddleData.glowSprite.destroy();
         puddleData.slowSprite.destroy();
-        puddleData.auraSprites.forEach(aura => {
-          this.scene.tweens.killTweensOf(aura);
-          aura.destroy();
-        });
-      }
+      },
     });
 
     this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
@@ -320,12 +264,12 @@ export class MilkWeapon extends BaseWeapon {
         alpha: 0,
         scale: 0,
         duration: 200,
-        ease: 'Power1',
+        ease: "Power1",
         onComplete: () => {
           this.scene.tweens.killTweensOf(enemy.slowEffect);
           enemy.slowEffect.destroy();
           delete enemy.slowEffect;
-        }
+        },
       });
     }
   }
@@ -337,46 +281,23 @@ export class MilkWeapon extends BaseWeapon {
     enemy.moveSpeed = enemy.originalMoveSpeed * this.stats.slowAmount;
 
     if (!enemy.slowEffect) {
-      enemy.slowEffect = this.scene.add.sprite(
-        enemy.sprite.x,
-        enemy.sprite.y,
-        "weapon-magic-milk"
-      );
+      enemy.slowEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-magic-milk");
       enemy.slowEffect.setScale(0.3);
       enemy.slowEffect.setAlpha(0.3);
       enemy.slowEffect.setTint(0x00ffff);
-      enemy.slowEffect.setBlendMode(Phaser.BlendModes.ADD);
-      enemy.slowEffect.setDepth(enemy.sprite.depth - 1);  // Ensure effect is below enemy
-
-      // Add pulsing effect
-      this.scene.tweens.add({
-        targets: enemy.slowEffect,
-        alpha: { from: 0.3, to: 0.1 },
-        scale: { from: 0.3, to: 0.4 },
-        yoyo: true,
-        repeat: -1,
-        duration: 500,
-        ease: 'Sine.easeInOut'
-      });
+      enemy.slowEffect.setDepth(enemy.sprite.depth - 1); // Ensure effect is below enemy
     }
   }
 
   showDamageText(x, y, damage, isCritical) {
     const text = this.scene.add
-      .text(
-        x,
-        y - 20,
-        isCritical
-          ? `CRIT! ${Math.floor(damage)}`
-          : Math.floor(damage).toString(),
-        {
-          fontSize: isCritical ? "20px" : "16px",
-          fontFamily: "VT323",
-          fill: isCritical ? "#ffffff" : "#ffffff",
-          stroke: "#000000",
-          strokeThickness: 3,
-        }
-      )
+      .text(x, y - 20, isCritical ? `CRIT! ${Math.floor(damage)}` : Math.floor(damage).toString(), {
+        fontSize: isCritical ? "20px" : "16px",
+        fontFamily: "VT323",
+        fill: isCritical ? "#ffffff" : "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
       .setOrigin(0.5);
 
     this.scene.tweens.add({
@@ -393,10 +314,10 @@ export class MilkWeapon extends BaseWeapon {
     super.update(time, delta);
 
     // Check all active puddles and their affected enemies
-    this.activePuddles.forEach(puddle => {
-      puddle.affectedEnemies.forEach(enemyId => {
-        const enemy = this.scene.enemies.find(e => e.id === enemyId);
-        
+    this.activePuddles.forEach((puddle) => {
+      puddle.affectedEnemies.forEach((enemyId) => {
+        const enemy = this.scene.enemies.find((e) => e.id === enemyId);
+
         // Remove dead enemies from tracking
         if (!enemy || enemy.isDead) {
           puddle.affectedEnemies.delete(enemyId);
@@ -404,12 +325,7 @@ export class MilkWeapon extends BaseWeapon {
         }
 
         // Check if enemy is still in range
-        const distance = Phaser.Math.Distance.Between(
-          enemy.sprite.x,
-          enemy.sprite.y,
-          puddle.sprite.x,
-          puddle.sprite.y
-        );
+        const distance = Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, puddle.sprite.x, puddle.sprite.y);
 
         if (distance > this.stats.splashRadius) {
           this.removeSlowEffect(enemy);
@@ -419,14 +335,13 @@ export class MilkWeapon extends BaseWeapon {
           if (enemy.slowEffect) {
             enemy.slowEffect.setPosition(enemy.sprite.x, enemy.sprite.y);
           }
-          
+
           // Apply continuous damage
           const currentTime = time;
-          if (!puddle.lastDamageTime[enemyId] || 
-              currentTime - puddle.lastDamageTime[enemyId] >= 500) {
+          if (!puddle.lastDamageTime[enemyId] || currentTime - puddle.lastDamageTime[enemyId] >= 500) {
             const isCritical = Math.random() < this.stats.criticalChance;
             const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
-            
+
             enemy.takeDamage(damage);
             puddle.lastDamageTime[enemyId] = currentTime;
             this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
