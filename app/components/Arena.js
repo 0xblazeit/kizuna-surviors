@@ -116,10 +116,10 @@ export function Arena() {
           <Leaderboard />
         </div>
       </div>
-      <NftView walletAddress={user?.wallet?.address} />
-      <div className="grid grid-cols-1">
-        <div className="backdrop-blur-xs bg-black/40 rounded-xl aspect-[2/1] w-full flex items-center justify-center text-white p-4 text-center">
-          {/* <Game />; */}
+      <div className="flex flex-col items-center w-full gap-4">
+        <NftView walletAddress={user?.wallet?.address} />
+        <div className="flex justify-center w-full">
+          <Game />
         </div>
       </div>
     </div>
