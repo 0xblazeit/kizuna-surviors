@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { generateAvatar } from "@/lib/utils";
+import { Trophy, Medal, MedalMilitary } from "@phosphor-icons/react";
 
 function LeaderboardTable({ data }) {
   const [imageErrors, setImageErrors] = useState({});
@@ -15,24 +16,53 @@ function LeaderboardTable({ data }) {
     return player.profileImage || generateAvatar(player.walletAddress);
   };
 
+  const getRankDisplay = (index) => {
+    switch(index) {
+      case 0:
+        return (
+          <div className="flex items-center justify-center">
+            <Trophy weight="duotone" className="w-8 h-8 text-[#FFD700]" />
+          </div>
+        );
+      case 1:
+        return (
+          <div className="flex items-center justify-center">
+            <Medal weight="duotone" className="w-7 h-7 text-white/90" />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="flex items-center justify-center">
+            <MedalMilitary weight="duotone" className="w-6 h-6 text-white/90" />
+          </div>
+        );
+      default:
+        return (
+          <span className="text-base text-white/70">
+            {index + 1}
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="overflow-x-auto" suppressHydrationWarning>
       <table className="w-full rounded-lg shadow-lg bg-black/55">
         <thead className="border-b border-white/20">
           <tr>
-            <th className="p-2 text-xs font-medium tracking-wider text-left uppercase text-white/70">
+            <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">
               #
             </th>
-            <th className="p-2 text-xs font-medium tracking-wider text-left uppercase text-white/70">
+            <th className="p-2 text-sm font-medium tracking-wider text-left uppercase text-white/70">
               Player
             </th>
-            <th className="p-2 text-xs font-medium tracking-wider text-right uppercase text-white/70">
+            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">
               Gold
             </th>
-            <th className="p-2 text-xs font-medium tracking-wider text-right uppercase text-white/70">
+            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">
               Wave
             </th>
-            <th className="p-2 text-xs font-medium tracking-wider text-right uppercase text-white/70">
+            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">
               Time
             </th>
           </tr>
@@ -44,34 +74,18 @@ function LeaderboardTable({ data }) {
               className="transition-colors hover:bg-white/5"
               suppressHydrationWarning
             >
-              <td className="p-2 whitespace-nowrap">
-                <div
-                  className={`
-                    inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium backdrop-blur-sm
-                    ${
-                      index === 0
-                        ? "bg-yellow-400/90 text-white"
-                        : index === 1
-                        ? "bg-gray-300/80 text-gray-800 dark:bg-gray-600/80 dark:text-gray-200"
-                        : index === 2
-                        ? "bg-amber-600/90 text-white"
-                        : "bg-gray-100/50 text-gray-600 dark:bg-gray-800/50 dark:text-gray-300"
-                    }
-                  `}
-                  suppressHydrationWarning
-                >
-                  {index + 1}
-                </div>
+              <td className="p-2 whitespace-nowrap text-center">
+                {getRankDisplay(index)}
               </td>
               <td className="p-2 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 w-7 h-7">
+                  <div className="flex-shrink-0 w-8 h-8">
                     <Image
-                      className="w-7 h-7 rounded-full bg-gray-800"
+                      className="w-8 h-8 rounded-full bg-gray-800"
                       src={getAvatarSrc(player)}
                       alt={player.userName || "Player avatar"}
-                      width={28}
-                      height={28}
+                      width={32}
+                      height={32}
                       onError={() => {
                         setImageErrors((prev) => ({
                           ...prev,
@@ -81,10 +95,10 @@ function LeaderboardTable({ data }) {
                     />
                   </div>
                   <div className="ml-2">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-base font-medium text-white">
                       {player.userName}
                     </div>
-                    <div className="text-xs text-white/60">{`${player.walletAddress.slice(
+                    <div className="text-sm text-white/60">{`${player.walletAddress.slice(
                       0,
                       4
                     )}...${player.walletAddress.slice(-3)}`}</div>
@@ -92,17 +106,17 @@ function LeaderboardTable({ data }) {
                 </div>
               </td>
               <td className="p-2 text-right whitespace-nowrap">
-                <span className="text-sm text-white/90">
+                <span className="text-base text-white/90">
                   {player.gold.toLocaleString()}
                 </span>
               </td>
               <td className="p-2 text-right whitespace-nowrap">
-                <span className="text-sm text-white/90">
+                <span className="text-base text-white/90">
                   {player.waveNumber}
                 </span>
               </td>
               <td className="p-2 text-right whitespace-nowrap">
-                <span className="text-sm text-white/90">
+                <span className="text-base text-white/90">
                   {typeof player.timeAlive === 'number' 
                     ? `${Math.floor(player.timeAlive / 60)}:${(player.timeAlive % 60).toString().padStart(2, '0')}`
                     : player.timeAlive}
