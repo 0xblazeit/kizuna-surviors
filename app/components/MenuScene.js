@@ -1,5 +1,3 @@
-import { useLogin, usePrivy, useLogout } from "@privy-io/react-auth";
-
 const MenuScene = Phaser.Class({
   Extends: Phaser.Scene,
 
@@ -7,14 +5,14 @@ const MenuScene = Phaser.Class({
     Phaser.Scene.call(this, { key: "MenuScene" });
   },
 
-  preload: function() {
-    this.load.image('menu-background', '/assets/game/menu/menu-background.png');
+  preload: function () {
+    this.load.image("menu-background", "/assets/game/menu/menu-background.png");
   },
 
   create: function () {
     const { width, height } = this.scale;
 
-    const background = this.add.image(width / 2, height / 2, 'menu-background');
+    const background = this.add.image(width / 2, height / 2, "menu-background");
     const scale = Math.min(width / background.width, height / background.height) * 1;
     background.setScale(scale);
 
