@@ -594,18 +594,39 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
           },
         });
 
-        // Check for additional enemies in burst path
-        const burstLine = new Phaser.Geom.Line(
-          enemy.sprite.x,
-          enemy.sprite.y,
-          enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
-          enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange
-        );
+        // Create geometric burst movement
+        const startPoint = { x: enemy.sprite.x, y: enemy.sprite.y };
+        const endPoint = {
+          x: enemy.sprite.x + Math.cos(angle) * this.stats.convergenceRange,
+          y: enemy.sprite.y + Math.sin(angle) * this.stats.convergenceRange
+        };
 
         this.scene.enemies.forEach((targetEnemy) => {
           if (targetEnemy !== enemy && targetEnemy.sprite.active && !targetEnemy.isDead) {
-            const enemyPoint = new Phaser.Geom.Point(targetEnemy.sprite.x, targetEnemy.sprite.y);
-            if (Phaser.Geom.Line.DistanceToPoint(burstLine, enemyPoint) < 30) {
+            const point = { x: targetEnemy.sprite.x, y: targetEnemy.sprite.y };
+            
+            // Calculate distance from point to line segment
+            const lineLength = Phaser.Math.Distance.Between(
+              startPoint.x, startPoint.y,
+              endPoint.x, endPoint.y
+            );
+            
+            if (lineLength === 0) return;
+
+            const t = Math.max(0, Math.min(1, (
+              ((point.x - startPoint.x) * (endPoint.x - startPoint.x)) +
+              ((point.y - startPoint.y) * (endPoint.y - startPoint.y))
+            ) / (lineLength * lineLength)));
+
+            const nearestX = startPoint.x + t * (endPoint.x - startPoint.x);
+            const nearestY = startPoint.y + t * (endPoint.y - startPoint.y);
+
+            const distance = Phaser.Math.Distance.Between(
+              point.x, point.y,
+              nearestX, nearestY
+            );
+
+            if (distance < 30) {
               targetEnemy.takeDamage(this.stats.convergenceDamage);
               this.createHitEffect(targetEnemy.sprite.x, targetEnemy.sprite.y);
             }
