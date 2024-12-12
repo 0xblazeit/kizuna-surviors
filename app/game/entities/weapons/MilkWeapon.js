@@ -157,6 +157,32 @@ export class MilkWeapon extends BaseWeapon {
     puddle.setScale(0);
     puddle.setAlpha(1);
 
+    if (this.currentLevel === 8) {
+      // Create spinning aura layers
+      const auraLayers = [];
+      for (let i = 0; i < 3; i++) {
+        const aura = this.scene.add.sprite(x, y, "weapon-magic-milk");
+        aura.setScale(0);
+        aura.setAlpha(0.2 - (i * 0.05));
+        aura.setTint(0xffffff);
+        auraLayers.push(aura);
+        
+        // Continuous rotation and scale animation
+        this.scene.tweens.add({
+          targets: aura,
+          angle: (i % 2 === 0 ? 360 : -360),
+          scaleX: this.stats.scale * (1.5 + (i * 0.2)),
+          scaleY: this.stats.scale * (1.5 + (i * 0.2)),
+          duration: 2000 - (i * 300),
+          repeat: -1,
+          ease: "Sine.easeInOut"
+        });
+      }
+
+      // Store aura references for cleanup
+      puddle.auraLayers = auraLayers;
+    }
+
     const puddleData = {
       sprite: puddle,
       x: x,
@@ -188,8 +214,29 @@ export class MilkWeapon extends BaseWeapon {
     );
 
     this.scene.time.delayedCall(this.stats.puddleDuration, () => {
+      if (puddle.auraLayers) {
+        puddle.auraLayers.forEach(aura => {
+          this.scene.tweens.add({
+            targets: aura,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => aura.destroy()
+          });
+        });
+      }
       this.removePuddle(puddleData);
     });
+  }
+
+  removePuddle(puddleData) {
+    const index = this.activePuddles.indexOf(puddleData);
+    if (index !== -1) {
+      if (puddleData.sprite.auraLayers) {
+        puddleData.sprite.auraLayers.forEach(aura => aura.destroy());
+      }
+      puddleData.sprite.destroy();
+      this.activePuddles.splice(index, 1);
+    }
   }
 
   handleEnemyOverlap(enemy, puddle) {
@@ -215,30 +262,6 @@ export class MilkWeapon extends BaseWeapon {
       puddle.lastDamageTime[enemy.id] = currentTime;
       this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
     }
-  }
-
-  removePuddle(puddleData) {
-    // Clean up all effects for affected enemies
-    puddleData.affectedEnemies.forEach((enemyId) => {
-      const enemy = this.scene.enemies.find((e) => e.id === enemyId);
-      if (enemy) {
-        this.removeSlowEffect(enemy);
-      }
-    });
-
-    // Fade out animation for smoother cleanup
-    this.scene.tweens.add({
-      targets: puddleData.sprite,
-      alpha: 0,
-      scale: 0,
-      duration: 200,
-      ease: "Power1",
-      onComplete: () => {
-        puddleData.sprite.destroy();
-      },
-    });
-
-    this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
   }
 
   removeSlowEffect(enemy) {
