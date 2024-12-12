@@ -1,0 +1,1 @@
+ALTER TABLE `leaderboard` RENAME TO `gameStats`;

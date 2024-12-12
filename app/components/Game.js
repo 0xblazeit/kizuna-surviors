@@ -53,9 +53,6 @@ const GameScene = Phaser.Class({
   },
 
   init: function () {
-    console.log(
-      "Debug - YOYOYOYO", this.userInfo
-    );
     // Initialize game state
     this.gameState = {
       userAddress: this.game.config.userInfo?.userAddress,
@@ -122,8 +119,7 @@ const GameScene = Phaser.Class({
   },
 
   preload: function () {
-    // Load coin sprite first to ensure it's available
-    console.log("Loading coin sprite...");
+    // Load coin sprite
     this.load.svg("coin", "/assets/game/powerups/coin.svg", {
       scale: 0.5,
     });
@@ -1273,12 +1269,14 @@ const GameScene = Phaser.Class({
         body: JSON.stringify({
           gold: this.gameState.gold,
           kills: this.gameState.kills,
+          waveNumber: this.gameState.waveNumber,
+          timeAlive: this.gameState.gameTimer,
           timestamp: new Date().toISOString(),
           userAddress: this.userInfo.userAddress,
           username: this.userInfo.username,
+          profileImage: this.userInfo.profileImage,
         }),
       }).catch((error) => console.error("Error posting game stats:", error));
-      console.log("debug - results posted:", this.userInfo);
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1611,13 +1609,11 @@ export default function Game() {
     if (!ready || !userAddress || !username) return;
 
     if (typeof window !== "undefined" && window.Phaser) {
-
       const userInfo = {
         userAddress: user.wallet.address,
         username: user.twitter.username,
+        profileImage: user.twitter.profilePictureUrl,
       };
-
-      console.log("Debug - Creating game with userInfo:", userInfo);
 
       // Create a custom scene class that includes the user info
       class CustomGameScene extends GameScene {
