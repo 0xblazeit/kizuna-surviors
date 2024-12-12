@@ -197,7 +197,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     };
 
     // Initialize at level 1
-    this.currentLevel = 8;
+    this.currentLevel = 1;
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
@@ -436,7 +436,8 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
       // Update trail sprites with optimized batch updates
       const trailSprites = this.trailPools[index];
       const shapeType = this.stats.shapeTypes[index % this.stats.shapeTypes.length];
-      const glowColor = this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
+      const glowColor =
+        this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
 
       trailSprites.forEach((trailSprite, i) => {
         if (i < proj.trailPositions.length) {
@@ -473,7 +474,12 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
       });
 
       // Check if projectile is out of range
-      const distanceFromStart = Phaser.Math.Distance.Between(proj.sprite.x, proj.sprite.y, this.player.sprite.x, this.player.sprite.y);
+      const distanceFromStart = Phaser.Math.Distance.Between(
+        proj.sprite.x,
+        proj.sprite.y,
+        this.player.sprite.x,
+        this.player.sprite.y
+      );
 
       if (distanceFromStart > this.stats.range) {
         this.deactivateProjectile(proj);
@@ -573,7 +579,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         const angle = angleStep * i;
         const endPoint = {
           x: startPoint.x + Math.cos(angle) * range,
-          y: startPoint.y + Math.sin(angle) * range
+          y: startPoint.y + Math.sin(angle) * range,
         };
 
         // Simplified burst effect
@@ -597,16 +603,16 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         });
 
         // Optimized enemy damage check
-        const enemies = this.scene.enemies?.filter(
-          e => e !== enemy && e.sprite && e.sprite.active && !e.isDead
-        ) || [];
+        const enemies =
+          this.scene.enemies?.filter((e) => e !== enemy && e.sprite && e.sprite.active && !e.isDead) || [];
 
-        enemies.forEach(targetEnemy => {
+        enemies.forEach((targetEnemy) => {
           const dx = targetEnemy.sprite.x - startPoint.x;
           const dy = targetEnemy.sprite.y - startPoint.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < range * 0.5) { // Reduced damage range
+
+          if (distance < range * 0.5) {
+            // Reduced damage range
             targetEnemy.takeDamage(damage);
           }
         });
@@ -633,7 +639,8 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
 
     const graphics = this.scene.add.graphics();
     const shapeType = this.stats.shapeTypes[Math.floor(Math.random() * this.stats.shapeTypes.length)];
-    const glowColor = this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
+    const glowColor =
+      this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
 
     // Simplified hit effect
     graphics.lineStyle(2, glowColor, 0.8);

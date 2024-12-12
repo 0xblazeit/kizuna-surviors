@@ -57,7 +57,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         cooldown: 850,
         range: 950,
         speed: 350,
-        scale: 0.55,
+        scale: 0.5,
       },
       5: {
         damage: 16,
@@ -67,7 +67,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         cooldown: 800, // Significant cooldown improvement
         range: 1000,
         speed: 400,
-        scale: 0.6,
+        scale: 0.5,
       },
       6: {
         damage: 18,
@@ -77,7 +77,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         cooldown: 700,
         range: 1050,
         speed: 450,
-        scale: 0.65,
+        scale: 0.55,
       },
       7: {
         damage: 20,
@@ -87,17 +87,17 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         cooldown: 600,
         range: 1100,
         speed: 500,
-        scale: 0.7,
+        scale: 0.57,
       },
       8: {
         damage: 25, // Significant damage boost
         pierce: 4,
-        projectileCount: 5,
+        projectileCount: 4,
         spreadAngle: 45,
         range: 1200,
-        cooldown: 500, // Much faster firing at max level
-        speed: 550,
-        scale: 0.75,
+        cooldown: 750, // Much faster firing at max level
+        speed: 400,
+        scale: 0.59,
         isMaxLevel: true,
         mustardExplosion: true,
         explosionDamage: 15, // Increased explosion damage
