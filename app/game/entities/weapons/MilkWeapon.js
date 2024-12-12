@@ -155,16 +155,10 @@ export class MilkWeapon extends BaseWeapon {
     puddle.body.setCircle(this.stats.splashRadius);
     puddle.body.setOffset(puddle.width / 2 - this.stats.splashRadius, puddle.height / 2 - this.stats.splashRadius);
     puddle.setScale(0);
-    puddle.setAlpha(0.6);
-
-    const slowIndicator = this.scene.add.sprite(x, y, "weapon-magic-milk");
-    slowIndicator.setScale(0);
-    slowIndicator.setAlpha(0.3);
-    slowIndicator.setTint(0x00ffff);
+    puddle.setAlpha(1);
 
     const puddleData = {
       sprite: puddle,
-      slowSprite: slowIndicator,
       x: x,
       y: y,
       createdAt: this.scene.time.now,
@@ -175,7 +169,7 @@ export class MilkWeapon extends BaseWeapon {
     this.activePuddles.push(puddleData);
 
     this.scene.tweens.add({
-      targets: [puddle, slowIndicator],
+      targets: puddle,
       scaleX: this.stats.scale,
       scaleY: this.stats.scale,
       duration: 200,
@@ -234,15 +228,13 @@ export class MilkWeapon extends BaseWeapon {
 
     // Fade out animation for smoother cleanup
     this.scene.tweens.add({
-      targets: [puddleData.sprite, puddleData.slowSprite],
+      targets: puddleData.sprite,
       alpha: 0,
       scale: 0,
       duration: 200,
       ease: "Power1",
       onComplete: () => {
-        // Cleanup after fade
         puddleData.sprite.destroy();
-        puddleData.slowSprite.destroy();
       },
     });
 
@@ -256,22 +248,6 @@ export class MilkWeapon extends BaseWeapon {
       enemy.moveSpeed = enemy.originalMoveSpeed;
       delete enemy.originalMoveSpeed;
     }
-
-    if (enemy.slowEffect) {
-      // Fade out the slow effect
-      this.scene.tweens.add({
-        targets: enemy.slowEffect,
-        alpha: 0,
-        scale: 0,
-        duration: 200,
-        ease: "Power1",
-        onComplete: () => {
-          this.scene.tweens.killTweensOf(enemy.slowEffect);
-          enemy.slowEffect.destroy();
-          delete enemy.slowEffect;
-        },
-      });
-    }
   }
 
   applySlowEffect(enemy) {
@@ -279,14 +255,6 @@ export class MilkWeapon extends BaseWeapon {
       enemy.originalMoveSpeed = enemy.moveSpeed;
     }
     enemy.moveSpeed = enemy.originalMoveSpeed * this.stats.slowAmount;
-
-    if (!enemy.slowEffect) {
-      enemy.slowEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-magic-milk");
-      enemy.slowEffect.setScale(0.3);
-      enemy.slowEffect.setAlpha(0.3);
-      enemy.slowEffect.setTint(0x00ffff);
-      enemy.slowEffect.setDepth(enemy.sprite.depth - 1); // Ensure effect is below enemy
-    }
   }
 
   showDamageText(x, y, damage, isCritical) {
@@ -332,10 +300,6 @@ export class MilkWeapon extends BaseWeapon {
           puddle.affectedEnemies.delete(enemyId);
         } else {
           // Update slow effect position
-          if (enemy.slowEffect) {
-            enemy.slowEffect.setPosition(enemy.sprite.x, enemy.sprite.y);
-          }
-
           // Apply continuous damage
           const currentTime = time;
           if (!puddle.lastDamageTime[enemyId] || currentTime - puddle.lastDamageTime[enemyId] >= 500) {
