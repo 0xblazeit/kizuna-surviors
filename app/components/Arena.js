@@ -22,7 +22,7 @@ async function fetchWalletBalance(walletAddress) {
 const Game = dynamic(() => import("./Game"), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900">
+    <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
       <div className="w-[800px] h-[600px] bg-black border border-white flex items-center justify-center">
         <p className="text-2xl text-white">loading game...</p>
       </div>
@@ -55,7 +55,7 @@ export function Arena() {
   return (
     <div className="p-3 bg-transparent rounded-lg w-full max-w-[800px] mx-auto">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex flex-col w-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
+        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
@@ -66,10 +66,10 @@ export function Arena() {
                 Welcome, {user?.twitter?.username}
               </h3>
               <div className="space-y-1 text-sm md:text-lg">
-                <p className="flex items-center gap-1 text-white/50">
+                <p className="flex gap-1 items-center text-white/50">
                   Wallet:{" "}
                   {user?.wallet?.address ? (
-                    <span className="flex items-center gap-2 text-white">
+                    <span className="flex gap-2 items-center text-white">
                       <a
                         href={`https://shapescan.xyz/address/${user?.wallet?.address}`}
                         target="_blank"
@@ -118,7 +118,7 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex items-start w-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square overflow-hidden">
+        <div className="flex flex-col w-full h-full p-4 text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square overflow-auto">
           <Leaderboard />
         </div>
       </div>

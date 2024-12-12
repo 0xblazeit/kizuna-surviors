@@ -25,8 +25,7 @@ export async function GET() {
     {
       userName: "CryptoKnight",
       walletAddress: "0x1F3389Fc75Bf55275b03347E4283f24916D2A37f",
-      profileImage:
-        "https://pbs.twimg.com/profile_images/1864423248479326208/Ftwekr7F_normal.jpg",
+      profileImage: "",
       gold: 11000,
       kills: 320,
       waveNumber: 20,
@@ -36,7 +35,7 @@ export async function GET() {
       userName: "BlockchainMage",
       walletAddress: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
       profileImage:
-        "https://pbs.twimg.com/profile_images/1864423248479326208/Ftwekr7F_normal.jpg",
+        "https://pbs.twimg.com/profile_images/479326208/Ftwekr7F_normal.jpg",
       gold: 9800,
       kills: 290,
       waveNumber: 18,
