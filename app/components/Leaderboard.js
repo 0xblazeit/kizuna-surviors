@@ -7,34 +7,34 @@ import { useQuery } from "@tanstack/react-query";
 function LeaderboardTable({ data }) {
   return (
     <div className="overflow-x-auto" suppressHydrationWarning>
-      <table className="w-full bg-transparent rounded-lg shadow-lg backdrop-blur-sm">
-        <thead className="border-b border-gray-200/20 dark:border-gray-700/20">
+      <table className="w-full rounded-lg shadow-lg bg-black/55">
+        <thead className="border-b border-white/20">
           <tr>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Rank
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Player
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Gold
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Kills
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Wave
             </th>
-            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-white/70">
               Time Alive
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200/10 dark:divide-gray-700/10">
+        <tbody className="divide-y divide-white/10">
           {data.map((player, index) => (
             <tr
               key={player.walletAddress}
-              className="transition-colors hover:bg-white/5 dark:hover:bg-gray-800/10"
+              className="transition-colors hover:bg-white/5"
               suppressHydrationWarning
             >
               <td className="px-6 py-4 whitespace-nowrap">
@@ -68,10 +68,10 @@ function LeaderboardTable({ data }) {
                     />
                   </div>
                   <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-sm font-medium text-white">
                       {player.userName}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{`${player.walletAddress.slice(
+                    <div className="text-sm text-white/60">{`${player.walletAddress.slice(
                       0,
                       6
                     )}...${player.walletAddress.slice(-4)}`}</div>
@@ -79,22 +79,22 @@ function LeaderboardTable({ data }) {
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900 dark:text-gray-100">
+                <span className="text-sm text-white/90">
                   {player.gold.toLocaleString()}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900 dark:text-gray-100">
+                <span className="text-sm text-white/90">
                   {player.kills.toLocaleString()}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900 dark:text-gray-100">
+                <span className="text-sm text-white/90">
                   {player.waveNumber}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-900 dark:text-gray-100">
+                <span className="text-sm text-white/90">
                   {player.timeAlive}
                 </span>
               </td>
@@ -138,9 +138,7 @@ export default function Leaderboard() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <div className="p-4" suppressHydrationWarning>
-        <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Leaderboard
-        </h2>
+        <h2 className="mb-4 text-2xl font-bold text-white">Leaderboard</h2>
         <LeaderboardTable data={data} />
       </div>
     </Suspense>
