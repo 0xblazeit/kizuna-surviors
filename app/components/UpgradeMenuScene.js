@@ -134,13 +134,13 @@ const UpgradeMenuScene = Phaser.Class({
             return "weapon-wand-icon";
           case "Glizzy Blaster":
             return "weapon-hotdog-projectile";
-          case "Flying Axe":
+          case "Reverb Reaper":
             return "weapon-axe-projectile";
-          case "Sonic Hammer":
+          case "WattWhacker":
             return "weapon-hammer-projectile";
-          case "Magical Goo":
+          case "GooBoo":
             return "weapon-magic-milk";
-          case "Shapecraft Key":
+          case "Shapebinder":
             return "weapon-shapecraft-key";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);

@@ -3,8 +3,8 @@ import { BaseWeapon } from "./BaseWeapon.js";
 export class MilkWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
-    this.name = "Magical Goo";
-    this.description = "Creates pools of damaging milk that fall from the sky";
+    this.name = "GooBoo";
+    this.description = "Creates pools of damaging GooBoo wreckage on the ground.";
     this.type = "magic";
 
     // Level-up configurations

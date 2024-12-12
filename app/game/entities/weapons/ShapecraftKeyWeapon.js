@@ -4,7 +4,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
 
-    this.name = "Shapecraft Key";
+    this.name = "Shapebinder";
     this.description = "Conjures geometric shapes with neon trails that seek out enemies";
 
     // Effect colors for each shape type

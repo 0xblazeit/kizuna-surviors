@@ -5,7 +5,7 @@ export class SonicBoomHammer extends BaseWeapon {
     super(scene, player);
 
     // Set weapon name
-    this.name = "Sonic Hammer";
+    this.name = "WattWhacker";
 
     // Set weapon stats - slow but powerful
     this.stats = {

@@ -4,7 +4,7 @@ class FlyingAxeWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
 
-    this.name = "Flying Axe";
+    this.name = "Reverb Reaper";
 
     // Initialize trail container for level 8
     this.trailPool = [];
@@ -132,11 +132,7 @@ class FlyingAxeWeapon extends BaseWeapon {
 
   createProjectiles() {
     for (let i = 0; i < this.maxProjectiles; i++) {
-      const sprite = this.scene.physics.add.sprite(
-        0,
-        0,
-        "weapon-axe-projectile"
-      );
+      const sprite = this.scene.physics.add.sprite(0, 0, "weapon-axe-projectile");
       sprite.setScale(this.stats.scale);
       sprite.setDepth(5);
       sprite.setVisible(false);
@@ -148,11 +144,7 @@ class FlyingAxeWeapon extends BaseWeapon {
       // Create trail sprites for level 8
       const trailSprites = [];
       for (let j = 0; j < this.trailMaxSize; j++) {
-        const trailSprite = this.scene.add.sprite(
-          0,
-          0,
-          "weapon-axe-projectile"
-        );
+        const trailSprite = this.scene.add.sprite(0, 0, "weapon-axe-projectile");
         trailSprite.setDepth(4); // Set below main sprite
         trailSprite.setScale(this.stats.scale);
         trailSprite.setActive(false).setVisible(false);
@@ -182,9 +174,7 @@ class FlyingAxeWeapon extends BaseWeapon {
 
   fireProjectile(angleOffset = 0) {
     // Check if we're at the maximum number of active projectiles
-    const currentActiveCount = this.activeProjectiles.filter(
-      (p) => p.active
-    ).length;
+    const currentActiveCount = this.activeProjectiles.filter((p) => p.active).length;
     if (currentActiveCount >= this.maxProjectiles) return;
 
     const proj = this.getInactiveProjectile();
@@ -225,12 +215,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     let closestDist = Infinity;
 
     enemies.forEach((enemy) => {
-      const dist = Phaser.Math.Distance.Between(
-        x,
-        y,
-        enemy.sprite.x,
-        enemy.sprite.y
-      );
+      const dist = Phaser.Math.Distance.Between(x, y, enemy.sprite.x, enemy.sprite.y);
       if (dist < closestDist) {
         closest = enemy;
         closestDist = dist;
@@ -271,18 +256,13 @@ class FlyingAxeWeapon extends BaseWeapon {
 
           // Calculate orbit position
           proj.orbitAngle += this.stats.orbitSpeed * (delta / 1000);
-          const orbitX =
-            proj.startX + Math.cos(proj.orbitAngle) * this.stats.orbitRadius;
-          const orbitY =
-            proj.startY + Math.sin(proj.orbitAngle) * this.stats.orbitRadius;
+          const orbitX = proj.startX + Math.cos(proj.orbitAngle) * this.stats.orbitRadius;
+          const orbitY = proj.startY + Math.sin(proj.orbitAngle) * this.stats.orbitRadius;
           proj.sprite.setPosition(orbitX, orbitY);
 
           // Transition to seeking phase after orbit time
           if (proj.orbitTime >= this.stats.maxOrbitTime) {
-            const closestEnemy = this.findClosestEnemy(
-              proj.sprite.x,
-              proj.sprite.y
-            );
+            const closestEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
             if (closestEnemy) {
               proj.phase = "seeking";
               proj.targetEnemy = closestEnemy;
@@ -352,10 +332,7 @@ class FlyingAxeWeapon extends BaseWeapon {
         const trailSprites = this.trailPool[index];
 
         // Store current position and rotation
-        if (
-          time - (proj.lastTrailTime || 0) >=
-          this.stats.trailSpacing * 1000
-        ) {
+        if (time - (proj.lastTrailTime || 0) >= this.stats.trailSpacing * 1000) {
           proj.trailPositions.unshift({
             x: proj.sprite.x,
             y: proj.sprite.y,
@@ -399,12 +376,7 @@ class FlyingAxeWeapon extends BaseWeapon {
 
       enemies.forEach((enemy) => {
         if (proj.active && proj.pierceCount > 0) {
-          const distance = Phaser.Math.Distance.Between(
-            proj.sprite.x,
-            proj.sprite.y,
-            enemy.sprite.x,
-            enemy.sprite.y
-          );
+          const distance = Phaser.Math.Distance.Between(proj.sprite.x, proj.sprite.y, enemy.sprite.x, enemy.sprite.y);
 
           // Collision thresholds
           const projRadius = 25;
@@ -436,10 +408,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     // If no more pierce, start return phase
     if (proj.pierceCount <= 0) {
       proj.phase = "return";
-      const angle = Math.atan2(
-        this.player.y - proj.sprite.y,
-        this.player.x - proj.sprite.x
-      );
+      const angle = Math.atan2(this.player.y - proj.sprite.y, this.player.x - proj.sprite.x);
       const velocity = {
         x: Math.cos(angle) * this.stats.speed,
         y: Math.sin(angle) * this.stats.speed,
@@ -450,11 +419,7 @@ class FlyingAxeWeapon extends BaseWeapon {
 
   createHitEffect(enemy, proj) {
     // Create a hit flash
-    const flash = this.scene.add.sprite(
-      proj.sprite.x,
-      proj.sprite.y,
-      "weapon-axe-projectile"
-    );
+    const flash = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-axe-projectile");
     flash.setScale(this.stats.scale * 1.5);
     flash.setAlpha(0.6);
     flash.setTint(0xffffff);
@@ -472,11 +437,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     if (this.currentLevel === this.maxLevel) {
       for (let i = 0; i < 8; i++) {
         const angle = (i / 8) * Math.PI * 2;
-        const spark = this.scene.add.sprite(
-          proj.sprite.x,
-          proj.sprite.y,
-          "weapon-axe-projectile"
-        );
+        const spark = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-axe-projectile");
         spark.setScale(this.stats.scale * 0.3);
         spark.setAlpha(0.8);
         spark.setTint(0xffa500);
@@ -523,20 +484,14 @@ class FlyingAxeWeapon extends BaseWeapon {
     this.lastFiredTime = time;
 
     // Get current active projectile count
-    const currentActiveCount = this.activeProjectiles.filter(
-      (p) => p.active
-    ).length;
+    const currentActiveCount = this.activeProjectiles.filter((p) => p.active).length;
 
     // Calculate how many new projectiles we can fire
-    const maxNewProjectiles = Math.min(
-      this.stats.projectileCount,
-      this.maxProjectiles - currentActiveCount
-    );
+    const maxNewProjectiles = Math.min(this.stats.projectileCount, this.maxProjectiles - currentActiveCount);
 
     // Fire multiple projectiles based on available slots
     for (let i = 0; i < maxNewProjectiles; i++) {
-      const angleOffset =
-        ((i * 360) / this.stats.projectileCount) * (Math.PI / 180);
+      const angleOffset = ((i * 360) / this.stats.projectileCount) * (Math.PI / 180);
       this.fireProjectile(angleOffset);
     }
   }
@@ -562,10 +517,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     // Update maxProjectiles based on new level stats
     this.maxProjectiles = this.stats.projectileCount;
 
-    console.log(
-      `Flying Axe leveled up to ${this.currentLevel}! New stats:`,
-      this.stats
-    );
+    console.log(`Flying Axe leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
     // Recreate projectiles with new stats
     this.activeProjectiles.forEach((proj) => {
@@ -577,11 +529,7 @@ class FlyingAxeWeapon extends BaseWeapon {
     this.createProjectiles();
 
     // Create level up effect around the player
-    const burst = this.scene.add.sprite(
-      this.player.x,
-      this.player.y,
-      "weapon-axe-projectile"
-    );
+    const burst = this.scene.add.sprite(this.player.x, this.player.y, "weapon-axe-projectile");
     burst.setScale(0.2);
     burst.setAlpha(0.7);
     burst.setTint(0xff6b00); // Orange color for level up
