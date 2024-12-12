@@ -63,6 +63,7 @@ function LeaderboardTable({ data }) {
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">#</th>
             <th className="p-2 text-sm font-medium tracking-wider text-left uppercase text-white/70">Player</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Gold</th>
+            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Kills</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Wave</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Time</th>
           </tr>
@@ -109,6 +110,9 @@ function LeaderboardTable({ data }) {
                   <span className="text-base text-white/90">{player.gold.toLocaleString()}</span>
                 </td>
                 <td className="p-2 text-right whitespace-nowrap">
+                  <span className="text-base text-white/90">{player.kills}</span>
+                </td>
+                <td className="p-2 text-right whitespace-nowrap">
                   <span className="text-base text-white/90">{player.waveNumber}</span>
                 </td>
                 <td className="p-2 text-right whitespace-nowrap">
@@ -144,7 +148,11 @@ async function fetchLeaderboard() {
 }
 
 export default function Leaderboard() {
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
   });
@@ -156,7 +164,7 @@ export default function Leaderboard() {
     <Suspense fallback={<LoadingSpinner />}>
       <div className="" suppressHydrationWarning>
         <h2 className="mb-2 text-sm font-bold text-white">Leaderboard</h2>
-        <LeaderboardTable data={data} />
+        <LeaderboardTable data={response.data} />
       </div>
     </Suspense>
   );

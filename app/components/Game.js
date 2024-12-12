@@ -78,11 +78,11 @@ const GameScene = Phaser.Class({
         advanced: 5,
         epic: 10,
       },
+      gameStartTime: null,
+      gameEndTime: null,
+      finalTimeAlive: 0,
+      finalTimeAliveMS: 0,
     };
-
-    // Store user info in scene data instead of accessing from config
-    this.userAddress = this.game.config.userInfo?.userAddress;
-    this.username = this.game.config.userInfo?.username;
 
     // Debug log initial state
     console.log("Initial game state:", {
@@ -1260,7 +1260,11 @@ const GameScene = Phaser.Class({
     this.showWastedScreen = () => {
       if (this.gameState.isGameOver) return;
 
-      // Post game stats to /game-over endpoint before showing wasted screen
+      console.log("Posting game stats with precise time:", {
+        timeAlive: this.gameState.finalTimeAlive,
+        timeAliveMS: this.gameState.finalTimeAliveMS,
+      });
+
       fetch("/api/game-over", {
         method: "POST",
         headers: {
@@ -1270,13 +1274,18 @@ const GameScene = Phaser.Class({
           gold: this.gameState.gold,
           kills: this.gameState.kills,
           waveNumber: this.gameState.waveNumber,
-          timeAlive: this.gameState.gameTimer,
+          timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
+          timeAliveMS: this.gameState.finalTimeAliveMS,
           timestamp: new Date().toISOString(),
           userAddress: this.userInfo.userAddress,
           username: this.userInfo.username,
           profileImage: this.userInfo.profileImage,
         }),
-      }).catch((error) => console.error("Error posting game stats:", error));
+      })
+        .then((response) => response.json())
+        .then((data) => console.log("Game over response:", data))
+        .catch((error) => console.error("Error posting game stats:", error));
+
       this.gameState.isGameOver = true;
       this.wastedOverlay.setVisible(true);
 
@@ -1405,23 +1414,52 @@ const GameScene = Phaser.Class({
       });
     });
 
-    // Create new timer
-    const scene = this; // Store reference to the scene
+    // Create new timer with millisecond precision
     this.timerEvent = this.time.addEvent({
-      delay: 1000,
+      delay: 16, // Update roughly every frame (60fps)
       callback: () => {
-        if (!scene.gameState.timerStarted || scene.gameState.gameTimer >= 1800) {
-          return; // 30 minutes = 1800 seconds
-        }
+        if (this.gameState.gameStartTime && !this.gameState.gameEndTime) {
+          const currentTime = Date.now();
+          const elapsedMS = currentTime - this.gameState.gameStartTime;
+          this.gameState.gameTimer = Math.floor(elapsedMS / 1000);
+          this.gameState.finalTimeAliveMS = elapsedMS;
 
-        scene.gameState.gameTimer++;
-        const minutes = Math.floor(scene.gameState.gameTimer / 60);
-        const seconds = Math.floor(scene.gameState.gameTimer % 60);
-        scene.timerText.setText(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
+          // Update timer display with milliseconds
+          const minutes = Math.floor(this.gameState.gameTimer / 60);
+          const seconds = Math.floor(this.gameState.gameTimer % 60);
+          const ms = Math.floor((elapsedMS % 1000) / 10); // Get centiseconds (2 decimal places)
+          this.timerText.setText(
+            `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
+              .toString()
+              .padStart(2, "0")}`
+          );
+        }
       },
       callbackScope: this,
       loop: true,
     });
+
+    // Modify player damage handling for precise timing
+    if (this.player) {
+      const originalTakeDamage = this.player.takeDamage;
+      this.player.takeDamage = (amount) => {
+        originalTakeDamage.call(this.player, amount);
+
+        if (this.player.stats.currentHealth <= 0 && !this.gameState.gameEndTime) {
+          this.gameState.gameEndTime = Date.now();
+          const elapsedMS = this.gameState.gameEndTime - this.gameState.gameStartTime;
+          this.gameState.finalTimeAliveMS = elapsedMS;
+          this.gameState.finalTimeAlive = elapsedMS / 1000; // Store as seconds with decimal
+
+          console.log("Player died! Precise time:", {
+            timeAliveSeconds: this.gameState.finalTimeAlive,
+            timeAliveMS: this.gameState.finalTimeAliveMS,
+            startTime: this.gameState.gameStartTime,
+            endTime: this.gameState.gameEndTime,
+          });
+        }
+      };
+    }
   },
 
   update: function (time, delta) {
@@ -1445,6 +1483,8 @@ const GameScene = Phaser.Class({
         wasd.down.isDown
       ) {
         this.gameState.gameStarted = true;
+        this.gameState.gameStartTime = Date.now();
+        console.log("Game started! Start time:", this.gameState.gameStartTime); // Debug log
         this.startGame();
       }
       return;
@@ -1583,7 +1623,6 @@ const GameScene = Phaser.Class({
         this.wasd.down.isDown) &&
       !this.gameState.timerStarted
     ) {
-      console.log("Starting timer..."); // Debug log
       this.gameState.timerStarted = true;
     }
 

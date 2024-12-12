@@ -45,12 +45,14 @@ export async function POST(request) {
     console.log("User Address:", data.userAddress);
     console.log("Username:", data.username);
     console.log("Profile Image:", data.profileImage);
+    console.log("Time Alive MS:", data.timeAliveMS);
     // Save the data to the database
     await db.insert(gameStats).values({
       gold: data.gold,
       kills: data.kills,
       waveNumber: data.waveNumber,
       timeAlive: data.timeAlive,
+      timeAliveMS: data.timeAliveMS,
       timestamp: formattedDate,
       username: data.username,
       walletAddress: data.userAddress,
@@ -65,6 +67,7 @@ export async function POST(request) {
           kills: data.kills,
           waveNumber: data.waveNumber,
           timeAlive: data.timeAlive,
+          timeAliveMS: data.timeAliveMS,
           timestamp: formattedDate,
         },
       },

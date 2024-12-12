@@ -1,1 +1,0 @@
-ALTER TABLE `leaderboard` RENAME COLUMN "user_name" TO "username";
