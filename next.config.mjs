@@ -10,6 +10,14 @@ const nextConfig = {
   },
   images: {
     domains: ["ipfs.io", "gateway.ipfs.io", "cf-ipfs.com"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'pbs.twimg.com',
+        port: '',
+        pathname: '/profile_images/**',
+      },
+    ],
   },
 };
 
