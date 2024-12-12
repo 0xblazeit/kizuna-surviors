@@ -1195,37 +1195,6 @@ const GameScene = Phaser.Class({
       this.updateXPBar();
     });
 
-    // Listen for level up events to update stats
-    this.events.on("playerLevelUp", (level) => {
-      this.updateStatsDisplay();
-
-      // Filter out weapons that are at max level (8)
-      const availableWeapons = this.weapons.filter((weapon) => weapon.currentLevel < 8);
-      console.log("YOYOYOYOY");
-      console.log("Available upgradable weapons:", availableWeapons);
-      if (availableWeapons.length === 0) {
-        console.log("All weapons are maxed out!");
-        return;
-      }
-
-      // Randomly select 3 weapons (or fewer if less are available)
-      const selectedWeapons = [];
-      const numChoices = Math.min(3, availableWeapons.length);
-      const weaponsCopy = [...availableWeapons];
-
-      for (let i = 0; i < numChoices; i++) {
-        const randomIndex = Math.floor(Math.random() * weaponsCopy.length);
-        selectedWeapons.push(weaponsCopy.splice(randomIndex, 1)[0]);
-      }
-
-      // Launch the upgrade menu scene
-      this.scene.pause();
-      this.scene.launch("UpgradeMenu", {
-        parentScene: this,
-        selectedWeapons: selectedWeapons,
-      });
-    });
-
     // Add spacebar XP debug handler
     this.input.keyboard.addKey("SPACE").on(
       "down",
@@ -1444,36 +1413,6 @@ const GameScene = Phaser.Class({
       },
       callbackScope: this,
       loop: true,
-    });
-
-    // Listen for level up events to update stats
-    this.events.on("playerLevelUp", (level) => {
-      this.updateStatsDisplay();
-
-      // Filter out weapons that are at max level (8)
-      const availableWeapons = this.weapons.filter((weapon) => weapon.currentLevel < 8);
-
-      if (availableWeapons.length === 0) {
-        console.log("All weapons are maxed out!");
-        return;
-      }
-
-      // Randomly select 3 weapons (or fewer if less are available)
-      const selectedWeapons = [];
-      const numChoices = Math.min(3, availableWeapons.length);
-      const weaponsCopy = [...availableWeapons];
-
-      for (let i = 0; i < numChoices; i++) {
-        const randomIndex = Math.floor(Math.random() * weaponsCopy.length);
-        selectedWeapons.push(weaponsCopy.splice(randomIndex, 1)[0]);
-      }
-
-      // Launch the upgrade menu scene
-      this.scene.pause();
-      this.scene.launch("UpgradeMenu", {
-        parentScene: this,
-        selectedWeapons: selectedWeapons,
-      });
     });
   },
 
