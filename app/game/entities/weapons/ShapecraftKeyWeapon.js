@@ -625,44 +625,8 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
   }
 
   createHitEffect(x, y) {
-    // Skip visual effects for off-screen hits
-    const camera = this.scene.cameras.main;
-    const margin = 50;
-    if (
-      x < camera.scrollX - margin ||
-      x > camera.scrollX + camera.width + margin ||
-      y < camera.scrollY - margin ||
-      y > camera.scrollY + camera.height + margin
-    ) {
-      return;
-    }
-
-    const graphics = this.scene.add.graphics();
-    const shapeType = this.stats.shapeTypes[Math.floor(Math.random() * this.stats.shapeTypes.length)];
-    const glowColor =
-      this.currentLevel === this.maxLevel ? this.maxLevelColors.energy : this.shapeColors[shapeType].energy;
-
-    // Simplified hit effect
-    graphics.lineStyle(2, glowColor, 0.8);
-    graphics.fillStyle(glowColor, 0.5);
-    graphics.beginPath();
-    graphics.arc(x, y, 12, 0, Math.PI * 2); // Reduced size
-    graphics.closePath();
-    graphics.strokePath();
-    graphics.fillPath();
-
-    // Faster animation
-    this.scene.tweens.add({
-      targets: graphics,
-      scaleX: 1.3, // Reduced scale
-      scaleY: 1.3,
-      alpha: 0,
-      duration: 150, // Faster animation
-      ease: "Power1",
-      onComplete: () => {
-        graphics.destroy();
-      },
-    });
+    // Hit effect removed
+    return;
   }
 
   deactivateProjectile(projectile) {
