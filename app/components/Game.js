@@ -786,7 +786,6 @@ const GameScene = Phaser.Class({
       );
 
       const selectedWeapon = this.weapons[this.gameState.selectedWeaponIndex];
-      console.log("Selected weapon:", selectedWeapon);
 
       // Base stats
       let displayStats = {
@@ -1202,7 +1201,8 @@ const GameScene = Phaser.Class({
 
       // Filter out weapons that are at max level (8)
       const availableWeapons = this.weapons.filter((weapon) => weapon.currentLevel < 8);
-
+      console.log("YOYOYOYOY");
+      console.log("Available upgradable weapons:", availableWeapons);
       if (availableWeapons.length === 0) {
         console.log("All weapons are maxed out!");
         return;
