@@ -13,7 +13,7 @@ class EnemyAdvanced extends EnemyBasic {
       attackDamage: 12, // 50% more damage
       scale: 0.18, // Just slightly larger than basic enemies (0.4)
       trailTint: 0xffff00, // Gold trail for advanced enemies
-      attackRange: 180, // 50% more range than basic enemies
+      attackRange: 145, // 50% more range than basic enemies
       ...config,
     };
 
@@ -21,6 +21,11 @@ class EnemyAdvanced extends EnemyBasic {
 
     // Advanced enemy specific properties
     this.type = "advanced";
+    
+    // Custom separation parameters for advanced enemies
+    this.separationRadius = 80; // Larger separation radius due to bigger size
+    this.baseSeparationForce = 0.6; // Stronger base separation
+    this.maxSeparationForce = 2.4; // Stronger max separation
   }
 
   die() {

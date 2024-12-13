@@ -179,6 +179,9 @@ class MainPlayer extends BasePlayer {
     }
 
     takeDamage(amount) {
+        // Don't process damage if already dead
+        if (this.isDead) return 0;
+        
         // Get the raw damage before defense
         const rawDamage = Math.max(1, Number(amount) || 0);
         
@@ -264,6 +267,7 @@ class MainPlayer extends BasePlayer {
         }
         
         this.updateHealthBar();
+        return damageAfterDefense;
     }
 
     heal(amount) {

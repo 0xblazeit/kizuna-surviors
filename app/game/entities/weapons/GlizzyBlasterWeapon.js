@@ -20,96 +20,96 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     // Level-up configurations
     this.levelConfigs = {
       1: {
-        damage: 5, // Lower base damage
+        damage: 8, // Higher base damage for better early game
         pierce: 1,
         projectileCount: 1,
         spreadAngle: 0,
-        cooldown: 1100, // Faster firing
-        range: 800, // Much longer range
-        speed: 200, // Faster projectiles
+        cooldown: 1000, // Slightly faster base firing
+        range: 800,
+        speed: 250, // Better base projectile speed
         scale: 0.4,
       },
       2: {
-        damage: 6,
+        damage: 10,
         pierce: 1,
         projectileCount: 2,
         spreadAngle: 15,
-        cooldown: 1100,
+        cooldown: 950, // Gradually improving cooldown
         range: 850,
-        speed: 200,
+        speed: 275,
         scale: 0.45,
       },
       3: {
-        damage: 7,
+        damage: 12,
         pierce: 2,
-        projectileCount: 3,
+        projectileCount: 2,
         spreadAngle: 20,
-        cooldown: 1000,
+        cooldown: 900,
         range: 900,
         speed: 300,
         scale: 0.5,
       },
       4: {
-        damage: 8,
+        damage: 14,
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 25,
-        cooldown: 1000,
+        cooldown: 850,
         range: 950,
-        speed: 400,
-        scale: 0.55,
+        speed: 350,
+        scale: 0.5,
       },
       5: {
-        damage: 9,
+        damage: 16,
         pierce: 2,
         projectileCount: 3,
         spreadAngle: 30,
-        cooldown: 1200,
+        cooldown: 800, // Significant cooldown improvement
         range: 1000,
-        speed: 480,
-        scale: 0.6,
+        speed: 400,
+        scale: 0.5,
       },
       6: {
-        damage: 10,
+        damage: 18,
         pierce: 3,
         projectileCount: 4,
         spreadAngle: 35,
-        cooldown: 100,
+        cooldown: 700,
         range: 1050,
-        speed: 500,
-        scale: 0.65,
+        speed: 450,
+        scale: 0.55,
       },
       7: {
-        damage: 12,
+        damage: 20,
         pierce: 3,
         projectileCount: 4,
         spreadAngle: 40,
-        cooldown: 1100,
+        cooldown: 600,
         range: 1100,
-        speed: 520,
-        scale: 0.7,
+        speed: 500,
+        scale: 0.57,
       },
       8: {
-        damage: 18,
+        damage: 25, // Significant damage boost
         pierce: 4,
-        projectileCount: 5,
+        projectileCount: 4,
         spreadAngle: 45,
         range: 1200,
-        cooldown: 300,
-        speed: 550,
-        scale: 0.75,
+        cooldown: 750, // Much faster firing at max level
+        speed: 400,
+        scale: 0.59,
         isMaxLevel: true,
         mustardExplosion: true,
-        explosionDamage: 8,
-        explosionRadius: 100,
+        explosionDamage: 15, // Increased explosion damage
+        explosionRadius: 120, // Larger explosion radius
       },
     };
 
     // Initialize at level 1
     this.currentLevel = 1;
     this.maxLevel = 8;
-    // Create a deep copy of the level 1 config to avoid reference issues
-    this.stats = JSON.parse(JSON.stringify(this.levelConfigs[1]));
+    // Create a deep copy of the current level config
+    this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
 
     // Initialize projectile pool
     this.maxProjectiles = 50;
@@ -132,12 +132,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     this.activeProjectiles.forEach((proj) => {
       if (proj.active && proj.sprite) {
         // Check if projectile is out of range
-        const distance = Phaser.Math.Distance.Between(
-          proj.startX,
-          proj.startY,
-          proj.sprite.x,
-          proj.sprite.y
-        );
+        const distance = Phaser.Math.Distance.Between(proj.startX, proj.startY, proj.sprite.x, proj.sprite.y);
 
         if (distance > this.stats.range) {
           this.deactivateProjectile(proj);
@@ -198,12 +193,8 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     const baseAngle = Math.atan2(direction.y, direction.x);
 
     // Calculate spread angles based on projectile count
-    const angleStep =
-      this.stats.projectileCount > 1
-        ? this.stats.spreadAngle / (this.stats.projectileCount - 1)
-        : 0;
-    const startAngle =
-      baseAngle - (this.stats.spreadAngle / 2) * (Math.PI / 180);
+    const angleStep = this.stats.projectileCount > 1 ? this.stats.spreadAngle / (this.stats.projectileCount - 1) : 0;
+    const startAngle = baseAngle - (this.stats.spreadAngle / 2) * (Math.PI / 180);
 
     // Fire multiple projectiles in a spread pattern
     for (let i = 0; i < this.stats.projectileCount; i++) {
@@ -337,9 +328,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     if (this.currentLevel < this.maxLevel) {
       this.currentLevel++;
       // Create a deep copy of the new level config
-      this.stats = JSON.parse(
-        JSON.stringify(this.levelConfigs[this.currentLevel])
-      );
+      this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
       this.createProjectiles(); // Recreate projectiles with new stats
       return true;
     }
@@ -378,11 +367,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
 
   createHitEffect(enemy, proj) {
     // Create a small sprite burst effect
-    const hitSprite = this.scene.add.sprite(
-      proj.sprite.x,
-      proj.sprite.y,
-      "weapon-hotdog-projectile"
-    );
+    const hitSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
     hitSprite.setScale(0.3);
     hitSprite.setAlpha(0.8);
     hitSprite.setTint(0xffd700); // Golden tint
@@ -401,11 +386,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     });
 
     // Add a small rotation effect
-    const rotationSprite = this.scene.add.sprite(
-      proj.sprite.x,
-      proj.sprite.y,
-      "weapon-hotdog-projectile"
-    );
+    const rotationSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
     rotationSprite.setScale(0.4);
     rotationSprite.setAlpha(0.5);
     rotationSprite.setTint(0xff6b6b); // Reddish tint
@@ -466,11 +447,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       const angle = (i / particleCount) * Math.PI * 2;
       const innerRadius = explosionRadius * 0.5;
 
-      const mustardDrop = this.scene.add.sprite(
-        x,
-        y,
-        "weapon-hotdog-projectile"
-      );
+      const mustardDrop = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
       mustardDrop.setScale(0.4);
       mustardDrop.setAlpha(0.9);
       mustardDrop.setTint(0xffdb58);
@@ -504,11 +481,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       trail.setAlpha(0.6);
       trail.setTint(0xffa500); // Orange tint for trail
 
-      const mustardParticle = this.scene.add.sprite(
-        x,
-        y,
-        "weapon-hotdog-projectile"
-      );
+      const mustardParticle = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
       mustardParticle.setScale(0.3);
       mustardParticle.setAlpha(1);
       mustardParticle.setTint(0xffdb58);
@@ -592,8 +565,7 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         e.sprite &&
         e.sprite.active &&
         !e.isDead &&
-        Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <=
-          explosionRadius
+        Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <= explosionRadius
     );
 
     enemies.forEach((enemy) => {

@@ -13,7 +13,7 @@ class EnemyEpic extends EnemyAdvanced {
       attackDamage: 18, // 50% more damage than advanced
       scale: 0.15, // Slightly larger than advanced (0.42)
       trailTint: 0xffa500, // Orange trail
-      attackRange: 200, // Double the basic enemy range
+      attackRange: 130, // Double the basic enemy range
       ...config,
     };
 
@@ -21,6 +21,11 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Epic enemy specific properties
     this.type = "epic";
+
+    // Custom separation parameters for epic enemies
+    this.separationRadius = 100; // Even larger separation radius for epic enemies
+    this.baseSeparationForce = 0.8; // Strongest base separation
+    this.maxSeparationForce = 3.0; // Strongest max separation
 
     // Create dark red aura
     this.createAura();
@@ -78,11 +83,26 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Determine drop type - 100% chance for any drop
     const dropChance = Math.random();
-    // 40% chance for coin, 60% chance for XP gem
+    // 40% chance for coins, 60% chance for XP gem
     if (dropChance < 0.4) {
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-      if (coin) {
-        this.scene.coins.push(coin);
+      // Epic enemies drop multiple coins in a pattern
+      const numCoins = 4; // Epic enemies drop more coins
+      const radius = 25; // Slightly larger spread radius for epic enemies
+      
+      for (let i = 0; i < numCoins; i++) {
+        const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
+        const offsetX = Math.cos(angle) * radius;
+        const offsetY = Math.sin(angle) * radius;
+        
+        const coin = new Coin(
+          this.scene,
+          this.sprite.x + offsetX,
+          this.sprite.y + offsetY,
+          coinValue
+        );
+        if (coin) {
+          this.scene.coins.push(coin);
+        }
       }
     } else {
       const gem = new XPGem(

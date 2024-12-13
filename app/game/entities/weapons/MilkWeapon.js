@@ -3,8 +3,8 @@ import { BaseWeapon } from "./BaseWeapon.js";
 export class MilkWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
-    this.name = "Magical Goo";
-    this.description = "Creates pools of damaging milk that fall from the sky";
+    this.name = "GooBoo";
+    this.description = "Creates pools of damaging GooBoo wreckage on the ground.";
     this.type = "magic";
 
     // Level-up configurations
@@ -153,63 +153,38 @@ export class MilkWeapon extends BaseWeapon {
     const puddle = this.scene.add.sprite(x, y, "weapon-magic-milk");
     this.scene.physics.add.existing(puddle, true);
     puddle.body.setCircle(this.stats.splashRadius);
-    puddle.body.setOffset(
-      puddle.width / 2 - this.stats.splashRadius,
-      puddle.height / 2 - this.stats.splashRadius
-    );
+    puddle.body.setOffset(puddle.width / 2 - this.stats.splashRadius, puddle.height / 2 - this.stats.splashRadius);
     puddle.setScale(0);
-    puddle.setAlpha(0.8);
-    puddle.setBlendMode(Phaser.BlendModes.ADD);
+    puddle.setAlpha(1);
 
-    const glow = this.scene.add.sprite(x, y, "weapon-magic-milk");
-    glow.setScale(0);
-    glow.setAlpha(0.4);
-    glow.setBlendMode(Phaser.BlendModes.ADD);
-
-    const slowIndicator = this.scene.add.sprite(x, y, "weapon-magic-milk");
-    slowIndicator.setScale(0);
-    slowIndicator.setAlpha(0.3);
-    slowIndicator.setTint(0x00ffff);
-    slowIndicator.setBlendMode(Phaser.BlendModes.ADD);
-
-    let auraSprites = [];
-    if (this.currentLevel === 8) {
-      // Create multiple aura rings
+    if (this.currentLevel === this.maxLevel) {
+      // Create spinning aura layers
+      const auraLayers = [];
       for (let i = 0; i < 3; i++) {
         const aura = this.scene.add.sprite(x, y, "weapon-magic-milk");
         aura.setScale(0);
-        aura.setAlpha(0.15);
-        aura.setBlendMode(Phaser.BlendModes.ADD);
-        aura.setTint(0x00ffff);
-        auraSprites.push(aura);
-        
-        // Create unique rotating animation for each ring
+        aura.setAlpha(0.2 - i * 0.05);
+        aura.setTint(0xffffff);
+        auraLayers.push(aura);
+
+        // Continuous rotation and scale animation
         this.scene.tweens.add({
           targets: aura,
-          angle: 360,
-          duration: 3000 + i * 1000,
+          angle: i % 2 === 0 ? 360 : -360,
+          scaleX: this.stats.scale * (1.5 + i * 0.2),
+          scaleY: this.stats.scale * (1.5 + i * 0.2),
+          duration: 2000 - i * 300,
           repeat: -1,
-          ease: 'Linear'
+          ease: "Sine.easeInOut",
         });
       }
 
-      // Pulse animation for aura rings
-      this.scene.tweens.add({
-        targets: auraSprites,
-        scale: { from: this.stats.scale * 1.2, to: this.stats.scale * 1.5 },
-        alpha: { from: 0.15, to: 0.05 },
-        duration: 1500,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
+      // Store aura references for cleanup
+      puddle.auraLayers = auraLayers;
     }
 
     const puddleData = {
       sprite: puddle,
-      glowSprite: glow,
-      slowSprite: slowIndicator,
-      auraSprites: auraSprites,
       x: x,
       y: y,
       createdAt: this.scene.time.now,
@@ -220,7 +195,7 @@ export class MilkWeapon extends BaseWeapon {
     this.activePuddles.push(puddleData);
 
     this.scene.tweens.add({
-      targets: [puddle, glow, slowIndicator],
+      targets: puddle,
       scaleX: this.stats.scale,
       scaleY: this.stats.scale,
       duration: 200,
@@ -239,8 +214,29 @@ export class MilkWeapon extends BaseWeapon {
     );
 
     this.scene.time.delayedCall(this.stats.puddleDuration, () => {
+      if (puddle.auraLayers) {
+        puddle.auraLayers.forEach((aura) => {
+          this.scene.tweens.add({
+            targets: aura,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => aura.destroy(),
+          });
+        });
+      }
       this.removePuddle(puddleData);
     });
+  }
+
+  removePuddle(puddleData) {
+    const index = this.activePuddles.indexOf(puddleData);
+    if (index !== -1) {
+      if (puddleData.sprite.auraLayers) {
+        puddleData.sprite.auraLayers.forEach((aura) => aura.destroy());
+      }
+      puddleData.sprite.destroy();
+      this.activePuddles.splice(index, 1);
+    }
   }
 
   handleEnemyOverlap(enemy, puddle) {
@@ -258,69 +254,13 @@ export class MilkWeapon extends BaseWeapon {
 
     // Initial damage on overlap
     const currentTime = this.scene.time.now;
-    if (!puddle.lastDamageTime[enemy.id] || 
-        currentTime - puddle.lastDamageTime[enemy.id] >= 500) {
+    if (!puddle.lastDamageTime[enemy.id] || currentTime - puddle.lastDamageTime[enemy.id] >= 500) {
       const isCritical = Math.random() < this.stats.criticalChance;
       const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
-      
+
       enemy.takeDamage(damage);
       puddle.lastDamageTime[enemy.id] = currentTime;
       this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);
-    }
-  }
-
-  removePuddle(puddleData) {
-    // Clean up all effects for affected enemies
-    puddleData.affectedEnemies.forEach((enemyId) => {
-      const enemy = this.scene.enemies.find((e) => e.id === enemyId);
-      this.removeSlowEffect(enemy);
-    });
-
-    // Kill any existing tweens
-    this.scene.tweens.killTweensOf([
-      puddleData.sprite,
-      puddleData.glowSprite,
-      puddleData.slowSprite,
-      ...puddleData.auraSprites
-    ]);
-
-    // Immediate cleanup
-    puddleData.sprite.destroy();
-    puddleData.glowSprite.destroy();
-    puddleData.slowSprite.destroy();
-    puddleData.auraSprites.forEach(aura => aura.destroy());
-
-    this.activePuddles = this.activePuddles.filter((p) => p !== puddleData);
-  }
-
-  applySlowEffect(enemy) {
-    if (!enemy.originalMoveSpeed) {
-      enemy.originalMoveSpeed = enemy.moveSpeed;
-    }
-    enemy.moveSpeed = enemy.originalMoveSpeed * this.stats.slowAmount;
-
-    if (!enemy.slowEffect) {
-      enemy.slowEffect = this.scene.add.sprite(
-        enemy.sprite.x,
-        enemy.sprite.y,
-        "weapon-magic-milk"
-      );
-      enemy.slowEffect.setScale(0.3);
-      enemy.slowEffect.setAlpha(0.3);
-      enemy.slowEffect.setTint(0x00ffff);
-      enemy.slowEffect.setBlendMode(Phaser.BlendModes.ADD);
-      enemy.slowEffect.setDepth(enemy.sprite.depth - 1);  // Ensure effect is below enemy
-
-      // Add pulsing effect
-      this.scene.tweens.add({
-        targets: enemy.slowEffect,
-        alpha: { from: 0.3, to: 0.1 },
-        scale: { from: 0.3, to: 0.4 },
-        yoyo: true,
-        repeat: -1,
-        duration: 500,
-        ease: 'Sine.easeInOut'
-      });
     }
   }
 
@@ -331,31 +271,24 @@ export class MilkWeapon extends BaseWeapon {
       enemy.moveSpeed = enemy.originalMoveSpeed;
       delete enemy.originalMoveSpeed;
     }
+  }
 
-    if (enemy.slowEffect) {
-      // Stop any existing tweens on the slow effect
-      this.scene.tweens.killTweensOf(enemy.slowEffect);
-      enemy.slowEffect.destroy();
-      delete enemy.slowEffect;
+  applySlowEffect(enemy) {
+    if (!enemy.originalMoveSpeed) {
+      enemy.originalMoveSpeed = enemy.moveSpeed;
     }
+    enemy.moveSpeed = enemy.originalMoveSpeed * this.stats.slowAmount;
   }
 
   showDamageText(x, y, damage, isCritical) {
     const text = this.scene.add
-      .text(
-        x,
-        y - 20,
-        isCritical
-          ? `CRIT! ${Math.floor(damage)}`
-          : Math.floor(damage).toString(),
-        {
-          fontSize: isCritical ? "20px" : "16px",
-          fontFamily: "VT323",
-          fill: isCritical ? "#ffffff" : "#ffffff",
-          stroke: "#000000",
-          strokeThickness: 3,
-        }
-      )
+      .text(x, y - 20, isCritical ? `CRIT! ${Math.floor(damage)}` : Math.floor(damage).toString(), {
+        fontSize: isCritical ? "20px" : "16px",
+        fontFamily: "VT323",
+        fill: isCritical ? "#ffffff" : "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
       .setOrigin(0.5);
 
     this.scene.tweens.add({
@@ -372,10 +305,10 @@ export class MilkWeapon extends BaseWeapon {
     super.update(time, delta);
 
     // Check all active puddles and their affected enemies
-    this.activePuddles.forEach(puddle => {
-      puddle.affectedEnemies.forEach(enemyId => {
-        const enemy = this.scene.enemies.find(e => e.id === enemyId);
-        
+    this.activePuddles.forEach((puddle) => {
+      puddle.affectedEnemies.forEach((enemyId) => {
+        const enemy = this.scene.enemies.find((e) => e.id === enemyId);
+
         // Remove dead enemies from tracking
         if (!enemy || enemy.isDead) {
           puddle.affectedEnemies.delete(enemyId);
@@ -383,29 +316,19 @@ export class MilkWeapon extends BaseWeapon {
         }
 
         // Check if enemy is still in range
-        const distance = Phaser.Math.Distance.Between(
-          enemy.sprite.x,
-          enemy.sprite.y,
-          puddle.sprite.x,
-          puddle.sprite.y
-        );
+        const distance = Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, puddle.sprite.x, puddle.sprite.y);
 
         if (distance > this.stats.splashRadius) {
           this.removeSlowEffect(enemy);
           puddle.affectedEnemies.delete(enemyId);
         } else {
           // Update slow effect position
-          if (enemy.slowEffect) {
-            enemy.slowEffect.setPosition(enemy.sprite.x, enemy.sprite.y);
-          }
-          
           // Apply continuous damage
           const currentTime = time;
-          if (!puddle.lastDamageTime[enemyId] || 
-              currentTime - puddle.lastDamageTime[enemyId] >= 500) {
+          if (!puddle.lastDamageTime[enemyId] || currentTime - puddle.lastDamageTime[enemyId] >= 500) {
             const isCritical = Math.random() < this.stats.criticalChance;
             const damage = isCritical ? this.stats.damage * 1.5 : this.stats.damage;
-            
+
             enemy.takeDamage(damage);
             puddle.lastDamageTime[enemyId] = currentTime;
             this.showDamageText(enemy.sprite.x, enemy.sprite.y, damage, isCritical);

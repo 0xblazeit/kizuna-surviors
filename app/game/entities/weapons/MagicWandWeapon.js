@@ -113,8 +113,6 @@ export class MagicWandWeapon extends BaseWeapon {
     // Initialize lastFiredTime
     this.lastFiredTime = 0;
 
-    console.log("Magic Wand initialized with stats:", this.stats);
-
     this.createMagicProjectiles();
   }
 
@@ -132,11 +130,7 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Create new projectiles
     for (let i = 0; i < this.maxProjectiles; i++) {
-      const sprite = this.scene.physics.add.sprite(
-        this.player.x,
-        this.player.y,
-        "weapon-wand-projectile"
-      );
+      const sprite = this.scene.physics.add.sprite(this.player.x, this.player.y, "weapon-wand-projectile");
       sprite.setScale(this.stats.scale);
       sprite.setActive(true);
       sprite.setVisible(false);
@@ -150,11 +144,7 @@ export class MagicWandWeapon extends BaseWeapon {
       sprite.body.setImmovable(true); // Projectiles don't get pushed by collisions
 
       // Add a simple glow effect using a second sprite
-      const glowSprite = this.scene.add.sprite(
-        this.player.x,
-        this.player.y,
-        "weapon-wand-projectile"
-      );
+      const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, "weapon-wand-projectile");
       glowSprite.setScale(this.stats.scale * 1.4);
       glowSprite.setAlpha(0.3);
       glowSprite.setVisible(false);
@@ -209,8 +199,7 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Check if projectile is out of range from player
     const distanceFromPlayer = Math.sqrt(
-      Math.pow(proj.sprite.x - this.player.x, 2) +
-        Math.pow(proj.sprite.y - this.player.y, 2)
+      Math.pow(proj.sprite.x - this.player.x, 2) + Math.pow(proj.sprite.y - this.player.y, 2)
     );
 
     if (distanceFromPlayer > this.stats.range) {
@@ -249,14 +238,9 @@ export class MagicWandWeapon extends BaseWeapon {
     if (!this.player) return;
 
     // Update last movement direction if player is moving
-    if (
-      this.player.body &&
-      (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0)
-    ) {
+    if (this.player.body && (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0)) {
       const velocity = this.player.body.velocity;
-      const magnitude = Math.sqrt(
-        velocity.x * velocity.x + velocity.y * velocity.y
-      );
+      const magnitude = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
       if (magnitude > 0) {
         this.lastDirection = {
           x: velocity.x / magnitude,
@@ -288,19 +272,11 @@ export class MagicWandWeapon extends BaseWeapon {
         // Check for collisions with enemies
         if (this.scene.enemies && proj.pierceCount > 0) {
           this.scene.enemies.forEach((enemy) => {
-            if (
-              enemy &&
-              enemy.sprite &&
-              enemy.sprite.active &&
-              !enemy.isDead &&
-              !proj.hitEnemies.has(enemy)
-            ) {
+            if (enemy && enemy.sprite && enemy.sprite.active && !enemy.isDead && !proj.hitEnemies.has(enemy)) {
               const bounds1 = proj.sprite.getBounds();
               const bounds2 = enemy.sprite.getBounds();
 
-              if (
-                Phaser.Geom.Intersects.RectangleToRectangle(bounds1, bounds2)
-              ) {
+              if (Phaser.Geom.Intersects.RectangleToRectangle(bounds1, bounds2)) {
                 this.handleHit(enemy, proj);
                 proj.hitEnemies.add(enemy);
               }
@@ -313,7 +289,6 @@ export class MagicWandWeapon extends BaseWeapon {
 
   handleHit(enemy, proj) {
     if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
-      console.log("Invalid enemy or already dead, skipping hit");
       return;
     }
 
@@ -333,13 +308,6 @@ export class MagicWandWeapon extends BaseWeapon {
     finalDamage *= 1 + this.stats.magicPower / 100;
 
     const roundedDamage = Math.round(finalDamage);
-    // console.log('Applying hit:', {
-    //     projectile: { x: proj.sprite.x, y: proj.sprite.y, pierce: proj.pierceCount },
-    //     enemy: { x: enemy.sprite.x, y: enemy.sprite.y, health: enemy.stats.currentHealth },
-    //     damage: roundedDamage,
-    //     isCritical
-    // });
-
     // Apply damage with source position for proper hit effects
     enemy.takeDamage(roundedDamage, proj.sprite.x, proj.sprite.y);
 
@@ -348,7 +316,6 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Reduce pierce count and handle projectile state
     proj.pierceCount--;
-    // console.log('Pierce count after hit:', proj.pierceCount);
 
     if (proj.pierceCount <= 0) {
       this.deactivateProjectile(proj);
@@ -391,7 +358,6 @@ export class MagicWandWeapon extends BaseWeapon {
   getTargetPosition() {
     // Ensure we have valid enemies array
     if (!Array.isArray(this.scene.enemies)) {
-      console.log("No valid enemies array found");
       return this.getDefaultTarget();
     }
 
@@ -402,12 +368,7 @@ export class MagicWandWeapon extends BaseWeapon {
       }
 
       // Check if enemy is within range
-      const dist = this.getDistance(
-        this.player.x,
-        this.player.y,
-        enemy.sprite.x,
-        enemy.sprite.y
-      );
+      const dist = this.getDistance(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y);
 
       // Add a small buffer to range for better targeting
       return dist <= this.stats.range * 1.2;
@@ -419,22 +380,11 @@ export class MagicWandWeapon extends BaseWeapon {
       let bestScore = Number.MAX_VALUE;
 
       validEnemies.forEach((enemy) => {
-        const dist = this.getDistance(
-          this.player.x,
-          this.player.y,
-          enemy.sprite.x,
-          enemy.sprite.y
-        );
+        const dist = this.getDistance(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y);
 
         // Calculate angle difference from current direction
-        const angle = Math.atan2(
-          enemy.sprite.y - this.player.y,
-          enemy.sprite.x - this.player.x
-        );
-        const currentAngle = Math.atan2(
-          this.lastDirection.y,
-          this.lastDirection.x
-        );
+        const angle = Math.atan2(enemy.sprite.y - this.player.y, enemy.sprite.x - this.player.x);
+        const currentAngle = Math.atan2(this.lastDirection.y, this.lastDirection.x);
         let angleDiff = Math.abs(angle - currentAngle);
         if (angleDiff > Math.PI) {
           angleDiff = 2 * Math.PI - angleDiff;
@@ -491,17 +441,10 @@ export class MagicWandWeapon extends BaseWeapon {
       ...newStats,
     };
 
-    console.log(
-      `Magic Wand leveled up to ${this.currentLevel}! New stats:`,
-      this.stats
-    );
+    console.log(`Magic Wand leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
     // Create level up effect around the player
-    const burst = this.scene.add.sprite(
-      this.player.x,
-      this.player.y,
-      "weapon-magic-wand"
-    );
+    const burst = this.scene.add.sprite(this.player.x, this.player.y, "weapon-magic-wand");
     burst.setScale(0.2);
     burst.setAlpha(0.7);
     burst.setTint(0x00ffff);
@@ -535,11 +478,7 @@ export class MagicWandWeapon extends BaseWeapon {
 
   createHitEffect(enemy, proj, isCritical) {
     // Simplified hit effect without glow
-    const hitEffect = this.scene.add.sprite(
-      enemy.sprite.x,
-      enemy.sprite.y,
-      "weapon-wand-icon"
-    );
+    const hitEffect = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-wand-icon");
     hitEffect.setScale(0.3);
     hitEffect.setAlpha(0.6);
 
@@ -555,19 +494,14 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Simplified critical hit particles without glow
     if (isCritical) {
-      const particles = this.scene.add.particles(
-        enemy.sprite.x,
-        enemy.sprite.y,
-        "weapon-wand-icon",
-        {
-          scale: { start: 0.1, end: 0.05 },
-          alpha: { start: 0.4, end: 0 },
-          speed: 40,
-          angle: { min: 0, max: 360 },
-          lifespan: 300,
-          quantity: 6,
-        }
-      );
+      const particles = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, "weapon-wand-icon", {
+        scale: { start: 0.1, end: 0.05 },
+        alpha: { start: 0.4, end: 0 },
+        speed: 40,
+        angle: { min: 0, max: 360 },
+        lifespan: 300,
+        quantity: 6,
+      });
 
       this.scene.time.delayedCall(300, () => particles.destroy());
     }
