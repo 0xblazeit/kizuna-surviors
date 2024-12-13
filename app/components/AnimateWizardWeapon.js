@@ -2333,10 +2333,20 @@ const AnimateWizardWeapon = ({}) => {
             d="M389.995 189.023L391.023 188.928C392.691 189.63 394.163 190.588 396.026 190.601L396.086 190.869C395.842 193.573 396.124 196.047 396.47 198.729C397.114 199.23 397.449 199.129 398.262 199.164L398.063 199.234C397.378 199.471 396.73 199.61 396.007 199.713C395.172 200.977 397.144 202.318 394.547 202.781C394.027 202.873 393.391 202.811 392.864 202.794L392.57 202.699C391.67 199.267 393.993 194.379 391.915 191.141L390.613 191.054C389.901 190.364 390.044 189.935 389.995 189.023Z"
             fill="#806B59"
           />
-          <path
+          <motion.path
             id="wizardOrb"
             d="M385.555 193.035C386.47 193.041 387.418 193.1 388.209 193.582C389.489 194.366 390.667 195.762 390.965 197.208C391.16 198.15 390.987 199.09 390.366 199.86C389.636 200.769 388.559 200.861 387.456 201.021C386.202 200.981 384.535 201.076 383.488 200.319C382.761 199.792 382.268 198.999 382.268 198.116C382.261 195.642 383.831 194.533 385.555 193.035Z"
             fill="#43F4FD"
+            initial={{ opacity: 0, scale: 0.3 }}
+            animate={{
+              opacity: [0, 1, 0.1, 1],
+              scale: [0.5, 1, 1.2, 1],
+            }}
+            transition={{
+              duration: 12,
+              ease: "easeInOut",
+              repeat: Infinity,
+            }}
           />
           <path
             id="Vector_466"
@@ -3592,10 +3602,10 @@ const AnimateWizardWeapon = ({}) => {
             id="weapon-five"
             initial={{ y: 0 }}
             animate={{
-              y: [0, -13, 0],
+              y: [0, -17, 0],
             }}
             transition={{
-              duration: 10,
+              duration: 15,
               delay: 1,
               repeat: Infinity,
               ease: "easeInOut",
@@ -4402,11 +4412,11 @@ const AnimateWizardWeapon = ({}) => {
             clipPath="url(#clip1_137_4)"
             initial={{ y: 0 }}
             animate={{
-              y: [0, -13, 0],
+              y: [0, -18, 0],
             }}
             transition={{
               duration: 10,
-              delay: 2,
+              delay: 0,
               repeat: Infinity,
               ease: "easeInOut",
             }}
@@ -4777,7 +4787,7 @@ const AnimateWizardWeapon = ({}) => {
             clipPath="url(#clip2_137_4)"
             initial={{ y: 0 }}
             animate={{
-              y: [0, -10, 0],
+              y: [0, -17, 0],
             }}
             transition={{
               duration: 10,
@@ -8241,7 +8251,7 @@ const AnimateWizardWeapon = ({}) => {
             clipPath="url(#clip3_137_4)"
             initial={{ y: 0 }}
             animate={{
-              y: [0, -10, 0],
+              y: [0, -19, 0],
             }}
             transition={{
               duration: 7,
@@ -11415,7 +11425,7 @@ const AnimateWizardWeapon = ({}) => {
             clipPath="url(#clip5_137_4)"
             initial={{ x: 0 }}
             animate={{
-              rotate: [-8, 8, -8], // Oscillates between -5° and 5° rotation
+              rotate: [-17, 17, -17], // Oscillates between -5° and 5° rotation
             }}
             transition={{
               duration: 9, // Duration for one wobble cycle

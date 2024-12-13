@@ -5,6 +5,7 @@ import Loading from "./components/Loading";
 import { Button } from "@/components/ui/button";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
+import AnimateWizardWeapon from "./components/AnimateWizardWeapon";
 
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(
@@ -27,13 +28,13 @@ export default function Home() {
   return (
     <main className="flex justify-center items-center bg-transparent min-h-fit">
       <div className="p-8 mx-auto max-w-2xl">
-        <div className="p-8 mt-8 rounded-xl shadow-lg backdrop-blur-xs bg-black/40">
+        <div className="p-8 mt-8 rounded-xl border shadow-lg backdrop-blur-sm bg-black/70 border-white/20">
           <h1 className="mb-4 text-3xl font-bold tracking-widest text-white">
             Surive the horde. Forge weapons. Climb the ranks.
           </h1>
-          <p className="mb-6 text-xl tracking-tight text-slate-200">
+          <p className="mb-6 text-2xl tracking-tight text-slate-200">
             A 2D rouguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off
-            endless waves of enemies while upgrading weapons found on-chain living on{" "}
+            endless waves of enemies while upgrading weapons found on-chain @{" "}
             <a
               href="https://shape.network/"
               target="_blank"
@@ -43,6 +44,12 @@ export default function Home() {
               Shape L2
             </a>
           </p>
+          <p className="text-2xl tracking-tight text-slate-200">
+            The path forward is treacherous for those unprepared. To survive, one must arm themselves with the tools
+            forged on the Shape blockchain. Only then can one hope to stand strong against the relentless horde and
+            emerge victorious.
+          </p>
+          <AnimateWizardWeapon />
           <div className="flex justify-center mt-8">
             {!authenticated && (
               <Button

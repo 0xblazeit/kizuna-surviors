@@ -45,10 +45,6 @@ export default function Navbar() {
           title: "Welcome to ShapeCraft Survivors!",
           description: "Your battle awaits!",
         });
-        if (user.twitter && user.twitter.profilePictureUrl && user.twitter.username) {
-          // await insertNewLogin(user.twitter.username, user.twitter.profilePictureUrl);
-          // queryClient.invalidateQueries({ queryKey: ["memberCount"] });
-        }
       } else {
         toast({
           title: "Welcome back warrior!",

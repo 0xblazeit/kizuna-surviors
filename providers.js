@@ -22,8 +22,8 @@ export function Providers({ children }) {
           accentColor: "#f39c12",
           logo:
             process.env.NODE_ENV === "development"
-              ? "http://localhost:3000/shapecraft-survivors-logo-stacked.png"
-              : `${process.env.NEXT_PUBLIC_APP_URL}/shapecraft-survivors-logo-stacked.png`,
+              ? "http://localhost:3000/ss-logo-stacked.png"
+              : `${process.env.NEXT_PUBLIC_APP_URL}/ss-logo-stacked.png`,
         },
         embeddedWallets: {
           createOnLogin: "users-without-wallets", // defaults to 'off'
