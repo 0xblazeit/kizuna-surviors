@@ -1,34 +1,28 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 const IPFS_GATEWAYS = ["https://ipfs.io/ipfs/", "https://gateway.ipfs.io/ipfs/", "https://cf-ipfs.com/ipfs/"];
 
+async function fetchNFTs(walletAddress) {
+  if (!walletAddress) return [];
+  const response = await fetch(`/api/wallet-nfts?wallet=${walletAddress}`);
+  const data = await response.json();
+  return data.nfts;
+}
+
 export function NftView({ walletAddress }) {
-  const [nfts, setNfts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState({});
 
-  useEffect(() => {
-    async function fetchNFTs() {
-      try {
-        const response = await fetch(`/api/wallet-nfts?wallet=${walletAddress}`);
-        const data = await response.json();
-        setNfts(data.nfts);
-      } catch (error) {
-        console.error("Error fetching NFTs:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (walletAddress) {
-      fetchNFTs();
-    }
-  }, [walletAddress]);
+  const { data: nfts = [], isLoading } = useQuery({
+    queryKey: ["nfts"],
+    queryFn: () => fetchNFTs(walletAddress),
+    enabled: !!walletAddress,
+  });
 
   function getNextGatewayUrl(currentUrl) {
     const ipfsHash = currentUrl.split("ipfs://")[1];

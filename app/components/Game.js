@@ -16,6 +16,7 @@ import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
@@ -1283,7 +1284,13 @@ const GameScene = Phaser.Class({
         }),
       })
         .then((response) => response.json())
-        .then((data) => console.log("Game over response:", data))
+        .then((data) => {
+          console.log("Game over response:", data);
+          // Invalidate the query after successful POST
+          if (this.userInfo.invalidateQueries) {
+            this.userInfo.invalidateQueries();
+          }
+        })
         .catch((error) => console.error("Error posting game stats:", error));
 
       this.gameState.isGameOver = true;
@@ -1646,6 +1653,7 @@ export default function Game() {
   const userAddress = user?.wallet?.address;
   const username = user?.twitter?.username;
   const gameRef = useRef(null);
+  const queryClient = useQueryClient(); // Get the query client
 
   useEffect(() => {
     if (!ready || !userAddress || !username) return;
@@ -1655,6 +1663,13 @@ export default function Game() {
         userAddress: user.wallet.address,
         username: user.twitter.username,
         profileImage: user.twitter.profilePictureUrl,
+        // Add the invalidate function to userInfo
+        invalidateQueries: () => {
+          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+          queryClient.invalidateQueries({ queryKey: ["memberCount"] });
+          queryClient.invalidateQueries({ queryKey: ["gameTotalPlays"] });
+          queryClient.invalidateQueries({ queryKey: ["nfts"] });
+        },
       };
 
       // Create a custom scene class that includes the user info
