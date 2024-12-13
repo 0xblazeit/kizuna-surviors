@@ -30,10 +30,10 @@ export default function Home() {
       <div className="p-8 mx-auto max-w-2xl">
         <div className="p-8 mt-8 rounded-xl border shadow-lg backdrop-blur-sm bg-black/60 border-white/20">
           <h1 className="mb-4 text-3xl font-bold tracking-widest text-white md:text-4xl">
-            Surive the horde. Forge weapons. Climb the ranks.
+            Survive the horde. Forge weapons. Climb the ranks.
           </h1>
           <p className="mb-6 text-2xl tracking-tight md:text-3xl text-slate-200">
-            A 2D rouguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off
+            A 2D roguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off
             endless waves of enemies while upgrading weapons found on-chain @{" "}
             <a
               href="https://shape.network/"
