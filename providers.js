@@ -3,11 +3,13 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import PlausibleProvider from "next-plausible";
 
 export function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient({}));
 
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  const domain = process.env.NEXT_PUBLIC_DOMAIN;
 
   if (!privyAppId) {
     throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set in the environment variables");
@@ -34,7 +36,9 @@ export function Providers({ children }) {
         },
       }}
     >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <PlausibleProvider domain={domain}>{children}</PlausibleProvider>
+      </QueryClientProvider>
     </PrivyProvider>
   );
 }
