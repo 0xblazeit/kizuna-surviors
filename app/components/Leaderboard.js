@@ -96,7 +96,7 @@ function LeaderboardTable({ data }) {
               >
                 <td className="p-2 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
                 <td className="p-2 whitespace-nowrap">
-                  <div className="flex gap-3 items-center">
+                  <div className="flex gap-1 items-center">
                     <div className="relative w-8 h-8">
                       <Image
                         src={getAvatarSrc(player)}
@@ -112,14 +112,11 @@ function LeaderboardTable({ data }) {
                         }}
                       />
                     </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-base font-medium text-white">{player.userName}</span>
-                      {isYou && (
-                        <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
-                          <PawPrint weight="duotone" className="w-3 h-3" />
-                        </span>
-                      )}
-                    </div>
+                    {isYou && (
+                      <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
+                        <PawPrint weight="duotone" className="w-3 h-3" />
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="p-2 text-right whitespace-nowrap">
