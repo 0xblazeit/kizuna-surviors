@@ -55,6 +55,23 @@ function LeaderboardTable({ data }) {
     }
   };
 
+  function formatTime(timeValue) {
+    // If it's a string (like "247.268"), convert to number
+    const seconds = typeof timeValue === "string" ? parseFloat(timeValue) : timeValue;
+    if (typeof seconds !== "number" || isNaN(seconds)) return timeValue;
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+
+    const hoursStr = hours > 0 ? `${hours}:` : "";
+    const minutesStr = `${minutes.toString().padStart(2, "0")}:`;
+    const secondsStr = `${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
+
+    return `${hoursStr}${minutesStr}${secondsStr}`;
+  }
+
   return (
     <div className="overflow-x-auto" suppressHydrationWarning>
       <table className="w-full rounded-lg shadow-lg bg-black/55">
@@ -115,11 +132,7 @@ function LeaderboardTable({ data }) {
                   <span className="text-base text-white/90">{player.waveNumber}</span>
                 </td>
                 <td className="p-2 text-right whitespace-nowrap">
-                  <span className="text-base text-white/90">
-                    {typeof player.timeAlive === "number"
-                      ? `${Math.floor(player.timeAlive / 60)}:${(player.timeAlive % 60).toString().padStart(2, "0")}`
-                      : player.timeAlive}
-                  </span>
+                  <span className="text-base text-white/90">{formatTime(player.timeAlive)}</span>
                 </td>
               </tr>
             );
@@ -142,7 +155,7 @@ async function fetchLeaderboard() {
   const response = await fetch("/api/leaderboard");
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(error || 'Failed to fetch leaderboard');
+    throw new Error(error || "Failed to fetch leaderboard");
   }
   return response.json();
 }
@@ -153,7 +166,7 @@ export default function Leaderboard() {
     isLoading,
     isError,
     error,
-    refetch
+    refetch,
   } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
@@ -165,18 +178,19 @@ export default function Leaderboard() {
   });
 
   if (isLoading) return <LoadingSpinner />;
-  if (isError) return (
-    <div className="flex flex-col items-center gap-2 p-4">
-      <div className="text-sm text-red-500">Failed to load leaderboard</div>
-      <div className="text-xs text-red-400/80">{error?.message}</div>
-      <button 
-        onClick={() => refetch()} 
-        className="px-3 py-1 text-xs text-white bg-red-500/20 rounded-md hover:bg-red-500/30 transition-colors"
-      >
-        Try Again
-      </button>
-    </div>
-  );
+  if (isError)
+    return (
+      <div className="flex flex-col gap-2 items-center p-4">
+        <div className="text-sm text-red-500">Failed to load leaderboard</div>
+        <div className="text-xs text-red-400/80">{error?.message}</div>
+        <button
+          onClick={() => refetch()}
+          className="px-3 py-1 text-xs text-white rounded-md transition-colors bg-red-500/20 hover:bg-red-500/30"
+        >
+          Try Again
+        </button>
+      </div>
+    );
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
