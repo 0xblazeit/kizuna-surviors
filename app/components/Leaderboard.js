@@ -171,10 +171,8 @@ export default function Leaderboard() {
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
     refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    retry: 3,
-    staleTime: 10000, // Consider data stale after 10 seconds
-    gcTime: 300000, // Keep unused data in cache for 5 minutes
+    refetchInterval: 60000, // Refetch every 30 seconds
+    retry: 2,
   });
 
   if (isLoading) return <LoadingSpinner />;
