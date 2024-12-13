@@ -251,17 +251,17 @@ const GameScene = Phaser.Class({
         scale: 0.3,
       });
     } else if (this.gameState.gameTimer < 120) {
-      // 45-120 seconds - 60% basic, 30% shooter, 10% advanced
-      if (roll < 0.3) {
+      // 45-120 seconds - 50% basic, 40% shooter, 10% advanced
+      if (roll < 0.4) {
         enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
           type: "shooter",
           scale: 0.3,
-          maxHealth: 80,
+          maxHealth: 80 + Math.floor(this.gameState.waveNumber * 5),
           moveSpeed: 1.4,
-          attackRange: 250,
-          projectileSpeed: 200,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 10),
+          projectileSpeed: 200 + Math.min(100, this.gameState.waveNumber * 5),
         });
-      } else if (roll < 0.4) {
+      } else if (roll < 0.5) {
         const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -278,17 +278,17 @@ const GameScene = Phaser.Class({
         });
       }
     } else if (this.gameState.gameTimer < 240) {
-      // 120-240 seconds - 35% basic, 25% shooter, 25% advanced, 15% epic
-      if (roll < 0.25) {
+      // 120-240 seconds - 25% basic, 35% shooter, 25% advanced, 15% epic
+      if (roll < 0.35) {
         enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
           type: "shooter",
           scale: 0.3,
-          maxHealth: 80,
+          maxHealth: 80 + Math.floor(this.gameState.waveNumber * 5),
           moveSpeed: 1.4,
-          attackRange: 250,
-          projectileSpeed: 200,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 10),
+          projectileSpeed: 200 + Math.min(100, this.gameState.waveNumber * 5),
         });
-      } else if (roll < 0.5) {
+      } else if (roll < 0.6) {
         const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -297,7 +297,7 @@ const GameScene = Phaser.Class({
           attackDamage: 12,
           scale: 0.5,
         });
-      } else if (roll < 0.65) {
+      } else if (roll < 0.75) {
         const randomEpicSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
@@ -314,17 +314,17 @@ const GameScene = Phaser.Class({
         });
       }
     } else {
-      // After 240 seconds - 25% basic, 25% shooter, 25% advanced, 25% epic
-      if (roll < 0.25) {
+      // After 240 seconds - 15% basic, 35% shooter, 25% advanced, 25% epic
+      if (roll < 0.35) {
         enemy = new EnemyShooter(this, randomX, randomY, "enemy-shooter", {
           type: "shooter",
           scale: 0.3,
-          maxHealth: 80,
+          maxHealth: 80 + Math.floor(this.gameState.waveNumber * 5),
           moveSpeed: 1.4,
-          attackRange: 250,
-          projectileSpeed: 200,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 10),
+          projectileSpeed: 200 + Math.min(100, this.gameState.waveNumber * 5),
         });
-      } else if (roll < 0.5) {
+      } else if (roll < 0.6) {
         const randomAdvancedSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
         enemy = new EnemyAdvanced(this, randomX, randomY, randomAdvancedSprite, {
           maxHealth: 300,
@@ -333,7 +333,7 @@ const GameScene = Phaser.Class({
           attackDamage: 12,
           scale: 0.5,
         });
-      } else if (roll < 0.75) {
+      } else if (roll < 0.85) {
         const randomEpicSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
         enemy = new EnemyEpic(this, randomX, randomY, randomEpicSprite, {
           maxHealth: 600,
@@ -1087,7 +1087,7 @@ const GameScene = Phaser.Class({
         });
 
         // Increase max enemies and decrease spawn rate based on wave number
-        this.gameState.maxEnemies = Math.min(50, 15 + Math.floor(this.gameState.waveNumber / 2));
+        this.gameState.maxEnemies = Math.min(60, 15 + Math.floor(this.gameState.waveNumber * 0.75));
         this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 1000 - this.gameState.waveNumber * 50);
         this.enemySpawnTimer.delay = this.gameState.spawnRate;
 
@@ -1153,7 +1153,7 @@ const GameScene = Phaser.Class({
       },
       callbackScope: this,
       loop: true,
-    });
+    );
 
     // Listen for player death event
     this.events.on("playerDeath", () => {
