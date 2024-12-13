@@ -3,11 +3,12 @@
 import { usePrivy } from "@privy-io/react-auth";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Check } from "@phosphor-icons/react";
+import { Copy, Check, Info } from "@phosphor-icons/react";
 import { NftView } from "./NftView";
 import dynamic from "next/dynamic";
 import Leaderboard from "./Leaderboard";
 import { AccessDenied } from "./AccessDenied";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
@@ -84,8 +85,8 @@ export function Arena() {
             <p>Please connect your wallet</p>
           ) : (
             <>
-              <h3 className="mb-2 text-lg">Welcome, {user?.twitter?.username}</h3>
-              <div className="space-y-1 text-sm md:text-lg">
+              <h3 className="mb-2 text-lg md:text-3xl">Welcome, {user?.twitter?.username}</h3>
+              <div className="space-y-1 text-sm md:text-2xl">
                 <p className="flex gap-1 items-center text-white/50">
                   Wallet:{" "}
                   {user?.wallet?.address ? (
@@ -109,23 +110,45 @@ export function Arena() {
                           <Copy size={16} weight="bold" />
                         )}
                       </button>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={200}>
+                          <TooltipTrigger>
+                            <Info size={16} weight="bold" className="text-white/70 hover:text-white" />
+                          </TooltipTrigger>
+                          <TooltipContent
+                            className="backdrop-blur-md border-white max-w-xs rounded-xl text-xl"
+                            sideOffset={5}
+                            side="bottom"
+                          >
+                            <p className="">* Your embedded wallet is created and protected by Privy. </p>
+                            <p className="">
+                              * Export your embedded wallet to use in any external wallet (metamask, rabby, etc) through
+                              profile icon.
+                            </p>
+                            <p className="">
+                              * See more about{" "}
+                              <a
+                                className="underline"
+                                href="https://privy.io/blog/shamir-secret-sharing-deep-dive"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Privy Security
+                              </a>
+                              .
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </span>
                   ) : (
                     "No wallet connected"
                   )}
                 </p>
                 <p className="text-white/50">
-                  Chain:{" "}
-                  <a
-                    href="https://chainlist.org/?search=shape"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer hover:underline"
-                  >
-                    <span className="text-white">Shape L2</span>
-                  </a>
+                  Chain: <span className="text-white">Shape L2</span>
                 </p>
-                <div className="text-sm md:text-lg">
+                <div className="text-sm md:text-2xl">
                   <span className="text-white/50">Balance: </span>
                   {isBalanceLoading ? (
                     <span className="text-white/70">loading...</span>
