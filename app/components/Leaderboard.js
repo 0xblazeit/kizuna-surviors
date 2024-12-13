@@ -171,7 +171,6 @@ export default function Leaderboard() {
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
     refetchOnWindowFocus: true,
-    refetchInterval: 60000, // Refetch every 30 seconds
     retry: 2,
   });
 
