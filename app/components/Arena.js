@@ -7,6 +7,7 @@ import { Copy, Check } from "@phosphor-icons/react";
 import { NftView } from "./NftView";
 import dynamic from "next/dynamic";
 import Leaderboard from "./Leaderboard";
+import { AccessDenied } from "./AccessDenied";
 
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
@@ -16,6 +17,15 @@ async function fetchWalletBalance(walletAddress) {
   }
   const data = await response.json();
   return data.balance;
+}
+
+async function verifyAccess(walletAddress) {
+  if (!walletAddress) return null;
+  const response = await fetch(`/api/verify-access?wallet=${walletAddress}`);
+  if (!response.ok) {
+    throw new Error("Failed to verify access");
+  }
+  return response.json();
 }
 
 // Dynamically import the game component to avoid SSR issues
@@ -36,8 +46,8 @@ export function Arena() {
 
   const {
     data: balance,
-    isLoading,
-    isError,
+    isLoading: isBalanceLoading,
+    isError: isBalanceError,
   } = useQuery({
     queryKey: ["walletBalance", user?.wallet?.address],
     queryFn: () => fetchWalletBalance(user?.wallet?.address),
@@ -45,6 +55,18 @@ export function Arena() {
     refetchInterval: 60000 * 20,
     refetchOnWindowFocus: true,
   });
+
+  const {
+    data: accessData,
+    isLoading: isAccessLoading,
+    isError: isAccessError,
+  } = useQuery({
+    queryKey: ["accessVerification", user?.wallet?.address],
+    queryFn: () => verifyAccess(user?.wallet?.address),
+    enabled: !!user?.wallet?.address,
+  });
+
+  const hasAccess = accessData?.isShapeCraftKeyHolder || accessData?.isAwakenEyeHolder;
 
   const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
@@ -55,7 +77,7 @@ export function Arena() {
   return (
     <div className="p-3 bg-transparent rounded-lg w-full max-w-[800px] mx-auto">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
+        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
@@ -105,9 +127,9 @@ export function Arena() {
                 </p>
                 <div className="text-sm md:text-lg">
                   <span className="text-white/50">Balance: </span>
-                  {isLoading ? (
+                  {isBalanceLoading ? (
                     <span className="text-white/70">loading...</span>
-                  ) : isError ? (
+                  ) : isBalanceError ? (
                     <span className="text-red-400">Error</span>
                   ) : (
                     <span className="text-white">
@@ -120,16 +142,36 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/40 aspect-square">
+        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
           <Leaderboard />
         </div>
       </div>
+      {ready && authenticated && <NftView walletAddress={user?.wallet?.address} />}
       <div className="flex flex-col gap-4 items-center w-full">
-        <NftView walletAddress={user?.wallet?.address} />
         <div className="flex justify-center w-full">
-          <Game />
+          {ready && authenticated ? (
+            isAccessLoading ? (
+              <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
+                <div className="w-[800px] h-[600px] bg-black border border-white flex items-center justify-center">
+                  <p className="text-2xl text-white">loading...</p>
+                </div>
+              </div>
+            ) : isAccessError ? (
+              <div className="text-red-500">Failed to verify access. Please try again.</div>
+            ) : hasAccess ? (
+              <>
+                <Game />
+              </>
+            ) : (
+              <AccessDenied />
+            )
+          ) : (
+            <AccessDenied />
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+export default Arena;
