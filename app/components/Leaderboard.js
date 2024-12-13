@@ -97,20 +97,23 @@ function LeaderboardTable({ data }) {
                 <td className="p-2 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
                 <td className="p-2 whitespace-nowrap">
                   <div className="flex gap-1 items-center">
-                    <div className="relative w-8 h-8">
-                      <Image
-                        src={getAvatarSrc(player)}
-                        alt={`${player.walletAddress}'s avatar`}
-                        className="rounded-full"
-                        fill
-                        sizes="32px"
-                        onError={() => {
-                          setImageErrors((prev) => ({
-                            ...prev,
-                            [player.walletAddress]: true,
-                          }));
-                        }}
-                      />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src={getAvatarSrc(player)}
+                          alt={`${player.walletAddress}'s avatar`}
+                          className="rounded-full"
+                          fill
+                          sizes="32px"
+                          onError={() => {
+                            setImageErrors((prev) => ({
+                              ...prev,
+                              [player.walletAddress]: true,
+                            }));
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-white/70">{player.username || "—"}</span>
                     </div>
                     {isYou && (
                       <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
