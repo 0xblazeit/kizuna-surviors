@@ -34,7 +34,7 @@ export default function Navbar() {
   const { logout } = useLogout({
     onSuccess: async () => {
       console.log("logout..");
-      // router.push('/');
+      // router.push("/");
     },
   });
 
