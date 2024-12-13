@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { generateAvatar } from "@/utils/utils";
+import { insertNewLogin } from "@/actions/InsertNewLogin";
+import { updateExistingLogin } from "@/actions/UpdateLogin";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,11 +43,18 @@ export default function Navbar() {
       console.log("login..", isNewUser, wasAlreadyAuthenticated, user);
 
       if (isNewUser) {
+        if (user.twitter && user.twitter.profilePictureUrl && user.twitter.username) {
+          await insertNewLogin(user.twitter.username, user.twitter.profilePictureUrl, user.wallet.address);
+          queryClient.invalidateQueries({ queryKey: ["memberCount"] });
+        }
         toast({
           title: "Welcome to ShapeCraft Survivors!",
           description: "Your battle awaits!",
         });
       } else {
+        if (user.twitter && user.twitter?.profilePictureUrl && user.twitter?.username && user.wallet?.address) {
+          await updateExistingLogin(user.twitter.username, user.twitter.profilePictureUrl, user.wallet.address);
+        }
         toast({
           title: "Welcome back warrior!",
           description: "Ready for another battle?",

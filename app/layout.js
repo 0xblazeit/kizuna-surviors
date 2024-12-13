@@ -4,6 +4,7 @@ import { Providers } from "@/providers";
 import { Toaster } from "@/components/ui/toaster";
 import Navbar from "./components/Navbar";
 import AnimateBackground from "./components/AnimateBackground";
+import Footer from "./components/Footer";
 const vt323 = localFont({
   src: "./fonts/VT323-Regular.ttf",
   variable: "--font-vt323",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
           <Navbar />
           {children}
           <Toaster />
+          <Footer />
         </Providers>
       </body>
     </html>
