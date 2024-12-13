@@ -126,7 +126,7 @@ const GameScene = Phaser.Class({
 
     // Load player sprite
     this.load.svg("player", "/assets/game/characters/player.svg", {
-      scale: 0.1,
+      scale: 0.15,
     });
 
     // Load enemy sprites
