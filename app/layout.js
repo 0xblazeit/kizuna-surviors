@@ -2,7 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { Toaster } from "@/components/ui/toaster";
-import Navbar from './components/Navbar';
+import Navbar from "./components/Navbar";
 import AnimateBackground from "./components/AnimateBackground";
 const vt323 = localFont({
   src: "./fonts/VT323-Regular.ttf",
@@ -11,7 +11,7 @@ const vt323 = localFont({
 });
 
 export const metadata = {
-  title: "ShapeCraft Survivors",
+  title: "Shapecraft Survivors",
   description: "A survival game",
 };
 
