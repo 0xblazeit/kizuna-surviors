@@ -19,7 +19,7 @@ export default function FooterContent() {
     queryKey: ["gameTotalPlays"],
     queryFn: async () => await axios.get("/api/game-total-plays"),
     refetchOnWindowFocus: true,
-    refetchInterval: 30000,
+    refetchInterval: 160000,
   });
 
   return (
