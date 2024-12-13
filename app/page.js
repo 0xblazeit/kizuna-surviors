@@ -29,10 +29,10 @@ export default function Home() {
     <main className="flex justify-center items-center bg-transparent min-h-fit">
       <div className="p-8 mx-auto max-w-2xl">
         <div className="p-8 mt-8 rounded-xl border shadow-lg backdrop-blur-sm bg-black/70 border-white/20">
-          <h1 className="mb-4 text-3xl font-bold tracking-widest text-white">
+          <h1 className="mb-4 text-3xl font-bold tracking-widest text-white md:text-4xl">
             Surive the horde. Forge weapons. Climb the ranks.
           </h1>
-          <p className="mb-6 text-2xl tracking-tight text-slate-200">
+          <p className="mb-6 text-2xl tracking-tight md:text-3xl text-slate-200">
             A 2D rouguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off
             endless waves of enemies while upgrading weapons found on-chain @{" "}
             <a
@@ -44,7 +44,7 @@ export default function Home() {
               Shape L2
             </a>
           </p>
-          <p className="text-2xl tracking-tight text-slate-200">
+          <p className="text-2xl tracking-tight md:text-3xl text-slate-200">
             The path forward is treacherous for those unprepared. To survive, one must arm themselves with the tools
             forged on the Shape blockchain. Only then can one hope to stand strong against the relentless horde and
             emerge victorious.
@@ -68,7 +68,7 @@ export default function Home() {
                           flex items-center gap-3"
               >
                 <Image
-                  src="/shapecraft-survivors-logo.svg"
+                  src="/ss-logo.svg"
                   alt="Game Logo"
                   width={24}
                   height={24}
@@ -76,7 +76,7 @@ export default function Home() {
                 />
                 Enter Arena
                 <Image
-                  src="/shapecraft-survivors-logo.svg"
+                  src="/ss-logo.svg"
                   alt="Game Logo"
                   width={24}
                   height={24}
