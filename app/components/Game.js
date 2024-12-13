@@ -1665,7 +1665,9 @@ export default function Game() {
         profileImage: user.twitter.profilePictureUrl,
         // Add the invalidate function to userInfo
         invalidateQueries: () => {
-          queryClient.invalidateQueries({ queryKey: ["leaderboard"] }); // Adjust the query key to match your actual query
+          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+          queryClient.invalidateQueries({ queryKey: ["memberCount"] });
+          queryClient.invalidateQueries({ queryKey: ["gameTotalPlays"] });
         },
       };
 
