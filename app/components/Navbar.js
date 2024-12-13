@@ -86,13 +86,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <div className="relative size-14 md:size-18">
-                <Image
-                  src="/shapecraft-survivors-logo.svg"
-                  alt="shapecraft"
-                  fill
-                  className="object-contain w-full h-full"
-                  priority
-                />
+                <Image src="/ss-logo.svg" alt="shapecraft" fill className="object-contain w-full h-full" priority />
               </div>
               <h1 className="text-3xl font-bold text-white md:text-4xl">ShapeCraft Survivors</h1>
             </Link>
