@@ -64,6 +64,15 @@ body {
   }
 }
 
+@keyframes pixelate {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 4px 4px;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

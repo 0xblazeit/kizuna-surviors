@@ -43,6 +43,7 @@ export default function Navbar() {
       if (isNewUser) {
         toast({
           title: "Welcome to ShapeCraft Survivors!",
+          description: "Your battle awaits!",
         });
         if (user.twitter && user.twitter.profilePictureUrl && user.twitter.username) {
           // await insertNewLogin(user.twitter.username, user.twitter.profilePictureUrl);
@@ -50,9 +51,12 @@ export default function Navbar() {
         }
       } else {
         toast({
-          title: "Welcome back!",
+          title: "Welcome back warrior!",
+          description: "Ready for another battle?",
         });
       }
+
+      router.push("/arena");
     },
     onError: (error) => {
       console.log("login error..", error);
@@ -87,7 +91,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center space-x-2">
               <div className="relative size-14 md:size-18">
                 <Image
-                  src="/shapecraft-surviors-logo.svg"
+                  src="/shapecraft-survivors-logo.svg"
                   alt="shapecraft"
                   fill
                   className="object-contain w-full h-full"
