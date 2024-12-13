@@ -1,18 +1,33 @@
 class XPGem {
   // Static property to track total gems
   static totalGems = 0;
-  static MAX_GEMS = 50;  // Lower than coins since these are more valuable
+  static MAX_GEMS = 50; // Lower than coins since these are more valuable
 
-  constructor(scene, x, y, xpValue = 50, scale = 0.3) {
+  // Static method to calculate XP value based on game time and enemy tier
+  static calculateXPValue(scene, basexp = 50) {
+    // Get current wave or time (assuming scene has gameTime in seconds)
+    const gameTime = scene.gameTime || 0;
+    const timeMultiplier = 1 + gameTime / 300; // Increase by 100% every 5 minutes
+
+    // Cap the multiplier at 5x to prevent excessive scaling
+    const cappedMultiplier = Math.min(5, timeMultiplier);
+
+    return Math.floor(basexp * cappedMultiplier);
+  }
+
+  constructor(scene, x, y, baseXPValue = 50, scale = 0.3) {
     // Check if we're at the gem limit
     if (XPGem.totalGems >= XPGem.MAX_GEMS) {
       return null;
+      as;
     }
-    
+
     XPGem.totalGems++;
     this.scene = scene;
     this.isCollected = false;
-    this.xpValue = xpValue;
+
+    // Calculate scaled XP value
+    this.xpValue = XPGem.calculateXPValue(scene, baseXPValue);
 
     // Create gem sprite with correct texture key
     this.sprite = scene.add.image(x, y, "powerup-xp-gem");
@@ -21,9 +36,9 @@ class XPGem {
 
     // Add floating animation with larger range and smoother motion
     scene.tweens.add({
-      targets: [this.sprite, this.glow],  // Apply to both sprite and glow
-      y: y - 15,  // Increased float height
-      duration: 2000,  // Slower, smoother motion
+      targets: [this.sprite, this.glow], // Apply to both sprite and glow
+      y: y - 15, // Increased float height
+      duration: 2000, // Slower, smoother motion
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
@@ -31,10 +46,10 @@ class XPGem {
 
     // Add glow effect with correct texture key
     this.glow = scene.add.image(x, y, "powerup-xp-gem");
-    this.glow.setScale(scale * 1.2);  // Slightly larger than the gem
+    this.glow.setScale(scale * 1.2); // Slightly larger than the gem
     this.glow.setAlpha(0.3);
     this.glow.setBlendMode(Phaser.BlendModes.ADD);
-    this.glow.setDepth(4);  // Below the main gem
+    this.glow.setDepth(4); // Below the main gem
 
     // Animate the glow
     scene.tweens.add({
@@ -46,17 +61,25 @@ class XPGem {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
+
+    // Scale color based on XP value
+    const valueRatio = this.xpValue / baseXPValue;
+    if (valueRatio >= 4) {
+      this.sprite.setTint(0xffd700); // Gold for 4x or higher
+      this.glow.setTint(0xffd700);
+    } else if (valueRatio >= 2.5) {
+      this.sprite.setTint(0xff00ff); // Purple for 2.5x-4x
+      this.glow.setTint(0xff00ff);
+    } else if (valueRatio >= 1.5) {
+      this.sprite.setTint(0x00ffff); // Cyan for 1.5x-2.5x
+      this.glow.setTint(0x00ffff);
+    }
   }
 
   update(player) {
     if (this.isCollected || !this.sprite || !player) return;
 
-    const distance = Phaser.Math.Distance.Between(
-      this.sprite.x,
-      this.sprite.y,
-      player.x,
-      player.y
-    );
+    const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
 
     if (distance <= 50) {
       // Mark as collected
@@ -87,7 +110,7 @@ class XPGem {
         .text(this.sprite.x, this.sprite.y, `+${this.xpValue} XP`, {
           fontFamily: "VT323",
           fontSize: "20px",
-          color: "#4CAF50",  // Green color for XP
+          color: "#4CAF50", // Green color for XP
         })
         .setOrigin(0.5);
 

@@ -71,8 +71,10 @@ class EnemyEpic extends EnemyAdvanced {
       this.aura.destroy();
       this.aura = null;
     }
+    
     // Set higher coin value for epic enemies
     const coinValue = 50;
+    
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -81,10 +83,10 @@ class EnemyEpic extends EnemyAdvanced {
       this.scene.xpGems = [];
     }
 
-    // Determine drop type - 100% chance for any drop
+    // Determine drop type - 100% chance for drops
     const dropChance = Math.random();
-    // 40% chance for coins, 60% chance for XP gem
-    if (dropChance < 0.4) {
+    // 30% chance for coins, 70% chance for XP gem (increased XP chance)
+    if (dropChance < 0.3) {
       // Epic enemies drop multiple coins in a pattern
       const numCoins = 4; // Epic enemies drop more coins
       const radius = 25; // Slightly larger spread radius for epic enemies
@@ -105,15 +107,25 @@ class EnemyEpic extends EnemyAdvanced {
         }
       }
     } else {
-      const gem = new XPGem(
-        this.scene,
-        this.sprite.x,
-        this.sprite.y,
-        200,
-        0.18
-      );
-      if (gem) {
-        this.scene.xpGems.push(gem);
+      // Epic enemies now have a chance to drop multiple XP gems
+      const numGems = Math.random() < 0.3 ? 2 : 1; // 30% chance for double gems
+      const radius = 20;
+      
+      for (let i = 0; i < numGems; i++) {
+        const angle = (i / numGems) * Math.PI * 2;
+        const offsetX = Math.cos(angle) * radius;
+        const offsetY = Math.sin(angle) * radius;
+        
+        const gem = new XPGem(
+          this.scene,
+          this.sprite.x + offsetX,
+          this.sprite.y + offsetY,
+          200, // Higher base value that will be scaled by game time
+          0.18
+        );
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
       }
     }
 
