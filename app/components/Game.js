@@ -1668,6 +1668,7 @@ export default function Game() {
           queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
           queryClient.invalidateQueries({ queryKey: ["memberCount"] });
           queryClient.invalidateQueries({ queryKey: ["gameTotalPlays"] });
+          queryClient.invalidateQueries({ queryKey: ["nfts"] });
         },
       };
 
