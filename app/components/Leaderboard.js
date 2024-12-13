@@ -94,28 +94,30 @@ function LeaderboardTable({ data }) {
                 className={`transition-colors ${isYou ? "bg-white/10 hover:bg-white/15" : "hover:bg-white/5"}`}
                 suppressHydrationWarning
               >
-                <td className="p-2 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
-                <td className="p-2 whitespace-nowrap">
-                  <div className="flex gap-3 items-center">
-                    <div className="relative w-8 h-8">
-                      <Image
-                        src={getAvatarSrc(player)}
-                        alt={`${player.walletAddress}'s avatar`}
-                        className="rounded-full"
-                        fill
-                        sizes="32px"
-                        onError={() => {
-                          setImageErrors((prev) => ({
-                            ...prev,
-                            [player.walletAddress]: true,
-                          }));
-                        }}
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-base font-medium text-white">{player.userName}</span>
+                <td className="p-1 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
+                <td className="p-1 whitespace-nowrap">
+                  <div className="flex gap-0.5 items-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src={getAvatarSrc(player)}
+                          alt={`${player.walletAddress}'s avatar`}
+                          className="rounded-full"
+                          fill
+                          sizes="32px"
+                          onError={() => {
+                            setImageErrors((prev) => ({
+                              ...prev,
+                              [player.walletAddress]: true,
+                            }));
+                          }}
+                        />
+                      </div>
+                      <span className="text-[15px] font-medium md:text-lg tracking-tight text-white/80">
+                        {player.username || "—"}
+                      </span>
                       {isYou && (
-                        <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
+                        <span className="flex gap-0.5 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
                           <PawPrint weight="duotone" className="w-3 h-3" />
                         </span>
                       )}
@@ -192,7 +194,7 @@ export default function Leaderboard() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <div className="" suppressHydrationWarning>
-        <h2 className="mb-2 text-sm font-bold text-white">Leaderboard</h2>
+        <h2 className="mb-2 text-lg font-bold text-white md:text-3xl text-center">Leaderboard</h2>
         <LeaderboardTable data={response?.data || []} />
       </div>
     </Suspense>
