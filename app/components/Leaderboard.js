@@ -94,10 +94,10 @@ function LeaderboardTable({ data }) {
                 className={`transition-colors ${isYou ? "bg-white/10 hover:bg-white/15" : "hover:bg-white/5"}`}
                 suppressHydrationWarning
               >
-                <td className="p-2 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
-                <td className="p-2 whitespace-nowrap">
-                  <div className="flex gap-1 items-center">
-                    <div className="flex flex-col items-center gap-1">
+                <td className="p-1 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
+                <td className="p-1 whitespace-nowrap">
+                  <div className="flex gap-0.5 items-center">
+                    <div className="flex flex-col items-center gap-0.5">
                       <div className="relative w-8 h-8">
                         <Image
                           src={getAvatarSrc(player)}
@@ -113,13 +113,15 @@ function LeaderboardTable({ data }) {
                           }}
                         />
                       </div>
-                      <span className="text-xs text-white/70">{player.username || "—"}</span>
-                    </div>
-                    {isYou && (
-                      <span className="flex gap-1 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
-                        <PawPrint weight="duotone" className="w-3 h-3" />
+                      <span className="text-[15px] font-medium md:text-lg tracking-tight text-white/80">
+                        {player.username || "—"}
                       </span>
-                    )}
+                      {isYou && (
+                        <span className="flex gap-0.5 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">
+                          <PawPrint weight="duotone" className="w-3 h-3" />
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td className="p-2 text-right whitespace-nowrap">
