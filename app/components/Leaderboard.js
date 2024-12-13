@@ -194,7 +194,7 @@ export default function Leaderboard() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <div className="" suppressHydrationWarning>
-        <h2 className="mb-2 text-sm font-bold text-white">Leaderboard</h2>
+        <h2 className="mb-2 text-lg font-bold text-white md:text-3xl text-center">Leaderboard</h2>
         <LeaderboardTable data={response?.data || []} />
       </div>
     </Suspense>
