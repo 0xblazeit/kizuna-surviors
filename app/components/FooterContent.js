@@ -23,14 +23,14 @@ export default function FooterContent() {
   });
 
   return (
-    <div className="flex mx-auto justify-center gap-x-1 md:gap-x-2 text-lg">
+    <div className="flex mx-auto justify-center gap-x-1 md:gap-x-2 text-lg md:text-2xl">
       <div className="flex items-center">
-        <CurrencyEth className="size-4 mr-1" />
+        <CurrencyEth className="size-6 mr-1" />
         <span>${ethData?.price?.toFixed(2) ?? "--.--"}</span>
       </div>
       <span>•</span>
       <div className="flex items-center">
-        <Users className="size-4 mr-1" />
+        <Users className="size-6 mr-1" />
         {queryMemberCount.isLoading ? (
           <Circle weight="fill" className="text-yellow-500 size-2" />
         ) : (
@@ -39,7 +39,7 @@ export default function FooterContent() {
       </div>
       <span>•</span>
       <div className="flex items-center">
-        <GameController className="size-4 mr-1" />
+        <GameController className="size-6 mr-1" />
         {queryGameTotalPlays.isLoading ? (
           <Circle weight="fill" className="text-yellow-500 size-2" />
         ) : (
