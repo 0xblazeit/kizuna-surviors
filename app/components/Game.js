@@ -1153,7 +1153,7 @@ const GameScene = Phaser.Class({
       },
       callbackScope: this,
       loop: true,
-    );
+    });
 
     // Listen for player death event
     this.events.on("playerDeath", () => {
