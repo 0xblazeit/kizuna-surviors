@@ -44,12 +44,6 @@ export default function Home() {
               Shape L2
             </a>
           </p>
-          <p className="text-2xl tracking-tight md:text-3xl text-slate-200">
-            The path forward is treacherous for those unprepared. To survive, one must arm themselves with the tools
-            forged on the Shape blockchain. Only then can one hope to stand strong against the relentless horde and
-            emerge victorious.
-          </p>
-          <AnimateWizardWeapon />
           <div className="flex justify-center mt-8">
             {!authenticated && (
               <Button
