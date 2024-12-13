@@ -13,6 +13,10 @@ export function Providers({ children }) {
     throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set in the environment variables");
   }
 
+  if (!domain) {
+    throw new Error("NEXT_PUBLIC_DOMAIN is not set in the environment variables");
+  }
+
   return (
     <PrivyProvider
       appId={privyAppId}
