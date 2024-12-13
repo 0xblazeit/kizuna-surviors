@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import AnimateWizardWeapon from "./components/AnimateWizardWeapon";
+import { useRouter } from "next/navigation";
 
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(
@@ -24,6 +25,7 @@ const Game = dynamic(
 
 export default function Home() {
   const { login, authenticated } = usePrivy();
+  const router = useRouter();
 
   return (
     <main className="flex justify-center items-center bg-transparent min-h-fit">
@@ -44,8 +46,8 @@ export default function Home() {
               Shape L2
             </a>
           </p>
-          <div className="flex justify-center mt-8">
-            {!authenticated && (
+          <div className="flex justify-center mt-8 gap-4">
+            {!authenticated ? (
               <Button
                 onClick={login}
                 className="relative px-8 py-3 font-mono font-bold text-white uppercase transition-all duration-200 
@@ -53,6 +55,38 @@ export default function Home() {
                           border-2 border-white/20 
                           hover:from-purple-700 hover:to-blue-700
                           hover:scale-105 hover:shadow-[0_0_20px_rgba(88,28,135,0.5)]
+                          after:content-[''] after:absolute after:inset-0 
+                          after:border-2 after:border-white/10 after:m-[-2px]
+                          after:bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,0.2)_25%,rgba(68,68,68,0.2)_50%,transparent_50%,transparent_75%,rgba(68,68,68,0.2)_75%)]
+                          after:bg-[length:4px_4px]
+                          after:animate-[pixelate_0.5s_infinite_linear]
+                          active:scale-95
+                          flex items-center gap-3"
+              >
+                <Image
+                  src="/ss-logo.svg"
+                  alt="Game Logo"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 transition-transform group-hover:rotate-180"
+                />
+                Connect Wallet
+                <Image
+                  src="/ss-logo.svg"
+                  alt="Game Logo"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 transition-transform group-hover:-rotate-180"
+                />
+              </Button>
+            ) : (
+              <Button
+                onClick={() => router.push('/arena')}
+                className="relative px-8 py-3 font-mono font-bold text-white uppercase transition-all duration-200 
+                          bg-gradient-to-r from-emerald-600 to-cyan-600 
+                          border-2 border-white/20 
+                          hover:from-emerald-700 hover:to-cyan-700
+                          hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]
                           after:content-[''] after:absolute after:inset-0 
                           after:border-2 after:border-white/10 after:m-[-2px]
                           after:bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,0.2)_25%,rgba(68,68,68,0.2)_50%,transparent_50%,transparent_75%,rgba(68,68,68,0.2)_75%)]
