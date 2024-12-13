@@ -28,7 +28,7 @@ export default function Home() {
   return (
     <main className="flex justify-center items-center bg-transparent min-h-fit">
       <div className="p-8 mx-auto max-w-2xl">
-        <div className="p-8 mt-8 rounded-xl border shadow-lg backdrop-blur-sm bg-black/70 border-white/20">
+        <div className="p-8 mt-8 rounded-xl border shadow-lg backdrop-blur-sm bg-black/60 border-white/20">
           <h1 className="mb-4 text-3xl font-bold tracking-widest text-white md:text-4xl">
             Surive the horde. Forge weapons. Climb the ranks.
           </h1>
