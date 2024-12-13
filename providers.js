@@ -36,9 +36,7 @@ export function Providers({ children }) {
         },
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <PlausibleProvider domain={domain}>{children}</PlausibleProvider>
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </PrivyProvider>
   );
 }

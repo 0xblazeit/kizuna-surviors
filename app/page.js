@@ -46,7 +46,7 @@ export default function Home() {
               Shape L2
             </a>
           </p>
-          <div className="flex justify-center mt-8 gap-4">
+          <div className="flex gap-4 justify-center mt-8">
             {!authenticated ? (
               <Button
                 onClick={login}
@@ -81,7 +81,7 @@ export default function Home() {
               </Button>
             ) : (
               <Button
-                onClick={() => router.push('/arena')}
+                onClick={() => router.push("/arena")}
                 className="relative px-8 py-3 font-mono font-bold text-white uppercase transition-all duration-200 
                           bg-gradient-to-r from-emerald-600 to-cyan-600 
                           border-2 border-white/20 
