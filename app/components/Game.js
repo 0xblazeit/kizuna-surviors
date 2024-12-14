@@ -1034,13 +1034,13 @@ const GameScene = Phaser.Class({
     const welcomeConfig = {
       ...overlayConfig,
       fontSize: "20px",
-      color: "#88ff88"
+      color: "#88ff88",
     };
 
-    const welcomeText = `Welcome, ${this.userInfo?.username || 'Player'}!`;
-    const addressText = this.userInfo?.userAddress ? 
-      `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}` : 
-      '';
+    const welcomeText = `Welcome, ${this.userInfo?.username || "Player"}!`;
+    const addressText = this.userInfo?.userAddress
+      ? `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}`
+      : "";
 
     this.welcomeText = this.add
       .text(centerX, startY + 40, welcomeText, welcomeConfig)
@@ -1071,7 +1071,7 @@ const GameScene = Phaser.Class({
         .text(centerX - 150, startY + 80 + index * 40, text, {
           fontFamily: "VT323",
           fontSize: "20px",
-          fill: "#ffffff",
+          fill: "#33ff33",
         })
         .setScrollFactor(0)
         .setDepth(10000);
