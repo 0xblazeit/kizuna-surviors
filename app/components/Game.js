@@ -1030,14 +1030,77 @@ const GameScene = Phaser.Class({
       .setScrollFactor(0)
       .setDepth(10000);
 
+    // Add welcome message with user info
+    const welcomeConfig = {
+      ...overlayConfig,
+      fontSize: "20px",
+      color: "#88ff88"
+    };
+
+    const welcomeText = `Welcome, ${this.userInfo?.username || 'Player'}!`;
+    const addressText = this.userInfo?.userAddress ? 
+      `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}` : 
+      '';
+
+    this.welcomeText = this.add
+      .text(centerX, startY + 40, welcomeText, welcomeConfig)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    if (addressText) {
+      this.addressText = this.add
+        .text(centerX, startY + 60, addressText, { ...welcomeConfig, fontSize: "16px", color: "#66ccff" })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(10000);
+    }
+
+    // Add to cleanup array
+    this.overlayElements = this.overlayElements || [];
+    this.overlayElements.push(this.welcomeText);
+    if (this.addressText) {
+      this.overlayElements.push(this.addressText);
+    }
+
     // Add pixel-style bullet points
     const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold"];
 
     this.objectiveTexts = bulletPoints.map((text, index) => {
-      return this.add
+      const textObj = this.add
         .text(centerX - 150, startY + 80 + index * 40, text, objectivesConfig)
         .setScrollFactor(0)
         .setDepth(10000);
+
+      // Add XP gem sprite next to "Gain XP" text
+      if (text === "► Gain XP") {
+        const textWidth = textObj.width;
+        const xpGem = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "powerup-xp-gem")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(xpGem);
+      }
+
+      // Add coin sprite next to "Collect Gold" text
+      if (text === "► Collect Gold") {
+        const textWidth = textObj.width;
+        const coin = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "coin")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(coin);
+      }
+
+      return textObj;
     });
 
     // Add separator line
@@ -1093,6 +1156,7 @@ const GameScene = Phaser.Class({
             this.separator,
             this.controlsText,
             this.pressStartText,
+            ...(this.overlayElements || []),
           ],
           alpha: 0,
           duration: 500,
@@ -1107,6 +1171,7 @@ const GameScene = Phaser.Class({
               this.separator,
               this.controlsText,
               this.pressStartText,
+              ...(this.overlayElements || []),
             ].forEach((element) => element.destroy());
           },
         });
