@@ -17,6 +17,7 @@ import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
+import XPGem from "../game/entities/XPGem"; // Import XPGem
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
@@ -938,6 +939,16 @@ const GameScene = Phaser.Class({
       spriteKey: "player",
     });
 
+    // Initialize XP gems array
+    this.xpGems = [];
+
+    // Spawn initial XP gems around the map
+    for (let i = 0; i < 7; i++) {
+      const spawnPos = this.getSpawnPosition();
+      const gem = new XPGem(this, spawnPos.x, spawnPos.y);
+      this.xpGems.push(gem);
+    }
+
     // Listen for player death event
     this.events.on("playerDeath", () => {
       this.showWastedScreen();
@@ -1128,7 +1139,9 @@ const GameScene = Phaser.Class({
           y: 50,
           duration: 2000,
           ease: "Power2",
-          onComplete: () => waveAnnouncement.destroy(),
+          onComplete: () => {
+            waveAnnouncement.destroy();
+          },
         });
       },
       callbackScope: this,
