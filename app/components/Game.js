@@ -973,30 +973,216 @@ const GameScene = Phaser.Class({
       this.weapons.map((w) => w.constructor.name)
     );
 
-    // Create new debug text with smaller font and transparent background
-    const debugConfig = {
+    // Create start game overlay with retro style
+    const overlayConfig = {
       fontFamily: "VT323",
-      fontSize: "16px",
+      fontSize: "32px",
       color: "#ffffff",
-      backgroundColor: "#00000088",
-      padding: { x: 5, y: 3 },
-      lineSpacing: 3,
+      padding: { x: 20, y: 10 },
+      align: "center",
     };
 
-    // Position below the existing inventory grid
-    const gridBottom = uiRowY + gridRows * gridCellSize;
-    this.debugText = this.add
-      .text(
-        gridX, // Same X as inventory grid
-        gridBottom + 10, // 10px spacing below grid
-        "Press Arrow Keys / WASD to start",
-        debugConfig
-      )
+    const objectivesConfig = {
+      fontFamily: "VT323",
+      fontSize: "24px",
+      color: "#00ff00",
+      padding: { x: 20, y: 5 },
+      align: "left",
+    };
+
+    const controlsConfig = {
+      fontFamily: "VT323",
+      fontSize: "20px",
+      color: "#ffff00",
+      padding: { x: 20, y: 5 },
+      align: "center",
+    };
+
+    // Create semi-transparent background
+    this.startOverlay = this.add.rectangle(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      500,
+      400,
+      0x000000,
+      0.85
+    );
+    this.startOverlay.setScrollFactor(0).setDepth(9999);
+
+    // Add decorative border
+    this.overlayBorder = this.add.rectangle(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      508,
+      408,
+      0x00ff00,
+      1
+    );
+    this.overlayBorder.setScrollFactor(0).setDepth(9998);
+
+    // Create text elements
+    const centerX = this.cameras.main.centerX;
+    const startY = this.cameras.main.centerY - 150;
+
+    this.startText = this.add
+      .text(centerX, startY, "SHAPECRAFT SURVIVORS", overlayConfig)
+      .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(9999)
-      .setOrigin(0, 0)
-      .setAlpha(0.8);
-    uiContainer.add(this.debugText);
+      .setDepth(10000);
+
+    // Add welcome message with user info
+    const welcomeConfig = {
+      ...overlayConfig,
+      fontSize: "20px",
+      color: "#88ff88"
+    };
+
+    const welcomeText = `Welcome, ${this.userInfo?.username || 'Player'}!`;
+    const addressText = this.userInfo?.userAddress ? 
+      `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}` : 
+      '';
+
+    this.welcomeText = this.add
+      .text(centerX, startY + 40, welcomeText, welcomeConfig)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    if (addressText) {
+      this.addressText = this.add
+        .text(centerX, startY + 60, addressText, { ...welcomeConfig, fontSize: "16px", color: "#66ccff" })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(10000);
+    }
+
+    // Add to cleanup array
+    this.overlayElements = this.overlayElements || [];
+    this.overlayElements.push(this.welcomeText);
+    if (this.addressText) {
+      this.overlayElements.push(this.addressText);
+    }
+
+    // Add pixel-style bullet points
+    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold"];
+
+    this.objectiveTexts = bulletPoints.map((text, index) => {
+      const textObj = this.add
+        .text(centerX - 150, startY + 80 + index * 40, text, objectivesConfig)
+        .setScrollFactor(0)
+        .setDepth(10000);
+
+      // Add XP gem sprite next to "Gain XP" text
+      if (text === "► Gain XP") {
+        const textWidth = textObj.width;
+        const xpGem = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "powerup-xp-gem")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(xpGem);
+      }
+
+      // Add coin sprite next to "Collect Gold" text
+      if (text === "► Collect Gold") {
+        const textWidth = textObj.width;
+        const coin = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "coin")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(coin);
+      }
+
+      return textObj;
+    });
+
+    // Add separator line
+    this.separator = this.add
+      .rectangle(centerX, startY + 220, 400, 2, 0x00ff00, 1)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add controls text
+    this.controlsText = this.add
+      .text(centerX, startY + 260, "CONTROLS\nARROW KEYS / WASD", controlsConfig)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add blinking "Press to Start" text
+    this.pressStartText = this.add
+      .text(centerX, startY + 340, "- PRESS TO START -", { ...overlayConfig, fontSize: "24px", color: "#ffffff" })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add blinking animation
+    this.tweens.add({
+      targets: this.pressStartText,
+      alpha: 0,
+      duration: 1750,
+      ease: "Power1",
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add all elements to UI container
+    uiContainer.add([
+      this.overlayBorder,
+      this.startOverlay,
+      this.startText,
+      ...this.objectiveTexts,
+      this.separator,
+      this.controlsText,
+      this.pressStartText,
+    ]);
+
+    // Setup input handler for game start
+    const startGameHandler = () => {
+      if (this.startOverlay) {
+        this.tweens.add({
+          targets: [
+            this.overlayBorder,
+            this.startOverlay,
+            this.startText,
+            ...this.objectiveTexts,
+            this.separator,
+            this.controlsText,
+            this.pressStartText,
+            ...(this.overlayElements || []),
+          ],
+          alpha: 0,
+          duration: 500,
+          ease: "Power2",
+          onComplete: () => {
+            // Clean up all overlay elements
+            [
+              this.overlayBorder,
+              this.startOverlay,
+              this.startText,
+              ...this.objectiveTexts,
+              this.separator,
+              this.controlsText,
+              this.pressStartText,
+              ...(this.overlayElements || []),
+            ].forEach((element) => element.destroy());
+          },
+        });
+      }
+    };
+
+    // Listen for any movement key press
+    const keys = ["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"];
+    keys.forEach((key) => {
+      this.input.keyboard.once(`keydown-${key}`, startGameHandler);
+    });
 
     // Create array to store enemies
     this.enemies = [];
