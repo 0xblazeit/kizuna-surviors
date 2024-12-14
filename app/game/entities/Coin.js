@@ -6,6 +6,14 @@ class Coin {
   static ACTIVATION_DISTANCE = 300; // Only update coins within this range
   static COLLECTION_DISTANCE = 50;
 
+  // Coin value tiers for consolidation
+  static VALUE_TIERS = {
+    BRONZE: 10,
+    SILVER: 50,
+    GOLD: 100,
+    PLATINUM: 250
+  };
+
   constructor(scene, x, y, value = 10) {
     this.scene = scene;
     this.reset(x, y, value);
@@ -27,6 +35,46 @@ class Coin {
       coin.deactivate();
       this.pool.push(coin);
     }
+  }
+
+  // New method to consolidate coins based on total value
+  static spawnConsolidated(scene, x, y, totalValue) {
+    const coins = [];
+    let remainingValue = totalValue;
+
+    // Distribute value across coin tiers
+    const tiers = Object.values(this.VALUE_TIERS).sort((a, b) => b - a);
+    
+    // Limit max coins per drop
+    const MAX_COINS_PER_DROP = 5;
+    let coinsSpawned = 0;
+
+    while (remainingValue > 0 && coinsSpawned < MAX_COINS_PER_DROP) {
+      const tier = tiers.find(t => t <= remainingValue) || tiers[tiers.length - 1];
+      
+      // Random position within a small radius
+      const radius = 20;
+      const angle = Math.random() * Math.PI * 2;
+      const spawnX = x + Math.cos(angle) * radius * Math.random();
+      const spawnY = y + Math.sin(angle) * radius * Math.random();
+
+      const coin = this.spawn(scene, spawnX, spawnY, tier);
+      if (coin) {
+        coins.push(coin);
+        remainingValue -= tier;
+        coinsSpawned++;
+      } else {
+        break; // No more coins available in pool
+      }
+    }
+
+    // If there's remaining value and we hit the coin limit,
+    // add it to the last coin
+    if (remainingValue > 0 && coins.length > 0) {
+      coins[coins.length - 1].value += remainingValue;
+    }
+
+    return coins;
   }
 
   static spawn(scene, x, y, value = 10) {
