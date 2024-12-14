@@ -142,7 +142,7 @@ const UpgradeMenuScene = Phaser.Class({
             return "weapon-magic-milk";
           case "Shapebinder":
             return "weapon-shapecraft-key";
-          case "Awaken":
+          case "Awakened":
             return "weapon-awaken";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);

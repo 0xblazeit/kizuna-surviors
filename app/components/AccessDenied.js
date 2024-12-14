@@ -36,7 +36,7 @@ export function AccessDenied() {
               target="_blank"
               rel="noreferrer"
             >
-              Awaken Eye
+              Awakened
             </a>
           </span>
           <span className="flex gap-1 items-center">

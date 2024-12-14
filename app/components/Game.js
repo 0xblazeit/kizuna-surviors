@@ -200,7 +200,7 @@ const GameScene = Phaser.Class({
     this.load.svg("weapon-wand-icon", "/assets/game/weapons/weapon-wand-icon.svg?v=1", {
       scale: 0.5,
     });
-    this.load.svg("weapon-eye", "/assets/game/weapons/weapon-eye.svg", {
+    this.load.svg("weapon-awaken", "/assets/game/weapons/weapon-awaken.svg", {
       scale: 0.2,
     });
     this.load.svg("weapon-wand-projectile", "/assets/game/weapons/weapon-wand-projectile.svg?v=1", {
@@ -770,7 +770,7 @@ const GameScene = Phaser.Class({
           awakeIcon = createWeaponIcon(
             gridX + col * gridCellSize,
             uiRowY + row * gridCellSize,
-            "weapon-eye",
+            "weapon-awaken",
             7,
             gridCells
           );

@@ -3,7 +3,7 @@ import { BaseWeapon } from "./BaseWeapon.js";
 export class AwakenWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
-    this.name = "Awaken";
+    this.name = "Awakened";
     this.description = "Stun enemies with awakening light";
     this.type = "magic";
 
@@ -116,7 +116,7 @@ export class AwakenWeapon extends BaseWeapon {
     console.log("Creating awaken effect for enemy at:", enemy.sprite.x, enemy.sprite.y);
 
     // Large eye symbol
-    const eye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-eye");
+    const eye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
     eye.setScale(0);
     eye.setAlpha(1);
     eye.setDepth(100);
@@ -127,7 +127,7 @@ export class AwakenWeapon extends BaseWeapon {
       targets: eye,
       scale: { from: 0, to: this.stats.scale * 4 },
       alpha: { from: 1, to: 0 },
-      duration: 2800,
+      duration: 2300,
       ease: "Power2",
       onComplete: () => eye.destroy(),
     });
@@ -136,13 +136,92 @@ export class AwakenWeapon extends BaseWeapon {
     const damage = this.stats.damage;
     enemy.takeDamage(damage);
 
+    // Max level special effects
+    if (this.currentLevel === 8) {
+      // Create multiple orbiting eyes
+      const orbitingEyes = [];
+      const numEyes = 6;
+      for (let i = 0; i < numEyes; i++) {
+        const orbitEye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
+        orbitEye.setScale(0.3);
+        orbitEye.setAlpha(0.8);
+        orbitEye.setBlendMode(Phaser.BlendModes.ADD);
+        orbitingEyes.push(orbitEye);
+
+        // Create orbiting animation
+        const angle = (i / numEyes) * Math.PI * 2;
+        const radius = 100;
+
+        this.scene.tweens.add({
+          targets: orbitEye,
+          x: enemy.sprite.x + Math.cos(angle) * radius,
+          y: enemy.sprite.y + Math.sin(angle) * radius,
+          scale: 0,
+          alpha: 0,
+          duration: 1000,
+          ease: "Power2",
+          onComplete: () => orbitEye.destroy(),
+        });
+      }
+
+      // Additional damage wave
+      const nearbyEnemies = this.scene.enemies.filter((e) => {
+        if (!e || !e.sprite || e.isDead) return false;
+        const dist = Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, e.sprite.x, e.sprite.y);
+        return dist <= 150 && e !== enemy; // 150 pixel radius
+      });
+
+      // Apply chain damage to nearby enemies
+      nearbyEnemies.forEach((nearbyEnemy) => {
+        const chainDamage = Math.floor(damage * 0.5); // 50% of original damage
+        nearbyEnemy.takeDamage(chainDamage);
+
+        // Create chain eye effect
+        const chainEye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
+        chainEye.setScale(0.4);
+        chainEye.setAlpha(0.8);
+        chainEye.setBlendMode(Phaser.BlendModes.ADD);
+
+        this.scene.tweens.add({
+          targets: chainEye,
+          x: nearbyEnemy.sprite.x,
+          y: nearbyEnemy.sprite.y,
+          scale: 0.1,
+          alpha: 0,
+          duration: 400,
+          ease: "Power2",
+          onComplete: () => chainEye.destroy(),
+        });
+      });
+
+      // Create expanding eye rings
+      for (let i = 0; i < 3; i++) {
+        const ringEye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
+        ringEye.setScale(0.2);
+        ringEye.setAlpha(0.6);
+        ringEye.setBlendMode(Phaser.BlendModes.ADD);
+
+        this.scene.tweens.add({
+          targets: ringEye,
+          scale: 1.5 + i * 0.5,
+          alpha: 0,
+          duration: 800 + i * 200,
+          ease: "Power2",
+          onComplete: () => ringEye.destroy(),
+        });
+      }
+
+      // Stronger screen shake for max level
+      if (this.scene.cameras && this.scene.cameras.main) {
+        this.scene.cameras.main.shake(150, 0.008);
+      }
+    }
+
     // Apply powerful knockback
     if (enemy.sprite && enemy.sprite.body) {
-      // Calculate angle from eye to enemy
       const angle = Math.atan2(enemy.sprite.y - eye.y, enemy.sprite.x - eye.x);
 
-      // Apply strong knockback (using a high value since this is a powerful weapon)
-      const knockbackForce = 300; // High knockback value
+      const knockbackForce = this.currentLevel === 8 ? 400 : 300; // Enhanced knockback at max level
       enemy.sprite.body.velocity.x += Math.cos(angle) * knockbackForce;
       enemy.sprite.body.velocity.y += Math.sin(angle) * knockbackForce;
     }
@@ -150,9 +229,9 @@ export class AwakenWeapon extends BaseWeapon {
     // Create damage text
     const damageText = this.scene.add
       .text(enemy.sprite.x, enemy.sprite.y - 40, damage.toString(), {
-        fontSize: "32px",
+        fontSize: this.currentLevel === 8 ? "40px" : "32px",
         fontFamily: "VT323",
-        color: "#ffffff",
+        color: this.currentLevel === 8 ? "#FFD700" : "#ffffff", // Gold color for max level
         stroke: "#000000",
         strokeThickness: 6,
         align: "center",
@@ -172,25 +251,20 @@ export class AwakenWeapon extends BaseWeapon {
     });
 
     // Add impact effect
-    const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-eye");
+    const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
     impact.setScale(0.3);
-    impact.setTint(0xffffff);
+    impact.setTint(this.currentLevel === 8 ? 0xffd700 : 0xffffff); // Gold tint for max level
     impact.setAlpha(0.8);
 
     // Animate impact
     this.scene.tweens.add({
       targets: impact,
-      scale: 1.5,
+      scale: this.currentLevel === 8 ? 2 : 1.5,
       alpha: 0,
       duration: 300,
       ease: "Power2",
       onComplete: () => impact.destroy(),
     });
-
-    // Add screen shake for impact feel
-    if (this.scene.cameras && this.scene.cameras.main) {
-      this.scene.cameras.main.shake(100, 0.005);
-    }
   }
 
   attack(time) {
