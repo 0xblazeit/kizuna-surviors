@@ -1,6 +1,98 @@
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
+
+  if (type === 'nfts') {
+    return NextResponse.json({
+      totalCount: 10,
+      nfts: [
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000252",
+          title: "Kizuna Warrior",
+          description: "Legendary warrior of the digital realm",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fp"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000253",
+          title: "Cyber Samurai",
+          description: "Master of digital combat arts",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fg"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000254",
+          title: "Digital Ninja",
+          description: "Silent guardian of the blockchain",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fh"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000255",
+          title: "Quantum Knight",
+          description: "Defender of digital dimensions",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fi"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000256",
+          title: "Crypto Mage",
+          description: "Wielder of blockchain magic",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fj"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000257",
+          title: "Pixel Paladin",
+          description: "Guardian of virtual realms",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fk"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000258",
+          title: "Chain Champion",
+          description: "Hero of the distributed ledger",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fl"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x0000000000000000000000000000000000000000000000000000000000000259",
+          title: "Meta Mercenary",
+          description: "Soldier of the metaverse",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fm"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x000000000000000000000000000000000000000000000000000000000000025a",
+          title: "Token Templar",
+          description: "Protector of digital assets",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fn"
+        },
+        {
+          contractAddress: "0x05aa491820662b131d285757e5da4b74bd0f0e5f",
+          tokenId: "0x000000000000000000000000000000000000000000000000000000000000025b",
+          title: "Byte Berserker",
+          description: "Warrior of the web3 wilderness",
+          tokenType: "ERC721",
+          image: "ipfs://QmcmEDyaw4RXADwuJ5SZWjYDwJiqdhwiYCCB1Y6FQGn1fo"
+        }
+      ],
+      isShapeCraftKeyHolder: true
+    });
+  }
+
   const mockLeaderboard = [
     {
       userName: "SamuraiX",

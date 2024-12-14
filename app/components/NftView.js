@@ -9,17 +9,25 @@ import Link from "next/link";
 const IPFS_GATEWAYS = ["https://ipfs.io/ipfs/", "https://gateway.ipfs.io/ipfs/", "https://cf-ipfs.com/ipfs/"];
 
 async function fetchNFTs(walletAddress) {
-  if (!walletAddress) return [];
-  const response = await fetch(`/api/wallet-nfts?wallet=${walletAddress}`);
-  const data = await response.json();
-  return data.nfts;
+  if (!walletAddress) return { nfts: [] };
+  try {
+    const response = await fetch(`/api/wallet-nfts?wallet=${walletAddress}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch NFTs");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching NFTs:", error);
+    return { nfts: [] };
+  }
 }
 
 export function NftView({ walletAddress }) {
   const [imageErrors, setImageErrors] = useState({});
 
-  const { data: nfts = [], isLoading } = useQuery({
-    queryKey: ["nfts"],
+  const { data = {}, isLoading } = useQuery({
+    queryKey: ["nfts", walletAddress],
     queryFn: () => fetchNFTs(walletAddress),
     enabled: !!walletAddress,
   });
@@ -55,7 +63,7 @@ export function NftView({ walletAddress }) {
     return null;
   }
 
-  if (nfts.length === 0) {
+  if (data.nfts.length === 0) {
     return (
       <div className="py-4 text-center text-white">
         <p className="text-sm text-white/50">No NFTs found</p>
@@ -64,9 +72,9 @@ export function NftView({ walletAddress }) {
   }
 
   return (
-    <div className="p-2 w-full">
-      <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
-        {nfts.map((nft, index) => {
+    <div className="p-2 w-full h-[calc(100vh-12rem)] overflow-y-auto">
+      <div className="grid grid-cols-2 auto-rows-max gap-2 md:grid-cols-3 lg:grid-cols-4">
+        {data.nfts.map((nft, index) => {
           const nftId = `${nft.contractAddress}-${nft.tokenId}`;
           const imageUrl = imageErrors[nftId]?.currentSrc || nft.image.replace("ipfs://", IPFS_GATEWAYS[0]);
 

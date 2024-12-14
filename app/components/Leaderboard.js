@@ -97,7 +97,7 @@ function LeaderboardTable({ data }) {
                 <td className="p-1 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
                 <td className="p-1 whitespace-nowrap">
                   <div className="flex gap-0.5 items-center">
-                    <div className="flex flex-col items-center gap-0.5 min-w-full">
+                    <div className="flex flex-col gap-0.5 items-center min-w-full">
                       <div className="relative w-8 h-8">
                         <Image
                           src={getAvatarSrc(player)}
@@ -113,7 +113,7 @@ function LeaderboardTable({ data }) {
                           }}
                         />
                       </div>
-                      <span className="text-[15px] font-medium md:text-lg tracking-tight text-white/80">
+                      <span className="text-[15px] font-semibold md:text-xl tracking-tight text-white/80">
                         {player.username || "—"}
                       </span>
                       {isYou && (
@@ -124,16 +124,16 @@ function LeaderboardTable({ data }) {
                     </div>
                   </div>
                 </td>
-                <td className="p-2 text-right whitespace-nowrap">
+                <td className="p-0.5 text-right whitespace-nowrap md:text-2xl">
                   <span className="text-base text-white/90">{player.gold.toLocaleString()}</span>
                 </td>
-                <td className="p-2 text-right whitespace-nowrap">
+                <td className="p-0.5 text-center whitespace-nowrap md:text-2xl">
                   <span className="text-base text-white/90">{player.kills}</span>
                 </td>
-                <td className="p-2 text-right whitespace-nowrap">
+                <td className="p-0.5 text-center whitespace-nowrap md:text-2xl">
                   <span className="text-base text-white/90">{player.waveNumber}</span>
                 </td>
-                <td className="p-2 text-right whitespace-nowrap">
+                <td className="p-0.5 text-right whitespace-nowrap md:text-2xl">
                   <span className="text-base text-white/90">{formatTime(player.timeAlive)}</span>
                 </td>
               </tr>
@@ -194,7 +194,7 @@ export default function Leaderboard() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <div className="" suppressHydrationWarning>
-        <h2 className="mb-2 text-lg font-bold text-white md:text-3xl text-center">Leaderboard</h2>
+        <h2 className="mb-2 text-lg font-bold text-center text-white md:text-3xl">Leaderboard</h2>
         <LeaderboardTable data={response?.data || []} />
       </div>
     </Suspense>

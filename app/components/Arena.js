@@ -78,7 +78,8 @@ export function Arena() {
   return (
     <div className="p-3 bg-transparent rounded-lg w-full max-w-[800px] mx-auto">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
+        {/* COL 1 */}
+        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square max-h-[calc(50vh-5rem)] overflow-y-scroll">
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
@@ -116,7 +117,7 @@ export function Arena() {
                             <Info size={16} weight="bold" className="text-white/70 hover:text-white" />
                           </TooltipTrigger>
                           <TooltipContent
-                            className="backdrop-blur-md border-white max-w-xs rounded-xl text-xl"
+                            className="max-w-xs text-xl rounded-xl border-white backdrop-blur-md"
                             sideOffset={5}
                             side="bottom"
                           >
@@ -161,15 +162,17 @@ export function Arena() {
                     </span>
                   )}
                 </div>
+                <NftView walletAddress={user?.wallet?.address} />
               </div>
             </>
           )}
         </div>
-        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
+
+        {/* COL 2 */}
+        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square max-h-[calc(50vh-5rem)] overflow-y-scroll">
           <Leaderboard />
         </div>
       </div>
-      {ready && authenticated && <NftView walletAddress={user?.wallet?.address} />}
       <div className="flex flex-col gap-4 items-center w-full">
         <div className="flex justify-center w-full">
           {ready && authenticated ? (
