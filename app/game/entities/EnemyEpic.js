@@ -73,7 +73,7 @@ class EnemyEpic extends EnemyAdvanced {
     }
     
     // Set higher coin value for epic enemies
-    const coinValue = 35; // Reduced from 50
+    const coinValue = 40; // Increased single coin value
     
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
@@ -85,53 +85,35 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Determine drop type - 100% chance for drops
     const dropChance = Math.random();
-    // 20% chance for coins, 80% chance for XP gem (adjusted rates)
-    if (dropChance < 0.2) {
-      // Epic enemies drop multiple coins in a pattern
-      const numCoins = 3; // Epic enemies drop more coins but balanced
-      const radius = 25; // Slightly larger spread radius for epic enemies
-      
-      for (let i = 0; i < numCoins; i++) {
-        const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
-        const offsetX = Math.cos(angle) * radius;
-        const offsetY = Math.sin(angle) * radius;
-        
-        const coin = new Coin(
-          this.scene,
-          this.sprite.x + offsetX,
-          this.sprite.y + offsetY,
-          coinValue
-        );
-        if (coin) {
-          this.scene.coins.push(coin);
-        }
+    // 40% chance for coins, 60% chance for XP gem
+    if (dropChance < 0.4) {
+      // Spawn a single high-value coin
+      const coin = new Coin(
+        this.scene,
+        this.sprite.x,
+        this.sprite.y,
+        coinValue
+      );
+      if (coin) {
+        this.scene.coins.push(coin);
       }
     } else {
-      // Epic enemies now have a chance to drop multiple XP gems
-      const numGems = Math.random() < 0.15 ? 2 : 1; // 15% chance for double gems
-      const radius = 20;
-      
-      for (let i = 0; i < numGems; i++) {
-        const angle = (i / numGems) * Math.PI * 2;
-        const offsetX = Math.cos(angle) * radius;
-        const offsetY = Math.sin(angle) * radius;
-        
-        const gem = new XPGem(
-          this.scene,
-          this.sprite.x + offsetX,
-          this.sprite.y + offsetY,
-          100, // Further reduced XP value
-          0.18
-        );
-        if (gem) {
-          this.scene.xpGems.push(gem);
-        }
+      // Spawn a single high-value XP gem
+      const gem = new XPGem(
+        this.scene,
+        this.sprite.x,
+        this.sprite.y,
+        80, // Higher base XP value
+        0.2 // Slightly larger scale to indicate higher value
+      );
+      if (gem) {
+        this.scene.xpGems.push(gem);
       }
     }
 
     super.playDeathAnimation().then(() => {
-      // Then call parent die method
-      super.die();
+      // Call parent die method but skip its drop logic
+      super.onDeath();
     });
   }
 }
