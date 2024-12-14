@@ -7,7 +7,7 @@ import MainPlayer from "../game/entities/MainPlayer";
 import EnemyBasic from "../game/entities/EnemyBasic";
 import EnemyAdvanced from "../game/entities/EnemyAdvanced";
 import EnemyEpic from "../game/entities/EnemyEpic";
-import EnemyShooter from "../game/entities/EnemyShooter";
+import EnemyShooter from "../game/entities/EnemyShooter"; // Added back EnemyShooter
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
@@ -404,21 +404,43 @@ const GameScene = Phaser.Class({
 
     // Enemy type distribution changes based on wave number
     if (this.gameState.waveNumber <= 2) {
-      // Waves 1-2: Only basic enemies
-      enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
-        maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-        moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-        attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-        scale: 0.4,
-      });
-    } else if (this.gameState.waveNumber <= 5) {
-      // Waves 3-5: Mix of basic and advanced
-      if (roll < 0.7) {
+      // Waves 1-2: 80% basic, 20% shooter
+      if (roll < 0.8) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
           maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
           moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
           attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
           scale: 0.4,
+        });
+      } else {
+        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 10),
+          projectileSpeed: 200 + Math.min(100, this.gameState.waveNumber * 5),
+          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
+        });
+      }
+    } else if (this.gameState.waveNumber <= 5) {
+      // Waves 3-5: 40% basic, 35% shooter, 25% advanced
+      if (roll < 0.4) {
+        enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
+          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+          scale: 0.4,
+        });
+      } else if (roll < 0.75) {
+        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 10),
+          projectileSpeed: 200 + Math.min(100, this.gameState.waveNumber * 5),
+          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
         });
       } else {
         enemy = new EnemyAdvanced(this, x, y, ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)], {
@@ -429,15 +451,25 @@ const GameScene = Phaser.Class({
         });
       }
     } else {
-      // Wave 6+: Mix of all enemy types
-      if (roll < 0.4) {
+      // Wave 6+: 25% basic, 35% shooter, 25% advanced, 15% epic
+      if (roll < 0.25) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
           maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
           moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
           attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
           scale: 0.4,
         });
-      } else if (roll < 0.7) {
+      } else if (roll < 0.6) {
+        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
+          type: "shooter",
+          scale: 0.3,
+          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
+          attackRange: 250 + Math.min(200, this.gameState.waveNumber * 15), // Increased range scaling
+          projectileSpeed: 200 + Math.min(150, this.gameState.waveNumber * 8), // Increased projectile speed scaling
+          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
+        });
+      } else if (roll < 0.85) {
         enemy = new EnemyAdvanced(this, x, y, ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)], {
           maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
           moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
