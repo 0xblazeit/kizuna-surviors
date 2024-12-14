@@ -78,15 +78,15 @@ function LeaderboardTable({ data }) {
         <thead className="border-b border-white/20">
           <tr>
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">#</th>
-            <th className="p-2 text-sm font-medium tracking-wider text-left uppercase text-white/70">Player</th>
+            <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Player</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Gold</th>
-            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Kills</th>
-            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Wave</th>
+            <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Kills</th>
+            <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Wave</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Time</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
-          {data.slice(0, 8).map((player, index) => {
+          {data.map((player, index) => {
             const isYou = isCurrentUser(player);
             return (
               <tr
