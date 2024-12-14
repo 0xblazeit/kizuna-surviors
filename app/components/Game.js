@@ -81,7 +81,7 @@ const GameScene = Phaser.Class({
         healthMultiplier: 1,
         damageMultiplier: 1,
         speedMultiplier: 1,
-        spawnRateMultiplier: 1
+        spawnRateMultiplier: 1,
       },
       spawnThresholds: {
         advanced: 5,
@@ -244,7 +244,7 @@ const GameScene = Phaser.Class({
         if (index > -1) {
           this.enemies.splice(index, 1);
           this.gameState.enemiesRemainingInWave--;
-          
+
           // Check if wave is complete
           if (this.gameState.enemiesRemainingInWave <= 0) {
             this.startNextWave();
@@ -271,28 +271,25 @@ const GameScene = Phaser.Class({
     });
   },
 
-  startNextWave: function() {
+  startNextWave: function () {
     // Increment wave number
     this.gameState.waveNumber++;
-    
+
     // Scale difficulty based on wave number
     const waveScaling = Math.log2(this.gameState.waveNumber + 1); // Logarithmic scaling
     this.gameState.waveScaling = {
-      healthMultiplier: 1 + (waveScaling * 0.5), // Health increases by 50% per scaling
-      damageMultiplier: 1 + (waveScaling * 0.3), // Damage increases by 30% per scaling
-      speedMultiplier: 1 + (waveScaling * 0.1), // Speed increases by 10% per scaling
-      spawnRateMultiplier: 1 + (waveScaling * 0.2) // Spawn rate increases by 20% per scaling
+      healthMultiplier: 1 + waveScaling * 0.5, // Health increases by 50% per scaling
+      damageMultiplier: 1 + waveScaling * 0.3, // Damage increases by 30% per scaling
+      speedMultiplier: 1 + waveScaling * 0.1, // Speed increases by 10% per scaling
+      spawnRateMultiplier: 1 + waveScaling * 0.2, // Spawn rate increases by 20% per scaling
     };
-    
+
     // Calculate enemies for next wave
-    this.gameState.baseEnemiesPerWave = Math.min(100, Math.floor(20 + (this.gameState.waveNumber * 5)));
+    this.gameState.baseEnemiesPerWave = Math.min(100, Math.floor(20 + this.gameState.waveNumber * 5));
     this.gameState.enemiesRemainingInWave = this.gameState.baseEnemiesPerWave;
     this.gameState.maxEnemies = Math.min(60, 20 + Math.floor(this.gameState.waveNumber * 2));
-    this.gameState.spawnRate = Math.max(
-      this.gameState.minSpawnRate,
-      800 - (this.gameState.waveNumber * 20)
-    );
-    
+    this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
+
     // Update wave text with animation
     if (this.waveText) {
       this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
@@ -314,15 +311,21 @@ const GameScene = Phaser.Class({
 
     // Add wave stats
     const waveStats = this.add
-      .text(this.cameras.main.centerX, 160, 
-        `Enemies: ${this.gameState.baseEnemiesPerWave}\nHealth: +${Math.floor((this.gameState.waveScaling.healthMultiplier - 1) * 100)}%\nDamage: +${Math.floor((this.gameState.waveScaling.damageMultiplier - 1) * 100)}%`, {
-        fontFamily: "VT323",
-        fontSize: "24px",
-        color: "#ffff00",
-        stroke: "#000000",
-        strokeThickness: 2,
-        align: 'center'
-      })
+      .text(
+        this.cameras.main.centerX,
+        160,
+        `Enemies: ${this.gameState.baseEnemiesPerWave}\nHealth: +${Math.floor(
+          (this.gameState.waveScaling.healthMultiplier - 1) * 100
+        )}%\nDamage: +${Math.floor((this.gameState.waveScaling.damageMultiplier - 1) * 100)}%`,
+        {
+          fontFamily: "VT323",
+          fontSize: "24px",
+          color: "#ffff00",
+          stroke: "#000000",
+          strokeThickness: 2,
+          align: "center",
+        }
+      )
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(1000)
@@ -332,7 +335,7 @@ const GameScene = Phaser.Class({
     this.tweens.add({
       targets: [waveAnnouncement, waveStats],
       alpha: 1,
-      y: '+=20',
+      y: "+=20",
       duration: 500,
       ease: "Back.easeOut",
     });
@@ -345,15 +348,16 @@ const GameScene = Phaser.Class({
       duration: 200,
       yoyo: true,
       repeat: 2,
-      ease: "Sine.easeInOut"
+      ease: "Sine.easeInOut",
     });
 
     // Keep visible for longer, then fade out
-    this.time.delayedCall(3000, () => { // Wait 3 seconds before starting fade
+    this.time.delayedCall(3000, () => {
+      // Wait 3 seconds before starting fade
       this.tweens.add({
         targets: [waveAnnouncement, waveStats],
         alpha: 0,
-        y: '-=30',
+        y: "-=30",
         duration: 1000,
         ease: "Power2",
         onComplete: () => {
@@ -364,7 +368,7 @@ const GameScene = Phaser.Class({
     });
   },
 
-  getSpawnPosition: function() {
+  getSpawnPosition: function () {
     const minSpawnDistance = 300;
     const maxSpawnDistance = 500;
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -443,12 +447,18 @@ const GameScene = Phaser.Class({
           attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
         });
       } else {
-        enemy = new EnemyAdvanced(this, x, y, ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)], {
-          maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.5,
-        });
+        enemy = new EnemyAdvanced(
+          this,
+          x,
+          y,
+          ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)],
+          {
+            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
+            scale: 0.5,
+          }
+        );
       }
     } else {
       // Wave 6+: 25% basic, 35% shooter, 25% advanced, 15% epic
@@ -470,12 +480,18 @@ const GameScene = Phaser.Class({
           attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
         });
       } else if (roll < 0.85) {
-        enemy = new EnemyAdvanced(this, x, y, ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)], {
-          maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.5,
-        });
+        enemy = new EnemyAdvanced(
+          this,
+          x,
+          y,
+          ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)],
+          {
+            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
+            scale: 0.5,
+          }
+        );
       } else {
         enemy = new EnemyEpic(this, x, y, ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)], {
           maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
@@ -492,7 +508,7 @@ const GameScene = Phaser.Class({
       if (index > -1) {
         this.enemies.splice(index, 1);
         this.gameState.enemiesRemainingInWave--;
-        
+
         // Check if wave is complete
         if (this.gameState.enemiesRemainingInWave <= 0) {
           this.startNextWave();
@@ -1766,7 +1782,6 @@ export default function Game() {
         userAddress: user.wallet.address,
         username: user.twitter.username,
         profileImage: user.twitter.profilePictureUrl,
-        // Add the invalidate function to userInfo
         invalidateQueries: () => {
           queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
           queryClient.invalidateQueries({ queryKey: ["memberCount"] });
