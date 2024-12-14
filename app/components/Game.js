@@ -1064,11 +1064,15 @@ const GameScene = Phaser.Class({
     }
 
     // Add pixel-style bullet points
-    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold"];
+    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold", "► In Game Boost"];
 
     this.objectiveTexts = bulletPoints.map((text, index) => {
       const textObj = this.add
-        .text(centerX - 150, startY + 80 + index * 40, text, objectivesConfig)
+        .text(centerX - 150, startY + 80 + index * 40, text, {
+          fontFamily: "VT323",
+          fontSize: "20px",
+          fill: "#ffffff",
+        })
         .setScrollFactor(0)
         .setDepth(10000);
 
@@ -1100,12 +1104,26 @@ const GameScene = Phaser.Class({
         this.overlayElements.push(coin);
       }
 
+      // Add shapecraft key sprite next to "In Game Boost" text
+      if (text === "► In Game Boost") {
+        const textWidth = textObj.width;
+        const key = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "weapon-shapecraft-key")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(key);
+      }
+
       return textObj;
     });
 
     // Add separator line
     this.separator = this.add
-      .rectangle(centerX, startY + 220, 400, 2, 0x00ff00, 1)
+      .rectangle(centerX, startY + 280, 400, 2, 0x00ff00, 1)
       .setScrollFactor(0)
       .setDepth(10000);
 
