@@ -78,7 +78,8 @@ export function Arena() {
   return (
     <div className="p-3 bg-transparent rounded-lg w-full max-w-[800px] mx-auto">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
+        {/* COL 1 */}
+        <div className="flex flex-col p-4 w-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square max-h-[calc(50vh-5rem)] overflow-y-scroll">
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
@@ -166,7 +167,9 @@ export function Arena() {
             </>
           )}
         </div>
-        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square">
+
+        {/* COL 2 */}
+        <div className="flex overflow-auto flex-col p-4 w-full h-full text-white rounded-xl backdrop-blur-xs bg-black/55 aspect-square max-h-[calc(50vh-5rem)] overflow-y-scroll">
           <Leaderboard />
         </div>
       </div>
