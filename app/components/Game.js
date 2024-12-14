@@ -670,7 +670,8 @@ const GameScene = Phaser.Class({
             cellIndex === 3 ||
             cellIndex === 4 ||
             cellIndex === 5 ||
-            cellIndex === 6
+            cellIndex === 6 ||
+            cellIndex === 7
           ) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
