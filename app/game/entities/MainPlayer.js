@@ -31,7 +31,7 @@ class MainPlayer extends BasePlayer {
     const healthBarHeight = spriteHeight * 0.1;
     const healthBarSpacing = spriteHeight * 0.4;
 
-    // Create a container for the health bar to keep components together
+    // Create a container for the health bar and username to keep components together
     this.healthBar = {
       width: healthBarWidth,
       height: healthBarHeight,
@@ -41,8 +41,15 @@ class MainPlayer extends BasePlayer {
       bar: scene.add.rectangle(0, 0, healthBarWidth, healthBarHeight, 0x00ff00),
     };
 
+    // Add username text below health bar
+    this.usernameText = scene.add.text(0, healthBarHeight + 5, scene.userInfo?.username || '', {
+      fontFamily: 'VT323',
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+
     // Add components to container
-    this.healthBar.container.add([this.healthBar.background, this.healthBar.bar]);
+    this.healthBar.container.add([this.healthBar.background, this.healthBar.bar, this.usernameText]);
     this.healthBar.container.setDepth(1);
 
     // Add a black border to make the health bar more visible
