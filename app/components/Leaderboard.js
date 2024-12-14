@@ -86,7 +86,7 @@ function LeaderboardTable({ data }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
-          {data.slice(0, 8).map((player, index) => {
+          {data.map((player, index) => {
             const isYou = isCurrentUser(player);
             return (
               <tr

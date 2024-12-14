@@ -7,7 +7,7 @@ export async function GET() {
   try {
     // Get top 10 results and total count in parallel
     const [results, [countResult]] = await Promise.all([
-      db.select().from(gameStats).orderBy(desc(gameStats.gold)).limit(20),
+      db.select().from(gameStats).orderBy(desc(gameStats.gold)).limit(10),
       db
         .select({
           count: sql`cast(count(*) as integer)`,
