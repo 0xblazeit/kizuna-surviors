@@ -337,7 +337,7 @@ const GameScene = Phaser.Class({
       targets: [waveAnnouncement, waveStats],
       alpha: 1,
       y: "+=20",
-      duration: 500,
+      duration: 1500,
       ease: "Back.easeOut",
     });
 
