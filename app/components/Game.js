@@ -14,6 +14,7 @@ import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapo
 import FlyingAxeWeapon from "../game/entities/weapons/FlyingAxeWeapon";
 import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
+import { AwakenWeapon } from "../game/entities/weapons/AwakenWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -198,6 +199,9 @@ const GameScene = Phaser.Class({
     });
     this.load.svg("weapon-wand-icon", "/assets/game/weapons/weapon-wand-icon.svg?v=1", {
       scale: 0.5,
+    });
+    this.load.svg("weapon-awaken", "/assets/game/weapons/weapon-awaken.svg", {
+      scale: 0.2,
     });
     this.load.svg("weapon-wand-projectile", "/assets/game/weapons/weapon-wand-projectile.svg?v=1", {
       scale: 0.5,
@@ -634,6 +638,7 @@ const GameScene = Phaser.Class({
     let hammerIcon = null; // Store hammer icon reference
     let milkIcon = null; // Store milk icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
+    let awakeIcon = null; // Store awake icon reference
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -665,7 +670,8 @@ const GameScene = Phaser.Class({
             cellIndex === 3 ||
             cellIndex === 4 ||
             cellIndex === 5 ||
-            cellIndex === 6
+            cellIndex === 6 ||
+            cellIndex === 7
           ) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
@@ -747,21 +753,7 @@ const GameScene = Phaser.Class({
             5,
             gridCells
           );
-          // Initialize milk weapon when icon is clicked
-          milkIcon.setInteractive();
-          milkIcon.on("pointerdown", () => {
-            // Just select the milk weapon (index 5)
-            this.gameState.selectedWeaponIndex = 5;
-
-            // Update all cell borders
-            gridCells.forEach((c, i) => {
-              c.setStrokeStyle(2, i === 5 ? 0xffffff : 0x666666);
-            });
-
-            this.updateStatsDisplay();
-          });
         }
-
         // Add shapecraft key weapon icon to seventh cell
         if (row === 1 && col === 0) {
           shapecraftIcon = createWeaponIcon(
@@ -769,6 +761,17 @@ const GameScene = Phaser.Class({
             uiRowY + row * gridCellSize,
             "weapon-shapecraft-key",
             6,
+            gridCells
+          );
+        }
+
+        // Add awaken icon to eighth cell
+        if (row === 1 && col === 1) {
+          awakeIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            "weapon-awaken",
+            7,
             gridCells
           );
         }
@@ -964,6 +967,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
     ];
 
@@ -1034,13 +1038,13 @@ const GameScene = Phaser.Class({
     const welcomeConfig = {
       ...overlayConfig,
       fontSize: "20px",
-      color: "#88ff88"
+      color: "#88ff88",
     };
 
-    const welcomeText = `Welcome, ${this.userInfo?.username || 'Player'}!`;
-    const addressText = this.userInfo?.userAddress ? 
-      `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}` : 
-      '';
+    const welcomeText = `Welcome, ${this.userInfo?.username || "Player"}!`;
+    const addressText = this.userInfo?.userAddress
+      ? `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}`
+      : "";
 
     this.welcomeText = this.add
       .text(centerX, startY + 40, welcomeText, welcomeConfig)
@@ -1064,11 +1068,15 @@ const GameScene = Phaser.Class({
     }
 
     // Add pixel-style bullet points
-    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold"];
+    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold", "► In Game Boost"];
 
     this.objectiveTexts = bulletPoints.map((text, index) => {
       const textObj = this.add
-        .text(centerX - 150, startY + 80 + index * 40, text, objectivesConfig)
+        .text(centerX - 150, startY + 80 + index * 40, text, {
+          fontFamily: "VT323",
+          fontSize: "20px",
+          fill: "#33ff33",
+        })
         .setScrollFactor(0)
         .setDepth(10000);
 
@@ -1100,12 +1108,26 @@ const GameScene = Phaser.Class({
         this.overlayElements.push(coin);
       }
 
+      // Add shapecraft key sprite next to "In Game Boost" text
+      if (text === "► In Game Boost") {
+        const textWidth = textObj.width;
+        const key = this.add
+          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "weapon-shapecraft-key")
+          .setScale(0.15)
+          .setScrollFactor(0)
+          .setDepth(10000);
+
+        // Add to cleanup array
+        this.overlayElements = this.overlayElements || [];
+        this.overlayElements.push(key);
+      }
+
       return textObj;
     });
 
     // Add separator line
     this.separator = this.add
-      .rectangle(centerX, startY + 220, 400, 2, 0x00ff00, 1)
+      .rectangle(centerX, startY + 280, 400, 2, 0x00ff00, 1)
       .setScrollFactor(0)
       .setDepth(10000);
 
@@ -1200,6 +1222,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
     ];
 

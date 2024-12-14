@@ -128,7 +128,7 @@ const UpgradeMenuScene = Phaser.Class({
       const iconKey = (() => {
         // Use weapon.name instead of constructor.name since it's more reliable in production
         switch (weapon.name) {
-          case "Rotating Dog":
+          case "Taco Doggie":
             return "weapon-dog-projectile";
           case "Shamir's Shard":
             return "weapon-wand-icon";
@@ -142,6 +142,8 @@ const UpgradeMenuScene = Phaser.Class({
             return "weapon-magic-milk";
           case "Shapebinder":
             return "weapon-shapecraft-key";
+          case "Awakened":
+            return "weapon-awaken";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);
             return "weapon-dog-projectile";
