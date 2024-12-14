@@ -328,6 +328,7 @@ class MainPlayer extends BasePlayer {
 
     this.stats.maxHealth += healthIncrease;
     this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
+    this.updateHealthBar(); // Add this line to update health bar visually
     this.stats.attackDamage += damageIncrease;
     this.stats.defense += defenseIncrease;
     this.stats.moveSpeed += speedIncrease; // More controlled speed increment
