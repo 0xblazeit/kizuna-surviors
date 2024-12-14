@@ -973,59 +973,149 @@ const GameScene = Phaser.Class({
       this.weapons.map((w) => w.constructor.name)
     );
 
-    // Create start game overlay
+    // Create start game overlay with retro style
     const overlayConfig = {
       fontFamily: "VT323",
       fontSize: "32px",
       color: "#ffffff",
       padding: { x: 20, y: 10 },
-      align: 'center'
+      align: "center",
+    };
+
+    const objectivesConfig = {
+      fontFamily: "VT323",
+      fontSize: "24px",
+      color: "#00ff00",
+      padding: { x: 20, y: 5 },
+      align: "left",
+    };
+
+    const controlsConfig = {
+      fontFamily: "VT323",
+      fontSize: "20px",
+      color: "#ffff00",
+      padding: { x: 20, y: 5 },
+      align: "center",
     };
 
     // Create semi-transparent background
     this.startOverlay = this.add.rectangle(
       this.cameras.main.centerX,
       this.cameras.main.centerY,
+      500,
       400,
-      200,
       0x000000,
-      0.7
+      0.85
     );
     this.startOverlay.setScrollFactor(0).setDepth(9999);
 
-    // Add text to the overlay
-    this.startText = this.add.text(
+    // Add decorative border
+    this.overlayBorder = this.add.rectangle(
       this.cameras.main.centerX,
       this.cameras.main.centerY,
-      "Press Arrow Keys or WASD\nto begin your adventure",
-      overlayConfig
-    )
-    .setOrigin(0.5)
-    .setScrollFactor(0)
-    .setDepth(10000);
+      508,
+      408,
+      0x00ff00,
+      1
+    );
+    this.overlayBorder.setScrollFactor(0).setDepth(9998);
 
-    // Add to UI container
-    uiContainer.add([this.startOverlay, this.startText]);
+    // Create text elements
+    const centerX = this.cameras.main.centerX;
+    const startY = this.cameras.main.centerY - 150;
+
+    this.startText = this.add
+      .text(centerX, startY, "SHAPECRAFT SURVIVORS", overlayConfig)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add pixel-style bullet points
+    const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold"];
+
+    this.objectiveTexts = bulletPoints.map((text, index) => {
+      return this.add
+        .text(centerX - 150, startY + 80 + index * 40, text, objectivesConfig)
+        .setScrollFactor(0)
+        .setDepth(10000);
+    });
+
+    // Add separator line
+    this.separator = this.add
+      .rectangle(centerX, startY + 220, 400, 2, 0x00ff00, 1)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add controls text
+    this.controlsText = this.add
+      .text(centerX, startY + 260, "CONTROLS\nARROW KEYS / WASD", controlsConfig)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add blinking "Press to Start" text
+    this.pressStartText = this.add
+      .text(centerX, startY + 340, "- PRESS TO START -", { ...overlayConfig, fontSize: "24px", color: "#ffffff" })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(10000);
+
+    // Add blinking animation
+    this.tweens.add({
+      targets: this.pressStartText,
+      alpha: 0,
+      duration: 1750,
+      ease: "Power1",
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add all elements to UI container
+    uiContainer.add([
+      this.overlayBorder,
+      this.startOverlay,
+      this.startText,
+      ...this.objectiveTexts,
+      this.separator,
+      this.controlsText,
+      this.pressStartText,
+    ]);
 
     // Setup input handler for game start
     const startGameHandler = () => {
-      if (this.startOverlay && this.startText) {
+      if (this.startOverlay) {
         this.tweens.add({
-          targets: [this.startOverlay, this.startText],
+          targets: [
+            this.overlayBorder,
+            this.startOverlay,
+            this.startText,
+            ...this.objectiveTexts,
+            this.separator,
+            this.controlsText,
+            this.pressStartText,
+          ],
           alpha: 0,
           duration: 500,
-          ease: 'Power2',
+          ease: "Power2",
           onComplete: () => {
-            this.startOverlay.destroy();
-            this.startText.destroy();
-          }
+            // Clean up all overlay elements
+            [
+              this.overlayBorder,
+              this.startOverlay,
+              this.startText,
+              ...this.objectiveTexts,
+              this.separator,
+              this.controlsText,
+              this.pressStartText,
+            ].forEach((element) => element.destroy());
+          },
         });
       }
     };
 
     // Listen for any movement key press
-    const keys = ['W', 'A', 'S', 'D', 'UP', 'DOWN', 'LEFT', 'RIGHT'];
-    keys.forEach(key => {
+    const keys = ["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"];
+    keys.forEach((key) => {
       this.input.keyboard.once(`keydown-${key}`, startGameHandler);
     });
 
