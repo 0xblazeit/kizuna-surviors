@@ -301,7 +301,7 @@ const GameScene = Phaser.Class({
       .text(this.cameras.main.centerX, 100, `Wave ${this.gameState.waveNumber}`, {
         fontFamily: "VT323",
         fontSize: "48px",
-        color: "#ff0000",
+        color: "#0000ff",
         stroke: "#000000",
         strokeThickness: 4,
       })
@@ -1124,7 +1124,7 @@ const GameScene = Phaser.Class({
           .text(this.cameras.main.centerX, 100, `Wave ${this.gameState.waveNumber}`, {
             fontFamily: "VT323",
             fontSize: "48px",
-            color: "#ff0000",
+            color: "#0000ff",
             stroke: "#000000",
             strokeThickness: 4,
           })
