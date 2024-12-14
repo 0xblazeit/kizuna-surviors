@@ -11,21 +11,16 @@ class Coin {
     BRONZE: 10,
     SILVER: 50,
     GOLD: 100,
-    PLATINUM: 250
+    PLATINUM: 250,
   };
 
   constructor(scene, x, y, value = 10) {
     this.scene = scene;
     this.reset(x, y, value);
-    
+
     // Create coin sprite only once
     this.sprite = scene.add.sprite(x, y, "coin");
     this.sprite.setScale(0.15);
-    
-    // Use a simpler rotation animation with sprite sheet frames instead of tweens
-    if (this.sprite.anims) {
-      this.sprite.play("coin-spin");
-    }
   }
 
   static initializePool(scene) {
@@ -44,14 +39,14 @@ class Coin {
 
     // Distribute value across coin tiers
     const tiers = Object.values(this.VALUE_TIERS).sort((a, b) => b - a);
-    
+
     // Limit max coins per drop
     const MAX_COINS_PER_DROP = 5;
     let coinsSpawned = 0;
 
     while (remainingValue > 0 && coinsSpawned < MAX_COINS_PER_DROP) {
-      const tier = tiers.find(t => t <= remainingValue) || tiers[tiers.length - 1];
-      
+      const tier = tiers.find((t) => t <= remainingValue) || tiers[tiers.length - 1];
+
       // Random position within a small radius
       const radius = 20;
       const angle = Math.random() * Math.PI * 2;
@@ -79,9 +74,9 @@ class Coin {
 
   static spawn(scene, x, y, value = 10) {
     // Get coin from pool or return if none available
-    const coin = this.pool.find(c => !c.isActive);
+    const coin = this.pool.find((c) => !c.isActive);
     if (!coin) return null;
-    
+
     coin.reset(x, y, value);
     return coin;
   }
@@ -90,12 +85,12 @@ class Coin {
     this.isCollected = false;
     this.isActive = true;
     this.value = value;
-    
+
     if (this.sprite) {
       this.sprite.setPosition(x, y);
       this.sprite.setVisible(true);
       this.sprite.setAlpha(1);
-      
+
       // Simple fade in without complex tween
       this.sprite.setAlpha(0);
       this.scene.tweens.add({
@@ -118,12 +113,7 @@ class Coin {
   update(player) {
     if (!this.isActive || this.isCollected || !this.sprite || !player) return;
 
-    const distance = Phaser.Math.Distance.Between(
-      this.sprite.x, 
-      this.sprite.y, 
-      player.x, 
-      player.y
-    );
+    const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
 
     // Only process coins within activation distance
     if (distance > Coin.ACTIVATION_DISTANCE) return;
@@ -135,7 +125,7 @@ class Coin {
 
   collect(player) {
     if (this.isCollected) return;
-    
+
     // Simple collection animation
     this.scene.tweens.add({
       targets: this.sprite,
@@ -148,7 +138,7 @@ class Coin {
         // Update gold count
         this.scene.gameState.gold += this.value;
         this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
-        
+
         // Create floating text
         const floatingText = this.scene.add
           .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
@@ -170,7 +160,7 @@ class Coin {
         });
 
         this.deactivate();
-      }
+      },
     });
   }
 }

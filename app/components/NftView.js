@@ -109,10 +109,10 @@ export function NftView({ walletAddress }) {
                 </CardHeader>
                 <CardContent className="p-1">
                   <h3 className="text-xs font-medium truncate text-white/90">{nft.title}</h3>
-                  <p className="text-[10px] text-white/50 line-clamp-2 break-words">{nft.description}</p>
+                  <p className="text-xs break-words text-white/50">{nft.description}</p>
                 </CardContent>
-                <CardFooter className="p-1 pt-0">
-                  <p className="text-[10px] text-white/50">{formatTokenId(nft.tokenId)}</p>
+                <CardFooter className="p-0.5">
+                  <p className="text-xs text-white/50">{formatTokenId(nft.tokenId)}</p>
                 </CardFooter>
               </Card>
             </Link>
