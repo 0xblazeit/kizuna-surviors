@@ -311,19 +311,16 @@ class MainPlayer extends BasePlayer {
     const baseXP = 100;
     this.experience.toNextLevel = Math.floor(baseXP * Math.pow(1.2, this.experience.level));
 
-    // Increase stats on level up with logarithmic scaling for better balance
-    const baseHealth = 10;
-    const baseDamage = 2;
-    const healthIncrease = Math.floor(baseHealth + (Math.log(this.experience.level) * 3)); // Logarithmic health scaling
-    const damageIncrease = Math.floor(baseDamage + (Math.log(this.experience.level) * 0.8)); // Logarithmic damage scaling
-    const defenseIncrease = Math.min(1, 0.2 + Math.floor(Math.log(this.experience.level) * 0.15)); // Logarithmic defense scaling
-    const speedIncrease = 0.15 + (this.experience.level * 0.02); // Linear speed scaling for better mobility
+    // Increase stats on level up with slightly better scaling
+    const healthIncrease = 10 + Math.floor(this.experience.level * 0.5); // More health per level
+    const damageIncrease = 2 + Math.floor(this.experience.level * 0.2); // More damage per level
+    const defenseIncrease = 1 + Math.floor(this.experience.level * 0.1); // More defense per level
     
     this.stats.maxHealth += healthIncrease;
     this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
     this.stats.attackDamage += damageIncrease;
     this.stats.defense += defenseIncrease;
-    this.stats.moveSpeed += speedIncrease; // More aggressive speed increment
+    this.stats.moveSpeed += 0.1; // Smaller speed increment to prevent getting too fast
 
     // Emit level up event for the upgrade menu and stats update
     this.scene.events.emit("showWeaponUpgradeMenu");
