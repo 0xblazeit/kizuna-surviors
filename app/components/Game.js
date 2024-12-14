@@ -973,30 +973,61 @@ const GameScene = Phaser.Class({
       this.weapons.map((w) => w.constructor.name)
     );
 
-    // Create new debug text with smaller font and transparent background
-    const debugConfig = {
+    // Create start game overlay
+    const overlayConfig = {
       fontFamily: "VT323",
-      fontSize: "16px",
+      fontSize: "32px",
       color: "#ffffff",
-      backgroundColor: "#00000088",
-      padding: { x: 5, y: 3 },
-      lineSpacing: 3,
+      padding: { x: 20, y: 10 },
+      align: 'center'
     };
 
-    // Position below the existing inventory grid
-    const gridBottom = uiRowY + gridRows * gridCellSize;
-    this.debugText = this.add
-      .text(
-        gridX, // Same X as inventory grid
-        gridBottom + 10, // 10px spacing below grid
-        "Press Arrow Keys / WASD to start",
-        debugConfig
-      )
-      .setScrollFactor(0)
-      .setDepth(9999)
-      .setOrigin(0, 0)
-      .setAlpha(0.8);
-    uiContainer.add(this.debugText);
+    // Create semi-transparent background
+    this.startOverlay = this.add.rectangle(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      400,
+      200,
+      0x000000,
+      0.7
+    );
+    this.startOverlay.setScrollFactor(0).setDepth(9999);
+
+    // Add text to the overlay
+    this.startText = this.add.text(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      "Press Arrow Keys or WASD\nto begin your adventure",
+      overlayConfig
+    )
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(10000);
+
+    // Add to UI container
+    uiContainer.add([this.startOverlay, this.startText]);
+
+    // Setup input handler for game start
+    const startGameHandler = () => {
+      if (this.startOverlay && this.startText) {
+        this.tweens.add({
+          targets: [this.startOverlay, this.startText],
+          alpha: 0,
+          duration: 500,
+          ease: 'Power2',
+          onComplete: () => {
+            this.startOverlay.destroy();
+            this.startText.destroy();
+          }
+        });
+      }
+    };
+
+    // Listen for any movement key press
+    const keys = ['W', 'A', 'S', 'D', 'UP', 'DOWN', 'LEFT', 'RIGHT'];
+    keys.forEach(key => {
+      this.input.keyboard.once(`keydown-${key}`, startGameHandler);
+    });
 
     // Create array to store enemies
     this.enemies = [];
