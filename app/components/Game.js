@@ -309,7 +309,8 @@ const GameScene = Phaser.Class({
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(1000);
+      .setDepth(1000)
+      .setAlpha(0); // Start invisible for fade in
 
     // Add wave stats
     const waveStats = this.add
@@ -324,19 +325,42 @@ const GameScene = Phaser.Class({
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(1000);
+      .setDepth(1000)
+      .setAlpha(0); // Start invisible for fade in
 
-    // Fade out and destroy announcement
+    // Add dramatic entrance animation
     this.tweens.add({
       targets: [waveAnnouncement, waveStats],
-      alpha: 0,
-      y: '-=50',
-      duration: 2000,
-      ease: "Power2",
-      onComplete: () => {
-        waveAnnouncement.destroy();
-        waveStats.destroy();
-      },
+      alpha: 1,
+      y: '+=20',
+      duration: 500,
+      ease: "Back.easeOut",
+    });
+
+    // Scale pulse animation for wave number
+    this.tweens.add({
+      targets: waveAnnouncement,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 200,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut"
+    });
+
+    // Keep visible for longer, then fade out
+    this.time.delayedCall(3000, () => { // Wait 3 seconds before starting fade
+      this.tweens.add({
+        targets: [waveAnnouncement, waveStats],
+        alpha: 0,
+        y: '-=30',
+        duration: 1000,
+        ease: "Power2",
+        onComplete: () => {
+          waveAnnouncement.destroy();
+          waveStats.destroy();
+        },
+      });
     });
   },
 
