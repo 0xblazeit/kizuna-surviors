@@ -1,98 +1,129 @@
 class Coin {
-  // Static property to track total coins
+  // Static object pool
+  static pool = [];
   static totalCoins = 0;
   static MAX_COINS = 75;
+  static ACTIVATION_DISTANCE = 300; // Only update coins within this range
+  static COLLECTION_DISTANCE = 50;
 
   constructor(scene, x, y, value = 10) {
-    // Check if we're at the coin limit
-    if (Coin.totalCoins >= Coin.MAX_COINS) {
-      return null;
-    }
-
-    Coin.totalCoins++;
     this.scene = scene;
-    this.isCollected = false;
-
-    // Create coin sprite
+    this.reset(x, y, value);
+    
+    // Create coin sprite only once
     this.sprite = scene.add.sprite(x, y, "coin");
     this.sprite.setScale(0.15);
+    
+    // Use a simpler rotation animation with sprite sheet frames instead of tweens
+    if (this.sprite.anims) {
+      this.sprite.play("coin-spin");
+    }
+  }
+
+  static initializePool(scene) {
+    // Pre-create coins and disable them
+    for (let i = 0; i < this.MAX_COINS; i++) {
+      const coin = new Coin(scene, 0, 0);
+      coin.deactivate();
+      this.pool.push(coin);
+    }
+  }
+
+  static spawn(scene, x, y, value = 10) {
+    // Get coin from pool or return if none available
+    const coin = this.pool.find(c => !c.isActive);
+    if (!coin) return null;
+    
+    coin.reset(x, y, value);
+    return coin;
+  }
+
+  reset(x, y, value) {
+    this.isCollected = false;
+    this.isActive = true;
     this.value = value;
+    
+    if (this.sprite) {
+      this.sprite.setPosition(x, y);
+      this.sprite.setVisible(true);
+      this.sprite.setAlpha(1);
+      
+      // Simple fade in without complex tween
+      this.sprite.setAlpha(0);
+      this.scene.tweens.add({
+        targets: this.sprite,
+        alpha: 1,
+        duration: 200,
+      });
+    }
+  }
 
-    // Initial spawn animation
-    this.sprite.setAlpha(0);
-    this.sprite.setScale(0.13);
-    scene.tweens.add({
-      targets: this.sprite,
-      alpha: 1,
-      scale: 0.15,
-      duration: 200,
-      ease: "Back.easeOut",
-    });
-
-    // Replace floating with rotation animation
-    scene.tweens.add({
-      targets: this.sprite,
-      angle: 360,
-      duration: 1500,
-      repeat: -1,
-      ease: "Linear",
-    });
+  deactivate() {
+    this.isActive = false;
+    this.isCollected = true;
+    if (this.sprite) {
+      this.sprite.setVisible(false);
+    }
+    Coin.totalCoins--;
   }
 
   update(player) {
-    if (this.isCollected || !this.sprite || !player) return;
+    if (!this.isActive || this.isCollected || !this.sprite || !player) return;
 
     const distance = Phaser.Math.Distance.Between(
-      this.sprite.x,
-      this.sprite.y,
-      player.x,
+      this.sprite.x, 
+      this.sprite.y, 
+      player.x, 
       player.y
     );
 
-    if (distance <= 50) {
-      // Mark as collected
-      this.isCollected = true;
-      Coin.totalCoins--;
+    // Only process coins within activation distance
+    if (distance > Coin.ACTIVATION_DISTANCE) return;
 
-      // Update gold count
-      this.scene.gameState.gold += this.value;
-      this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
-
-      // Simplified collection animation
-      this.scene.tweens.add({
-        targets: this.sprite,
-        scale: 0,
-        alpha: 0,
-        duration: 200,
-        ease: "Power2",
-        onComplete: () => {
-          if (this.sprite) {
-            this.sprite.destroy();
-            this.sprite = null;
-          }
-        },
-      });
-
-      // Simple floating text that cleans itself up
-      const floatingText = this.scene.add
-        .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
-          fontFamily: "VT323",
-          fontSize: "20px",
-          color: "#FFD700",
-        })
-        .setOrigin(0.5);
-
-      this.scene.tweens.add({
-        targets: floatingText,
-        y: floatingText.y - 40,
-        alpha: 0,
-        duration: 500,
-        ease: "Power2",
-        onComplete: () => {
-          floatingText.destroy();
-        },
-      });
+    if (distance <= Coin.COLLECTION_DISTANCE) {
+      this.collect(player);
     }
+  }
+
+  collect(player) {
+    if (this.isCollected) return;
+    
+    // Simple collection animation
+    this.scene.tweens.add({
+      targets: this.sprite,
+      x: player.x,
+      y: player.y,
+      alpha: 0,
+      scale: 0.1,
+      duration: 200,
+      onComplete: () => {
+        // Update gold count
+        this.scene.gameState.gold += this.value;
+        this.scene.goldText.setText(`Gold: ${this.scene.gameState.gold}`);
+        
+        // Create floating text
+        const floatingText = this.scene.add
+          .text(this.sprite.x, this.sprite.y, `+${this.value}`, {
+            fontFamily: "VT323",
+            fontSize: "20px",
+            color: "#FFD700",
+          })
+          .setOrigin(0.5);
+
+        this.scene.tweens.add({
+          targets: floatingText,
+          y: floatingText.y - 40,
+          alpha: 0,
+          duration: 500,
+          ease: "Power2",
+          onComplete: () => {
+            floatingText.destroy();
+          },
+        });
+
+        this.deactivate();
+      }
+    });
   }
 }
 
