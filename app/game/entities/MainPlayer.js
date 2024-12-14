@@ -314,7 +314,7 @@ class MainPlayer extends BasePlayer {
     // Increase stats on level up with slightly better scaling
     const healthIncrease = 10 + Math.floor(this.experience.level * 0.5); // More health per level
     const damageIncrease = 2 + Math.floor(this.experience.level * 0.2); // More damage per level
-    const defenseIncrease = 1 + Math.floor(this.experience.level * 0.1); // More defense per level
+    const defenseIncrease = Math.min(1, 0.2 + Math.floor(Math.log(this.experience.level) * 0.15)); // Logarithmic defense scaling
     
     this.stats.maxHealth += healthIncrease;
     this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
