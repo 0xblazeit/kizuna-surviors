@@ -14,6 +14,7 @@ import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapo
 import FlyingAxeWeapon from "../game/entities/weapons/FlyingAxeWeapon";
 import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
+import { AwakenWeapon } from "../game/entities/weapons/AwakenWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -198,6 +199,9 @@ const GameScene = Phaser.Class({
     });
     this.load.svg("weapon-wand-icon", "/assets/game/weapons/weapon-wand-icon.svg?v=1", {
       scale: 0.5,
+    });
+    this.load.svg("weapon-eye", "/assets/game/weapons/weapon-eye.svg", {
+      scale: 0.2,
     });
     this.load.svg("weapon-wand-projectile", "/assets/game/weapons/weapon-wand-projectile.svg?v=1", {
       scale: 0.5,
@@ -634,6 +638,7 @@ const GameScene = Phaser.Class({
     let hammerIcon = null; // Store hammer icon reference
     let milkIcon = null; // Store milk icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
+    let awakeIcon = null; // Store awake icon reference
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -747,21 +752,7 @@ const GameScene = Phaser.Class({
             5,
             gridCells
           );
-          // Initialize milk weapon when icon is clicked
-          milkIcon.setInteractive();
-          milkIcon.on("pointerdown", () => {
-            // Just select the milk weapon (index 5)
-            this.gameState.selectedWeaponIndex = 5;
-
-            // Update all cell borders
-            gridCells.forEach((c, i) => {
-              c.setStrokeStyle(2, i === 5 ? 0xffffff : 0x666666);
-            });
-
-            this.updateStatsDisplay();
-          });
         }
-
         // Add shapecraft key weapon icon to seventh cell
         if (row === 1 && col === 0) {
           shapecraftIcon = createWeaponIcon(
@@ -769,6 +760,17 @@ const GameScene = Phaser.Class({
             uiRowY + row * gridCellSize,
             "weapon-shapecraft-key",
             6,
+            gridCells
+          );
+        }
+
+        // Add awaken icon to eighth cell
+        if (row === 1 && col === 1) {
+          awakeIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            "weapon-eye",
+            7,
             gridCells
           );
         }
@@ -964,6 +966,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
     ];
 
@@ -1218,6 +1221,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
     ];
 
