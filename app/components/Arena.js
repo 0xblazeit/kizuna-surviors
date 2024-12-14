@@ -116,7 +116,7 @@ export function Arena() {
                             <Info size={16} weight="bold" className="text-white/70 hover:text-white" />
                           </TooltipTrigger>
                           <TooltipContent
-                            className="backdrop-blur-md border-white max-w-xs rounded-xl text-xl"
+                            className="max-w-xs text-xl rounded-xl border-white backdrop-blur-md"
                             sideOffset={5}
                             side="bottom"
                           >
@@ -161,6 +161,7 @@ export function Arena() {
                     </span>
                   )}
                 </div>
+                <NftView walletAddress={user?.wallet?.address} />
               </div>
             </>
           )}
@@ -169,7 +170,6 @@ export function Arena() {
           <Leaderboard />
         </div>
       </div>
-      {ready && authenticated && <NftView walletAddress={user?.wallet?.address} />}
       <div className="flex flex-col gap-4 items-center w-full">
         <div className="flex justify-center w-full">
           {ready && authenticated ? (
