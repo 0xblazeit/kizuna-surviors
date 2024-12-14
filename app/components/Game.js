@@ -1188,13 +1188,13 @@ const GameScene = Phaser.Class({
     });
 
     // Add spacebar XP debug handler
-    this.input.keyboard.addKey("SPACE").on(
-      "down",
-      () => {
-        this.gainXP(400);
-      },
-      this
-    );
+    // this.input.keyboard.addKey("SPACE").on(
+    //   "down",
+    //   () => {
+    //     this.gainXP(400);
+    //   },
+    //   this
+    // );
 
     // Setup camera to follow player
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
