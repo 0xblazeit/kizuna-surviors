@@ -97,7 +97,7 @@ function LeaderboardTable({ data }) {
                 <td className="p-1 text-center whitespace-nowrap">{getRankDisplay(index)}</td>
                 <td className="p-1 whitespace-nowrap">
                   <div className="flex gap-0.5 items-center">
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center gap-0.5 min-w-full">
                       <div className="relative w-8 h-8">
                         <Image
                           src={getAvatarSrc(player)}
