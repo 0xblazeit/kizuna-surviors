@@ -7,10 +7,10 @@ class XPGem {
   static calculateXPValue(scene, basexp = 50) {
     // Get current wave or time (assuming scene has gameTime in seconds)
     const gameTime = scene.gameTime || 0;
-    const timeMultiplier = 1 + gameTime / 300; // Increase by 100% every 5 minutes
+    const timeMultiplier = 1 + gameTime / 600; // Increase by 100% every 10 minutes
 
-    // Cap the multiplier at 5x to prevent excessive scaling
-    const cappedMultiplier = Math.min(5, timeMultiplier);
+    // Cap the multiplier at 3x to prevent excessive scaling
+    const cappedMultiplier = Math.min(3, timeMultiplier);
 
     return Math.floor(basexp * cappedMultiplier);
   }
