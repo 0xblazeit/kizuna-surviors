@@ -14,7 +14,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 5000,
         range: 250,
         targetCount: 1,
-        stunDuration: 1000,
         scale: 0.6,
       },
       2: {
@@ -22,7 +21,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 4800,
         range: 275,
         targetCount: 1,
-        stunDuration: 1200,
         scale: 0.65,
       },
       3: {
@@ -30,7 +28,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 4600,
         range: 300,
         targetCount: 2,
-        stunDuration: 1400,
         scale: 0.7,
       },
       4: {
@@ -38,7 +35,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 4400,
         range: 325,
         targetCount: 2,
-        stunDuration: 1600,
         scale: 0.75,
       },
       5: {
@@ -46,7 +42,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 4200,
         range: 350,
         targetCount: 3,
-        stunDuration: 1800,
         scale: 0.8,
       },
       6: {
@@ -54,7 +49,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 4000,
         range: 375,
         targetCount: 3,
-        stunDuration: 2000,
         scale: 0.85,
       },
       7: {
@@ -62,7 +56,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 3800,
         range: 400,
         targetCount: 4,
-        stunDuration: 2200,
         scale: 0.9,
       },
       8: {
@@ -70,7 +63,6 @@ export class AwakenWeapon extends BaseWeapon {
         cooldown: 3600,
         range: 450,
         targetCount: 5,
-        stunDuration: 2500,
         scale: 1,
       },
     };
@@ -97,7 +89,7 @@ export class AwakenWeapon extends BaseWeapon {
     // Filter valid targets
     const validTargets = enemies.filter((enemy) => {
       // Skip if enemy is invalid
-      if (!enemy || !enemy.sprite || enemy.isDead || enemy.isStunned) {
+      if (!enemy || !enemy.sprite || enemy.isDead) {
         return false;
       }
 
@@ -133,23 +125,29 @@ export class AwakenWeapon extends BaseWeapon {
     // Main eye animation
     this.scene.tweens.add({
       targets: eye,
-      scale: { from: 0, to: this.stats.scale * 4 }, // Large scale for visibility
+      scale: { from: 0, to: this.stats.scale * 4 },
       alpha: { from: 1, to: 0 },
-      duration: 2300,
+      duration: 2800,
       ease: "Power2",
       onComplete: () => eye.destroy(),
     });
-
-    // Stun the enemy
-    enemy.isStunned = true;
-    if (enemy.sprite) {
-      enemy.sprite.setTint(0xffffff);
-    }
 
     // Apply damage
     const damage = this.stats.damage;
     enemy.takeDamage(damage);
 
+    // Apply powerful knockback
+    if (enemy.sprite && enemy.sprite.body) {
+      // Calculate angle from eye to enemy
+      const angle = Math.atan2(enemy.sprite.y - eye.y, enemy.sprite.x - eye.x);
+
+      // Apply strong knockback (using a high value since this is a powerful weapon)
+      const knockbackForce = 300; // High knockback value
+      enemy.sprite.body.velocity.x += Math.cos(angle) * knockbackForce;
+      enemy.sprite.body.velocity.y += Math.sin(angle) * knockbackForce;
+    }
+
+    // Create damage text
     const damageText = this.scene.add
       .text(enemy.sprite.x, enemy.sprite.y - 40, damage.toString(), {
         fontSize: "32px",
@@ -173,14 +171,26 @@ export class AwakenWeapon extends BaseWeapon {
       onComplete: () => damageText.destroy(),
     });
 
-    // Remove stun after duration
-    this.scene.time.delayedCall(this.stats.stunDuration, () => {
-      if (enemy.sprite && !enemy.isDead) {
-        enemy.isStunned = false;
-        enemy.sprite.clearTint();
-        enemy.sprite.setAlpha(1);
-      }
+    // Add impact effect
+    const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-eye");
+    impact.setScale(0.3);
+    impact.setTint(0xffffff);
+    impact.setAlpha(0.8);
+
+    // Animate impact
+    this.scene.tweens.add({
+      targets: impact,
+      scale: 1.5,
+      alpha: 0,
+      duration: 300,
+      ease: "Power2",
+      onComplete: () => impact.destroy(),
     });
+
+    // Add screen shake for impact feel
+    if (this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(100, 0.005);
+    }
   }
 
   attack(time) {
