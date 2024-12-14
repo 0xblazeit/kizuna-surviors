@@ -942,10 +942,11 @@ const GameScene = Phaser.Class({
     // Initialize XP gems array
     this.xpGems = [];
 
-    // Spawn initial XP gems around the map
-    for (let i = 0; i < 7; i++) {
-      const spawnPos = this.getSpawnPosition();
-      const gem = new XPGem(this, spawnPos.x, spawnPos.y);
+    // Spawn initial XP gems randomly across the map
+    for (let i = 0; i < 14; i++) {
+      const x = Phaser.Math.Between(50, worldWidth - 50); // 50px padding from edges
+      const y = Phaser.Math.Between(50, worldHeight - 50);
+      const gem = new XPGem(this, x, y);
       this.xpGems.push(gem);
     }
 
