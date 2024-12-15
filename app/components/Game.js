@@ -376,8 +376,8 @@ const GameScene = Phaser.Class({
   },
 
   getSpawnPosition: function () {
-    const minSpawnDistance = 300;
-    const maxSpawnDistance = 500;
+    const minSpawnDistance = 500; // Increased from 300
+    const maxSpawnDistance = 800; // Increased from 500
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
     // Use wave number to rotate spawn points for variety
