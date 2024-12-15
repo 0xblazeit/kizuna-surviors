@@ -119,7 +119,7 @@ export class AwakenWeapon extends BaseWeapon {
       targets: eye,
       scale: { from: 0, to: this.stats.scale * 4 },
       alpha: { from: 1, to: 0 },
-      duration: 2300,
+      duration: 3300,
       ease: "Power2",
       onComplete: () => eye.destroy(),
     });
