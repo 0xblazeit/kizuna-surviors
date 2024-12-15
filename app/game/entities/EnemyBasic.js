@@ -488,40 +488,19 @@ class EnemyBasic extends BasePlayer {
       this.scene.xpGems = [];
     }
 
-    // Determine coin value based on enemy type
-    let coinValue = 10; // Base value for basic enemies
-    if (this.type === "advanced") {
-      coinValue = 25; // Advanced enemies drop more
-    } else if (this.type === "epic") {
-      coinValue = 50; // Epic enemies drop even more
-    }
+    // Scale coin value with game time and enemy type
+    const baseValue = this.type === "epic" ? 50 : this.type === "advanced" ? 25 : 10;
+    const waveMultiplier = Math.min(3, Math.floor(this.scene.gameState.wave / 5) + 1); // Cap at 3x after wave 15
+    const coinValue = baseValue * waveMultiplier;
 
-    // Determine drop type - 25% chance for any drop
-    const dropChance = Math.random();
+    // Determine drop type - scale down drop chance in later waves
+    const dropChance = Math.random() * (1 + this.scene.gameState.wave / 20); // Drop chance decreases as waves progress
     if (dropChance < 0.25) {
-      // 40% chance for coins (10% total), 60% chance for XP gem (15% total)
       if (dropChance < 0.1) {
-        // Determine number of coins based on enemy type
-        let numCoins = 1;
-        if (this.type === "advanced") {
-          numCoins = 2;
-        } else if (this.type === "epic") {
-          numCoins = 3;
-        }
-
-        // Create coins in a spread pattern
-        const radius = 20; // Base radius for coin spread
-        for (let i = 0; i < numCoins; i++) {
-          const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
-          const offsetX = Math.cos(angle) * radius;
-          const offsetY = Math.sin(angle) * radius;
-
-          const coin = new Coin(this.scene, this.sprite.x + offsetX, this.sprite.y + offsetY, coinValue);
-          if (coin) {
-            this.scene.coins.push(coin);
-          }
-        }
+        // Spawn consolidated coins instead of multiple individual ones
+        Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, coinValue);
       } else {
+        // XP gem drop chance remains the same
         const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
         if (gem) {
           this.scene.xpGems.push(gem);

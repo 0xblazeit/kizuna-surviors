@@ -2,7 +2,7 @@ class Coin {
   // Static object pool
   static pool = [];
   static totalCoins = 0;
-  static MAX_COINS = 75;
+  static MAX_COINS = 50; // Reduced from 75 to 50 for better performance
   static ACTIVATION_DISTANCE = 300; // Only update coins within this range
   static COLLECTION_DISTANCE = 50;
 
@@ -40,18 +40,20 @@ class Coin {
     // Distribute value across coin tiers
     const tiers = Object.values(this.VALUE_TIERS).sort((a, b) => b - a);
 
-    // Limit max coins per drop
-    const MAX_COINS_PER_DROP = 5;
+    // Limit max coins per drop based on total value
+    const MAX_COINS_PER_DROP = Math.min(3, Math.ceil(totalValue / 100)); // Scale coins with value but cap at 3
+
     let coinsSpawned = 0;
 
     while (remainingValue > 0 && coinsSpawned < MAX_COINS_PER_DROP) {
+      // Find highest value tier that fits in remaining value
       const tier = tiers.find((t) => t <= remainingValue) || tiers[tiers.length - 1];
 
-      // Random position within a small radius
-      const radius = 20;
-      const angle = Math.random() * Math.PI * 2;
-      const spawnX = x + Math.cos(angle) * radius * Math.random();
-      const spawnY = y + Math.sin(angle) * radius * Math.random();
+      // Random position within a smaller radius to keep coins closer
+      const radius = 15; // Reduced from 20 to 15
+      const angle = (coinsSpawned / MAX_COINS_PER_DROP) * Math.PI * 2; // Evenly distribute coins
+      const spawnX = x + Math.cos(angle) * radius;
+      const spawnY = y + Math.sin(angle) * radius;
 
       const coin = this.spawn(scene, spawnX, spawnY, tier);
       if (coin) {
@@ -63,8 +65,7 @@ class Coin {
       }
     }
 
-    // If there's remaining value and we hit the coin limit,
-    // add it to the last coin
+    // If there's remaining value, add it to the last coin
     if (remainingValue > 0 && coins.length > 0) {
       coins[coins.length - 1].value += remainingValue;
     }
