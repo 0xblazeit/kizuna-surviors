@@ -250,8 +250,8 @@ const GameScene = Phaser.Class({
           this.enemies.splice(index, 1);
           this.gameState.enemiesRemainingInWave--;
 
-          // Check if wave is complete
-          if (this.gameState.enemiesRemainingInWave <= 0) {
+          // Check if wave is complete AND no enemies are left
+          if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
             this.startNextWave();
           }
         }
@@ -400,7 +400,12 @@ const GameScene = Phaser.Class({
   },
 
   spawnEnemies: function () {
-    if (this.enemies.length >= this.gameState.maxEnemies) {
+    // Don't spawn if we've reached max concurrent enemies OR if no enemies remaining in wave
+    if (this.enemies.length >= this.gameState.maxEnemies || this.gameState.enemiesRemainingInWave <= 0) {
+      // If no enemies remaining and no enemies alive, start next wave immediately
+      if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
+        this.startNextWave();
+      }
       return;
     }
 
@@ -415,7 +420,7 @@ const GameScene = Phaser.Class({
     // Simplified wave-based spawning that scales indefinitely
     if (this.gameState.waveNumber <= 5) {
       // Early waves: Basic and Shooter enemies
-      if (roll < 0.7) {
+      if (roll < 0.6) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
           maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
           moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
@@ -435,14 +440,14 @@ const GameScene = Phaser.Class({
       }
     } else {
       // Later waves: Mix of all enemy types
-      if (roll < 0.3) {
+      if (roll < 0.25) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
           maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
           moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
           attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
           scale: 0.4,
         });
-      } else if (roll < 0.6) {
+      } else if (roll < 0.5) {
         enemy = new EnemyAdvanced(
           this,
           x,
@@ -478,6 +483,9 @@ const GameScene = Phaser.Class({
     // Add to physics system and enemies array
     this.physics.add.existing(enemy);
     this.enemies.push(enemy);
+
+    // Decrease remaining enemies count
+    this.gameState.enemiesRemainingInWave--;
 
     // Update spawn timer if needed
     if (!this.enemySpawnTimer.paused) {
