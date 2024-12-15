@@ -1493,139 +1493,77 @@ const GameScene = Phaser.Class({
     this.wastedOverlay.setVisible(false);
 
     // Create function to show WASTED screen
-    this.showWastedScreen = () => {
-      if (this.gameState.isGameOver) return;
+    this.showWastedScreen = async () => {
+      // Check if game is already over to prevent multiple calls
+      if (this.gameState.isGameOver) {
+        console.log("Game already over, preventing duplicate call");
+        return;
+      }
 
-      console.log("Posting game stats with precise time:", {
-        timeAlive: this.gameState.finalTimeAlive,
-        timeAliveMS: this.gameState.finalTimeAliveMS,
-      });
-
-      fetch("/api/game-over", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.userInfo.accessToken}`,
-        },
-        body: JSON.stringify({
-          gold: this.gameState.gold,
-          kills: this.gameState.kills,
-          waveNumber: this.gameState.waveNumber,
-          timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
-          timeAliveMS: this.gameState.finalTimeAliveMS,
-          timestamp: new Date().toISOString(),
-          userAddress: this.userInfo.userAddress,
-          username: this.userInfo.username,
-          profileImage: this.userInfo.profileImage,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Game over response:", data);
-          // Invalidate the query after successful POST
-          if (this.userInfo.invalidateQueries) {
-            this.userInfo.invalidateQueries();
-          }
-        })
-        .catch((error) => console.error("Error posting game stats:", error));
-
+      // Set game over state immediately
       this.gameState.isGameOver = true;
-      this.wastedOverlay.setVisible(true);
+      console.log("Setting game over state");
 
-      // Slow down time
-      this.time.timeScale = 0.5;
+      try {
+        // Get fresh access token
+        const accessToken = await this.userInfo.getAccessToken();
+        console.log("Got fresh access token");
 
-      // Fade in black overlay
-      this.tweens.add({
-        targets: this.wastedOverlay.getAt(0),
-        alpha: 0.5,
-        duration: 1000,
-        ease: "Power2",
-      });
+        const response = await fetch("/api/game-over", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            gold: this.gameState.gold,
+            kills: this.gameState.kills,
+            waveNumber: this.gameState.waveNumber,
+            timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
+            timeAliveMS: this.gameState.finalTimeAliveMS,
+            timestamp: new Date().toISOString(),
+            userAddress: this.userInfo.userAddress,
+            username: this.userInfo.username,
+            profileImage: this.userInfo.profileImage,
+          }),
+        });
 
-      // Fade in and scale up WASTED text
-      const wastedText = this.wastedOverlay.getAt(1);
-      wastedText.setScale(0.5);
-      this.tweens.add({
-        targets: wastedText,
-        alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 1000,
-        ease: "Power2",
-      });
+        const data = await response.json();
+        console.log("Game over API call completed successfully:", data);
 
-      // Add "Click anywhere or press WASD/Arrow keys to restart" text
-      const restartText = this.add.text(
-        this.scale.width / 2,
-        this.scale.height / 2 + 100,
-        "Click anywhere or press WASD/Arrow keys to restart",
-        {
-          fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#FFFFFF",
-          stroke: "#000000",
-          strokeThickness: 2,
-          align: "center",
+        if (this.userInfo.invalidateQueries) {
+          this.userInfo.invalidateQueries();
         }
-      );
-      restartText.setOrigin(0.5);
-      restartText.setAlpha(0);
-      restartText.setScrollFactor(0);
-      this.wastedOverlay.add(restartText);
 
-      // Make text pulse slightly
-      this.tweens.add({
-        targets: restartText,
-        alpha: { from: 0, to: 1 },
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-        onComplete: () => {
-          this.tweens.add({
-            targets: restartText,
-            scale: 1.1,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.inOut",
-          });
-        },
-      });
+        // Show the WASTED overlay
+        this.wastedOverlay.setVisible(true);
 
-      // Function to restart the game
-      const restartGame = () => {
-        // Remove all event listeners
-        this.input.keyboard.off("keydown", keyHandler);
-        this.input.off("pointerdown", restartGame);
+        // Add visual feedback
+        this.tweens.add({
+          targets: [this.wastedOverlay.getAt(0)], // black overlay
+          alpha: 0.8,
+          duration: 1000,
+          ease: "Power2",
+        });
 
-        // Reset time scale
-        this.time.timeScale = 1;
+        this.tweens.add({
+          targets: [this.wastedOverlay.getAt(1)], // WASTED text
+          alpha: 1,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 1000,
+          ease: "Power2",
+        });
 
-        // Stop all tweens
-        this.tweens.killAll();
-
-        // Restart the scene
-        this.scene.restart();
-      };
-
-      // Keyboard handler for WASD and Arrow keys
-      const keyHandler = (event) => {
-        const key = event.key.toUpperCase();
-        // Check for WASD or Arrow keys
-        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
-          restartGame();
-        }
-      };
-
-      // Add input listeners after a short delay to prevent accidental restarts
-      this.time.delayedCall(500, () => {
-        // Add keyboard listener
-        this.input.keyboard.on("keydown", keyHandler);
-
-        // Add mouse click listener for the entire game window
-        this.input.on("pointerdown", restartGame);
-      });
+        // Optional: Add a delay before returning to menu
+        this.time.delayedCall(3000, () => {
+          this.scene.start("MenuScene");
+        });
+      } catch (error) {
+        console.error("Error in showWastedScreen:", error);
+        // Even if the API call fails, we should still set game over state
+        this.gameState.isGameOver = true;
+      }
     };
 
     // Listen for player death event
@@ -1711,270 +1649,77 @@ const GameScene = Phaser.Class({
     }
 
     // In the create function, update the showLevelClearedScreen function:
-    this.showLevelClearedScreen = () => {
-      if (this.gameState.isLevelCleared) return;
-
-      // Stop player movement and game physics immediately
-      this.physics.pause();
-
-      // Disable all input temporarily
-      this.input.keyboard.enabled = false;
-      this.input.enabled = false;
-
-      // Store final time
-      this.gameState.gameEndTime = Date.now();
-      const elapsedMS = this.gameState.gameEndTime - this.gameState.gameStartTime;
-      this.gameState.finalTimeAliveMS = elapsedMS;
-      this.gameState.finalTimeAlive = elapsedMS / 1000;
-
-      console.log("Level Cleared! Posting game stats with precise time:", {
-        timeAlive: this.gameState.finalTimeAlive,
-        timeAliveMS: this.gameState.finalTimeAliveMS,
-      });
-
-      // Post game stats
-      fetch("/api/game-over", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.userInfo.accessToken}`,
-        },
-        body: JSON.stringify({
-          gold: this.gameState.gold,
-          kills: this.gameState.kills,
-          waveNumber: this.gameState.waveNumber,
-          timeAlive: this.gameState.finalTimeAlive,
-          timeAliveMS: this.gameState.finalTimeAliveMS,
-          timestamp: new Date().toISOString(),
-          userAddress: this.userInfo.userAddress,
-          username: this.userInfo.username,
-          profileImage: this.userInfo.profileImage,
-          levelCleared: true,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Game over response:", data);
-          if (this.userInfo.invalidateQueries) {
-            this.userInfo.invalidateQueries();
-          }
-        })
-        .catch((error) => console.error("Error posting game stats:", error));
-
-      this.gameState.isLevelCleared = true;
-      this.levelClearedOverlay.setVisible(true);
-
-      // Slow down time
-      this.time.timeScale = 0.5;
-
-      // Fade in black overlay
-      this.tweens.add({
-        targets: this.levelClearedOverlay.getAt(0),
-        alpha: 0.5,
-        duration: 1000,
-        ease: "Power2",
-      });
-
-      // Fade in and scale up LEVEL CLEARED text
-      const clearedText = this.levelClearedOverlay.getAt(1);
-      clearedText.setScale(0.5);
-      this.tweens.add({
-        targets: clearedText,
-        alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 1000,
-        ease: "Power2",
-      });
-
-      // Add restart text
-      const restartText = this.add.text(
-        this.scale.width / 2,
-        this.scale.height / 2 + 100,
-        "Click anywhere or press WASD/Arrow keys to play again",
-        {
-          fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#FFFFFF",
-          stroke: "#000000",
-          strokeThickness: 2,
-          align: "center",
-        }
-      );
-      restartText.setOrigin(0.5);
-      restartText.setAlpha(0);
-      restartText.setScrollFactor(0);
-      this.levelClearedOverlay.add(restartText);
-
-      // Make text pulse
-      this.tweens.add({
-        targets: restartText,
-        alpha: { from: 0, to: 1 },
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-        onComplete: () => {
-          this.tweens.add({
-            targets: restartText,
-            scale: 1.1,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.inOut",
-          });
-        },
-      });
-
-      // Clear any existing input handlers
-      this.input.keyboard.removeAllKeys(true);
-
-      const restartGame = () => {
-        this.input.keyboard.off("keydown", keyHandler);
-        this.input.off("pointerdown", restartGame);
-        this.time.timeScale = 1;
-        this.tweens.killAll();
-        this.scene.restart();
-      };
-
-      const keyHandler = (event) => {
-        const key = event.key.toUpperCase();
-        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
-          restartGame();
-        }
-      };
-
-      // Add longer delay (3 seconds) before enabling restart controls
-      this.time.delayedCall(3000, () => {
-        // Re-enable input
-        this.input.keyboard.enabled = true;
-        this.input.enabled = true;
-
-        // Add input listeners
-        this.input.keyboard.on("keydown", keyHandler);
-        this.input.on("pointerdown", restartGame);
-      });
-
-      // In the showLevelClearedScreen function, after the levelClearedText animation:
-
-      // Add stats container with retro styling
-      const statsContainer = this.add.container(this.scale.width / 2, this.scale.height / 2 + 80);
-      statsContainer.setScrollFactor(0);
-      this.levelClearedOverlay.add(statsContainer);
-
-      // Add decorative border for stats
-      const statsBorder = this.add.rectangle(0, 70, 400, 200, 0x00ff00, 1);
-      statsBorder.setStrokeStyle(2, 0x00ff00);
-      statsContainer.add(statsBorder);
-
-      // Add semi-transparent background for stats
-      const statsBackground = this.add.rectangle(0, 70, 396, 196, 0x000000, 0.85);
-      statsContainer.add(statsBackground);
-
-      // Format time for display
-      const minutes = Math.floor(this.gameState.finalTimeAlive / 60);
-      const seconds = Math.floor(this.gameState.finalTimeAlive % 60);
-      const ms = Math.floor((this.gameState.finalTimeAliveMS % 1000) / 10);
-      const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
-        .toString()
-        .padStart(2, "0")}`;
-
-      // Create stats text with retro styling
-      const statsStyle = {
-        fontFamily: "VT323",
-        fontSize: "24px",
-        color: "#00ff00",
-        align: "left",
-        stroke: "#003300",
-        strokeThickness: 2,
-      };
-
-      // Stats header
-      const statsHeader = this.add
-        .text(0, -20, "FINAL STATS", {
-          ...statsStyle,
-          fontSize: "32px",
-          color: "#ffff00",
-        })
-        .setOrigin(0.5);
-      statsContainer.add(statsHeader);
-
-      // Create stats text array
-      const statsTexts = [
-        `TIME SURVIVED: ${timeString}`,
-        `WAVE REACHED: ${this.gameState.waveNumber}`,
-        `ENEMIES SLAIN: ${this.gameState.kills}`,
-        `GOLD EARNED: ${this.gameState.gold}`,
-      ];
-
-      // Add each stat with a slight delay and animation
-      statsTexts.forEach((text, index) => {
-        const yPos = 20 + index * 35;
-        const statText = this.add.text(-180, yPos, text, statsStyle).setAlpha(0);
-        statsContainer.add(statText);
-
-        // Animate each stat line
-        this.tweens.add({
-          targets: statText,
-          alpha: 1,
-          x: -170,
-          duration: 500,
-          ease: "Power2",
-          delay: 1000 + index * 200,
-        });
-      });
-
-      // Add pixel decoration at corners
-      const cornerSize = 10;
-      const corners = [
-        { x: -200, y: -20 }, // Top left
-        { x: 200, y: -20 }, // Top right
-        { x: -200, y: 160 }, // Bottom left
-        { x: 200, y: 160 }, // Bottom right
-      ];
-
-      corners.forEach((corner) => {
-        const pixel = this.add.rectangle(corner.x, corner.y, cornerSize, cornerSize, 0x00ff00);
-        statsContainer.add(pixel);
-      });
-
-      // Add "HIGH SCORE" text if applicable (you can add your own logic here)
-      if (this.gameState.kills > 100) {
-        // Example condition
-        const highScoreText = this.add
-          .text(0, 160, "NEW HIGH SCORE!", {
-            fontFamily: "VT323",
-            fontSize: "28px",
-            color: "#ffff00",
-            stroke: "#ff0000",
-            strokeThickness: 4,
-          })
-          .setOrigin(0.5);
-        statsContainer.add(highScoreText);
-
-        // Make it flash
-        this.tweens.add({
-          targets: highScoreText,
-          alpha: 0.2,
-          duration: 500,
-          yoyo: true,
-          repeat: -1,
-        });
+    this.showLevelClearedScreen = async () => {
+      if (this.gameState.isLevelCleared || this.gameState.isGameOver) {
+        console.log("Level already cleared or game over, preventing duplicate call");
+        return;
       }
 
-      // Update the restart text position to be below the stats with more spacing
-      restartText.setY(this.scale.height / 2 + 280);
+      this.gameState.isLevelCleared = true;
+      this.gameState.isGameOver = true;
+      console.log("Setting level cleared state");
 
-      // Add all elements to the levelClearedOverlay
-      statsContainer.setAlpha(0);
+      try {
+        const accessToken = await this.userInfo.getAccessToken();
+        console.log("Got fresh access token for level clear");
 
-      // Fade in the stats container
-      this.tweens.add({
-        targets: statsContainer,
-        alpha: 1,
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-      });
+        const response = await fetch("/api/game-over", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            gold: this.gameState.gold,
+            kills: this.gameState.kills,
+            waveNumber: this.gameState.waveNumber,
+            timeAlive: this.gameState.finalTimeAlive,
+            timeAliveMS: this.gameState.finalTimeAliveMS,
+            timestamp: new Date().toISOString(),
+            userAddress: this.userInfo.userAddress,
+            username: this.userInfo.username,
+            profileImage: this.userInfo.profileImage,
+            levelCleared: true,
+          }),
+        });
+
+        const data = await response.json();
+        console.log("Level cleared API call completed successfully:", data);
+
+        if (this.userInfo.invalidateQueries) {
+          this.userInfo.invalidateQueries();
+        }
+
+        // Show the level cleared overlay
+        this.levelClearedOverlay.setVisible(true);
+
+        // Add visual feedback
+        this.tweens.add({
+          targets: [this.levelClearedOverlay.getAt(0)],
+          alpha: 0.8,
+          duration: 1000,
+          ease: "Power2",
+        });
+
+        this.tweens.add({
+          targets: [this.levelClearedOverlay.getAt(1)],
+          alpha: 1,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 1000,
+          ease: "Power2",
+        });
+
+        // Optional: Add a delay before returning to menu
+        this.time.delayedCall(3000, () => {
+          this.scene.start("MenuScene");
+        });
+      } catch (error) {
+        console.error("Error in showLevelClearedScreen:", error);
+        // Ensure states are set even if API call fails
+        this.gameState.isLevelCleared = true;
+        this.gameState.isGameOver = true;
+      }
     };
 
     // In the create function, add this before setting up the WASTED overlay:
@@ -2225,7 +1970,7 @@ export default function Game() {
             userAddress: userAddress,
             username: username,
             profileImage: user?.twitter?.profilePictureUrl,
-            accessToken,
+            getAccessToken: getAccessToken, // Pass the function instead of the token
             invalidateQueries: () => {
               queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
               queryClient.invalidateQueries({ queryKey: ["memberCount"] });
