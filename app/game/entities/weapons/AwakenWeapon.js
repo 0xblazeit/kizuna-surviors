@@ -83,9 +83,6 @@ export class AwakenWeapon extends BaseWeapon {
     // Get all enemies from the scene
     const enemies = this.scene.enemies || [];
 
-    // Debug: Log the number of enemies found
-    console.log(`Total enemies found: ${enemies.length}`);
-
     // Filter valid targets
     const validTargets = enemies.filter((enemy) => {
       // Skip if enemy is invalid
@@ -105,16 +102,11 @@ export class AwakenWeapon extends BaseWeapon {
       return distance <= this.stats.range;
     });
 
-    // Debug: Log the number of valid targets
-    console.log(`Valid targets in range: ${validTargets.length}`);
-
     // Return random targets up to the limit
     return Phaser.Utils.Array.Shuffle(validTargets).slice(0, this.stats.targetCount);
   }
 
   createAwakenEffect(enemy) {
-    console.log("Creating awaken effect for enemy at:", enemy.sprite.x, enemy.sprite.y);
-
     // Large eye symbol
     const eye = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-awaken");
     eye.setScale(0);
@@ -274,14 +266,8 @@ export class AwakenWeapon extends BaseWeapon {
     // Find targets
     const targets = this.findTargets();
 
-    // Debug: Log targeting attempt
-    console.log(`Attempting to attack ${targets.length} targets`);
-
     // Process each target
     targets.forEach((target, index) => {
-      // Debug: Log each target being processed
-      console.log(`Processing target ${index + 1}`);
-
       if (target && target.sprite && !target.isDead) {
         this.createAwakenEffect(target);
       }
