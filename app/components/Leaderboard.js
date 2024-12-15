@@ -114,7 +114,7 @@ function LeaderboardTable({ data }) {
                         />
                       </div>
                       <span className="text-[15px] font-semibold md:text-xl tracking-tight text-white/80">
-                        {player.userName ||
+                        {player.username ||
                           (player.walletAddress
                             ? `${player.walletAddress.slice(0, 6)}...${player.walletAddress.slice(-4)}`
                             : "—")}
