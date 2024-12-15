@@ -1494,20 +1494,26 @@ const GameScene = Phaser.Class({
 
     // Create function to show WASTED screen
     this.showWastedScreen = async () => {
-      // Check if game is already over to prevent multiple calls
       if (this.gameState.isGameOver) {
         console.log("Game already over, preventing duplicate call");
         return;
       }
 
-      // Set game over state immediately
       this.gameState.isGameOver = true;
       console.log("Setting game over state");
 
       try {
-        // Get fresh access token
         const accessToken = await this.userInfo.getAccessToken();
         console.log("Got fresh access token");
+
+        // Prepare stats for display
+        const gameStats = {
+          gold: this.gameState.gold,
+          kills: this.gameState.kills,
+          waveNumber: this.gameState.waveNumber,
+          timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
+          timeAliveMS: this.gameState.finalTimeAliveMS,
+        };
 
         const response = await fetch("/api/game-over", {
           method: "POST",
@@ -1516,11 +1522,7 @@ const GameScene = Phaser.Class({
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            gold: this.gameState.gold,
-            kills: this.gameState.kills,
-            waveNumber: this.gameState.waveNumber,
-            timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
-            timeAliveMS: this.gameState.finalTimeAliveMS,
+            ...gameStats,
             timestamp: new Date().toISOString(),
             userAddress: this.userInfo.userAddress,
             username: this.userInfo.username,
@@ -1538,16 +1540,67 @@ const GameScene = Phaser.Class({
         // Show the WASTED overlay
         this.wastedOverlay.setVisible(true);
 
-        // Add visual feedback
+        // Add visual feedback with animations
         this.tweens.add({
-          targets: [this.wastedOverlay.getAt(0)], // black overlay
+          targets: [this.wastedOverlay.getAt(0)],
           alpha: 0.8,
           duration: 1000,
           ease: "Power2",
         });
 
+        // WASTED text with retro effect
+        const wastedText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.3, "WASTED", {
+            fontFamily: "VT323",
+            fontSize: "128px",
+            color: "#ff0000",
+            stroke: "#000000",
+            strokeThickness: 8,
+            shadow: { color: "#000000", fill: true, offsetX: 2, offsetY: 2, blur: 8 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.wastedOverlay.add(wastedText);
+
+        // Stats display with retro style
+        const formatTime = (ms) => {
+          const seconds = Math.floor(ms / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+        };
+
+        const statsStyle = {
+          fontFamily: "VT323",
+          fontSize: "32px",
+          color: "#00ff00",
+          stroke: "#003300",
+          strokeThickness: 2,
+          shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+        };
+
+        const statsTexts = [
+          `GOLD COLLECTED: ${gameStats.gold}`,
+          `ENEMIES SLAIN: ${gameStats.kills}`,
+          `WAVE REACHED: ${gameStats.waveNumber}`,
+          `TIME SURVIVED: ${formatTime(gameStats.timeAliveMS)}`,
+        ];
+
+        const statsY = this.scale.height * 0.45;
+        const statsSpacing = 40;
+
+        const statElements = statsTexts.map((text, index) => {
+          const statText = this.add
+            .text(this.scale.width / 2, statsY + index * statsSpacing, text, statsStyle)
+            .setOrigin(0.5)
+            .setAlpha(0);
+          this.wastedOverlay.add(statText);
+          return statText;
+        });
+
+        // Animate WASTED text
         this.tweens.add({
-          targets: [this.wastedOverlay.getAt(1)], // WASTED text
+          targets: wastedText,
           alpha: 1,
           scaleX: 1.2,
           scaleY: 1.2,
@@ -1555,46 +1608,62 @@ const GameScene = Phaser.Class({
           ease: "Power2",
         });
 
-        // Add "Press any key to continue" text
+        // Animate stats with cascade effect
+        statElements.forEach((statText, index) => {
+          this.tweens.add({
+            targets: statText,
+            alpha: 1,
+            x: this.scale.width / 2,
+            duration: 500,
+            delay: 1000 + index * 200,
+            ease: "Power2",
+          });
+        });
+
+        // Add "Press any key to continue" text (initially invisible)
         const continueText = this.add
-          .text(this.scale.width / 2, this.scale.height * 0.7, "Press any movement key to continue", {
+          .text(this.scale.width / 2, this.scale.height * 0.8, "Press any movement key to continue", {
             fontFamily: "VT323",
             fontSize: "32px",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 4,
+            shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
           })
-          .setOrigin(0.5);
-        continueText.setScrollFactor(0);
-        continueText.setDepth(1001);
+          .setOrigin(0.5)
+          .setAlpha(0);
         this.wastedOverlay.add(continueText);
 
-        // Add blinking animation to continue text
-        this.tweens.add({
-          targets: continueText,
-          alpha: 0,
-          duration: 1000,
-          ease: "Power2",
-          yoyo: true,
-          repeat: -1,
+        // Delay before showing continue text and enabling input
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: continueText,
+            alpha: 1,
+            duration: 500,
+            ease: "Power2",
+            onComplete: () => {
+              this.tweens.add({
+                targets: continueText,
+                alpha: 0.3,
+                duration: 1000,
+                ease: "Power2",
+                yoyo: true,
+                repeat: -1,
+              });
+
+              const handleInput = (event) => {
+                if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                  this.input.keyboard.off("keydown", handleInput);
+                  this.scene.start("GameScene");
+                }
+              };
+
+              this.input.keyboard.on("keydown", handleInput);
+            },
+          });
         });
-
-        // Setup input handler for any movement key
-        const handleInput = (event) => {
-          // Check if the pressed key is a movement key
-          if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
-            // Remove the event listener
-            this.input.keyboard.off("keydown", handleInput);
-            // Transition to menu scene
-            this.scene.start("GameScene");
-          }
-        };
-
-        // Add the event listener
-        this.input.keyboard.on("keydown", handleInput);
       } catch (error) {
         console.error("Error in showWastedScreen:", error);
-        // Even if the API call fails, we should still set game over state
         this.gameState.isGameOver = true;
       }
     };
@@ -1696,6 +1765,15 @@ const GameScene = Phaser.Class({
         const accessToken = await this.userInfo.getAccessToken();
         console.log("Got fresh access token for level clear");
 
+        // Prepare stats for display
+        const gameStats = {
+          gold: this.gameState.gold,
+          kills: this.gameState.kills,
+          waveNumber: this.gameState.waveNumber,
+          timeAlive: this.gameState.finalTimeAlive,
+          timeAliveMS: this.gameState.finalTimeAliveMS,
+        };
+
         const response = await fetch("/api/game-over", {
           method: "POST",
           headers: {
@@ -1703,11 +1781,7 @@ const GameScene = Phaser.Class({
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            gold: this.gameState.gold,
-            kills: this.gameState.kills,
-            waveNumber: this.gameState.waveNumber,
-            timeAlive: this.gameState.finalTimeAlive,
-            timeAliveMS: this.gameState.finalTimeAliveMS,
+            ...gameStats,
             timestamp: new Date().toISOString(),
             userAddress: this.userInfo.userAddress,
             username: this.userInfo.username,
@@ -1726,7 +1800,7 @@ const GameScene = Phaser.Class({
         // Show the level cleared overlay
         this.levelClearedOverlay.setVisible(true);
 
-        // Add visual feedback
+        // Background fade
         this.tweens.add({
           targets: [this.levelClearedOverlay.getAt(0)],
           alpha: 0.8,
@@ -1734,8 +1808,59 @@ const GameScene = Phaser.Class({
           ease: "Power2",
         });
 
+        // Victory text with retro effect
+        const victoryText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.3, "LEVEL CLEARED!", {
+            fontFamily: "VT323",
+            fontSize: "96px",
+            color: "#00ff00",
+            stroke: "#003300",
+            strokeThickness: 8,
+            shadow: { color: "#000000", fill: true, offsetX: 2, offsetY: 2, blur: 8 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.levelClearedOverlay.add(victoryText);
+
+        // Stats display
+        const formatTime = (ms) => {
+          const seconds = Math.floor(ms / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+        };
+
+        const statsStyle = {
+          fontFamily: "VT323",
+          fontSize: "32px",
+          color: "#00ffff",
+          stroke: "#003333",
+          strokeThickness: 2,
+          shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+        };
+
+        const statsTexts = [
+          `GOLD COLLECTED: ${gameStats.gold}`,
+          `ENEMIES SLAIN: ${gameStats.kills}`,
+          `FINAL WAVE: ${gameStats.waveNumber}`,
+          `COMPLETION TIME: ${formatTime(gameStats.timeAliveMS)}`,
+        ];
+
+        const statsY = this.scale.height * 0.45;
+        const statsSpacing = 40;
+
+        const statElements = statsTexts.map((text, index) => {
+          const statText = this.add
+            .text(this.scale.width / 2, statsY + index * statsSpacing, text, statsStyle)
+            .setOrigin(0.5)
+            .setAlpha(0);
+          this.levelClearedOverlay.add(statText);
+          return statText;
+        });
+
+        // Animate victory text
         this.tweens.add({
-          targets: [this.levelClearedOverlay.getAt(1)],
+          targets: victoryText,
           alpha: 1,
           scaleX: 1.2,
           scaleY: 1.2,
@@ -1743,42 +1868,62 @@ const GameScene = Phaser.Class({
           ease: "Power2",
         });
 
-        // Add "Press any key to continue" text
+        // Animate stats with cascade effect
+        statElements.forEach((statText, index) => {
+          this.tweens.add({
+            targets: statText,
+            alpha: 1,
+            x: this.scale.width / 2,
+            duration: 500,
+            delay: 1000 + index * 200,
+            ease: "Power2",
+          });
+        });
+
+        // Continue text with retro styling
         const continueText = this.add
-          .text(this.scale.width / 2, this.scale.height * 0.7, "Press any movement key to continue", {
+          .text(this.scale.width / 2, this.scale.height * 0.8, "Press any movement key to continue", {
             fontFamily: "VT323",
             fontSize: "32px",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 4,
+            shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
           })
-          .setOrigin(0.5);
-        continueText.setScrollFactor(0);
-        continueText.setDepth(1001);
+          .setOrigin(0.5)
+          .setAlpha(0);
         this.levelClearedOverlay.add(continueText);
 
-        // Add blinking animation
-        this.tweens.add({
-          targets: continueText,
-          alpha: 0,
-          duration: 1000,
-          ease: "Power2",
-          yoyo: true,
-          repeat: -1,
+        // Delay before showing continue text
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: continueText,
+            alpha: 1,
+            duration: 500,
+            ease: "Power2",
+            onComplete: () => {
+              this.tweens.add({
+                targets: continueText,
+                alpha: 0.3,
+                duration: 1000,
+                ease: "Power2",
+                yoyo: true,
+                repeat: -1,
+              });
+
+              const handleInput = (event) => {
+                if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                  this.input.keyboard.off("keydown", handleInput);
+                  this.scene.start("GameScene");
+                }
+              };
+
+              this.input.keyboard.on("keydown", handleInput);
+            },
+          });
         });
-
-        // Setup input handler
-        const handleInput = (event) => {
-          if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
-            this.input.keyboard.off("keydown", handleInput);
-            this.scene.start("GameScene");
-          }
-        };
-
-        this.input.keyboard.on("keydown", handleInput);
       } catch (error) {
         console.error("Error in showLevelClearedScreen:", error);
-        // Ensure states are set even if API call fails
         this.gameState.isLevelCleared = true;
         this.gameState.isGameOver = true;
       }
