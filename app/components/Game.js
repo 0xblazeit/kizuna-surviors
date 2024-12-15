@@ -418,9 +418,18 @@ const GameScene = Phaser.Class({
 
     let enemy;
     const roll = Math.random();
+    const gameTimeElapsed = Date.now() - this.gameState.gameStartTime;
+    const isFirstThirtySeconds = gameTimeElapsed < 30000; // 30 seconds in milliseconds
 
-    // Simplified wave-based spawning that scales indefinitely
-    if (this.gameState.waveNumber <= 5) {
+    if (isFirstThirtySeconds) {
+      // First 30 seconds: Only Basic enemies
+      enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
+        maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+        moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+        attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+        scale: 0.4,
+      });
+    } else if (this.gameState.waveNumber <= 5) {
       // Early waves: Basic and Shooter enemies
       if (roll < 0.6) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
