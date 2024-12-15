@@ -1635,7 +1635,7 @@ const GameScene = Phaser.Class({
         this.wastedOverlay.add(continueText);
 
         // Delay before showing continue text and enabling input
-        this.time.delayedCall(3000, () => {
+        this.time.delayedCall(2000, () => {
           // First fade in the continue text
           this.tweens.add({
             targets: continueText,
