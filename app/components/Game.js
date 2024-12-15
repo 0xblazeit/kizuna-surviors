@@ -94,7 +94,7 @@ const GameScene = Phaser.Class({
       gameEndTime: null,
       finalTimeAlive: 0,
       finalTimeAliveMS: 0,
-      gameDuration: 1500000, // 25 minutes in milliseconds
+      gameDuration: 5000, // 5 seconds in milliseconds
       isLevelCleared: false,
     };
 
@@ -1555,10 +1555,43 @@ const GameScene = Phaser.Class({
           ease: "Power2",
         });
 
-        // Optional: Add a delay before returning to menu
-        this.time.delayedCall(3000, () => {
-          this.scene.start("MenuScene");
+        // Add "Press any key to continue" text
+        const continueText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.7, "Press any movement key to continue", {
+            fontFamily: "VT323",
+            fontSize: "32px",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 4,
+          })
+          .setOrigin(0.5);
+        continueText.setScrollFactor(0);
+        continueText.setDepth(1001);
+        this.wastedOverlay.add(continueText);
+
+        // Add blinking animation to continue text
+        this.tweens.add({
+          targets: continueText,
+          alpha: 0,
+          duration: 1000,
+          ease: "Power2",
+          yoyo: true,
+          repeat: -1,
         });
+
+        // Setup input handler for any movement key
+        const handleInput = (event) => {
+          // Check if the pressed key is a movement key
+          if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+            // Remove the event listener
+            this.input.keyboard.off("keydown", handleInput);
+            // Transition to menu scene
+            this.scene.start("GameScene");
+          }
+        };
+
+        // Add the event listener
+        this.input.keyboard.on("keydown", handleInput);
       } catch (error) {
         console.error("Error in showWastedScreen:", error);
         // Even if the API call fails, we should still set game over state
@@ -1710,10 +1743,39 @@ const GameScene = Phaser.Class({
           ease: "Power2",
         });
 
-        // Optional: Add a delay before returning to menu
-        this.time.delayedCall(3000, () => {
-          this.scene.start("MenuScene");
+        // Add "Press any key to continue" text
+        const continueText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.7, "Press any movement key to continue", {
+            fontFamily: "VT323",
+            fontSize: "32px",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 4,
+          })
+          .setOrigin(0.5);
+        continueText.setScrollFactor(0);
+        continueText.setDepth(1001);
+        this.levelClearedOverlay.add(continueText);
+
+        // Add blinking animation
+        this.tweens.add({
+          targets: continueText,
+          alpha: 0,
+          duration: 1000,
+          ease: "Power2",
+          yoyo: true,
+          repeat: -1,
         });
+
+        // Setup input handler
+        const handleInput = (event) => {
+          if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+            this.input.keyboard.off("keydown", handleInput);
+            this.scene.start("GameScene");
+          }
+        };
+
+        this.input.keyboard.on("keydown", handleInput);
       } catch (error) {
         console.error("Error in showLevelClearedScreen:", error);
         // Ensure states are set even if API call fails
