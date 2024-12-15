@@ -1636,12 +1636,14 @@ const GameScene = Phaser.Class({
 
         // Delay before showing continue text and enabling input
         this.time.delayedCall(3000, () => {
+          // First fade in the continue text
           this.tweens.add({
             targets: continueText,
             alpha: 1,
             duration: 500,
             ease: "Power2",
             onComplete: () => {
+              // Start blinking animation
               this.tweens.add({
                 targets: continueText,
                 alpha: 0.3,
@@ -1651,14 +1653,19 @@ const GameScene = Phaser.Class({
                 repeat: -1,
               });
 
-              const handleInput = (event) => {
-                if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
-                  this.input.keyboard.off("keydown", handleInput);
-                  this.scene.start("GameScene");
-                }
-              };
+              // Add another delay before enabling input
+              this.time.delayedCall(2000, () => {
+                const handleInput = (event) => {
+                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                    this.input.keyboard.off("keydown", handleInput);
+                    this.scene.start("GameScene");
+                  }
+                };
 
-              this.input.keyboard.on("keydown", handleInput);
+                // Only add the input listener after both delays
+                this.input.keyboard.on("keydown", handleInput);
+                console.log("Input handler enabled");
+              });
             },
           });
         });
@@ -1895,13 +1902,15 @@ const GameScene = Phaser.Class({
         this.levelClearedOverlay.add(continueText);
 
         // Delay before showing continue text
-        this.time.delayedCall(3000, () => {
+        this.time.delayedCall(10000, () => {
+          // First fade in the continue text
           this.tweens.add({
             targets: continueText,
             alpha: 1,
             duration: 500,
             ease: "Power2",
             onComplete: () => {
+              // Start blinking animation
               this.tweens.add({
                 targets: continueText,
                 alpha: 0.3,
@@ -1911,14 +1920,19 @@ const GameScene = Phaser.Class({
                 repeat: -1,
               });
 
-              const handleInput = (event) => {
-                if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
-                  this.input.keyboard.off("keydown", handleInput);
-                  this.scene.start("GameScene");
-                }
-              };
+              // Add another delay before enabling input
+              this.time.delayedCall(2000, () => {
+                const handleInput = (event) => {
+                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                    this.input.keyboard.off("keydown", handleInput);
+                    this.scene.start("GameScene");
+                  }
+                };
 
-              this.input.keyboard.on("keydown", handleInput);
+                // Only add the input listener after both delays
+                this.input.keyboard.on("keydown", handleInput);
+                console.log("Input handler enabled");
+              });
             },
           });
         });
