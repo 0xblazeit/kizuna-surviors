@@ -1758,10 +1758,44 @@ const GameScene = Phaser.Class({
         originalTakeDamage.call(this.player, amount);
 
         if (this.player.stats.currentHealth <= 0 && !this.gameState.gameEndTime) {
+          // Set game end time and calculate final stats
           this.gameState.gameEndTime = Date.now();
           const elapsedMS = this.gameState.gameEndTime - this.gameState.gameStartTime;
           this.gameState.finalTimeAliveMS = elapsedMS;
-          this.gameState.finalTimeAlive = elapsedMS / 1000; // Store as seconds with decimal
+          this.gameState.finalTimeAlive = elapsedMS / 1000;
+
+          // Set game over state immediately to prevent other screens
+          this.gameState.isGameOver = true;
+
+          // Stop all game processes
+          if (this.enemySpawnTimer) {
+            this.enemySpawnTimer.remove();
+          }
+          if (this.gameTimer) {
+            this.gameTimer.remove();
+          }
+
+          // Stop all enemy movement
+          if (this.enemies) {
+            this.enemies.forEach((enemy) => {
+              if (enemy && enemy.sprite && enemy.sprite.body) {
+                enemy.sprite.body.setVelocity(0, 0);
+                enemy.active = false;
+              }
+            });
+          }
+
+          // Stop all weapons
+          if (this.weapons) {
+            this.weapons.forEach((weapon) => {
+              if (weapon && weapon.stop) {
+                weapon.stop();
+              }
+            });
+          }
+
+          // Show wasted screen
+          this.showWastedScreen();
 
           console.log("Player died! Precise time:", {
             timeAliveSeconds: this.gameState.finalTimeAlive,
