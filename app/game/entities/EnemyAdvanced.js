@@ -29,31 +29,29 @@ class EnemyAdvanced extends EnemyBasic {
   }
 
   die() {
-    // Initialize arrays if they don't exist
-    if (!this.scene.coins) {
-      this.scene.coins = [];
-    }
-    if (!this.scene.xpGems) {
-      this.scene.xpGems = [];
-    }
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
 
-    // Determine drop type - 60% chance for any drop (increased from 50%)
+    // Calculate base coin value and scale with wave
+    const baseValue = 50; // Increased from 25
+    const waveMultiplier = Math.min(3, 1 + (this.scene.gameState.wave * 0.1)); // Scales up to 3x by wave 20
+    const totalCoinValue = Math.floor(baseValue * waveMultiplier);
+
+    // Determine drop type - 70% chance for any drop (increased from 60%)
     const dropChance = Math.random();
-    if (dropChance < 0.60) {  
-      // 30% chance for coin (18% total), 70% chance for XP gem (42% total)
-      // Increased XP gem chance to make leveling smoother
-      if (dropChance < 0.18) {
-        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-        if (coin) {
-          this.scene.coins.push(coin);
-        }
+    if (dropChance < 0.70) {  
+      // 40% chance for coins (28% total), 60% chance for XP gem (42% total)
+      if (dropChance < 0.28) {
+        // Use the coin consolidation system for better performance
+        Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, totalCoinValue);
       } else {
         // Advanced enemies drop higher value XP gems
         const gem = new XPGem(
           this.scene,
           this.sprite.x,
           this.sprite.y,
-          150, // Increased base value
+          150, // Keep the same XP value
           0.15
         );
         if (gem) {

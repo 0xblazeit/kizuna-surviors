@@ -489,19 +489,19 @@ class EnemyBasic extends BasePlayer {
     }
 
     // Scale coin value with game time and enemy type
-    const baseValue = this.type === "epic" ? 50 : this.type === "advanced" ? 25 : 10;
+    const baseValue = this.type === "epic" ? 50 : this.type === "advanced" ? 25 : 15;
     const waveMultiplier = Math.min(3, Math.floor(this.scene.gameState.wave / 5) + 1); // Cap at 3x after wave 15
     const coinValue = baseValue * waveMultiplier;
 
     // Improved drop chance calculation for early waves
     // Start with higher base chance and gradually decrease
-    const baseDropChance = 0.4; // Increased from 0.25
-    const waveScaling = Math.max(0.6, 1 - this.scene.gameState.wave / 25); // Slower decrease, minimum 60% of base chance
+    const baseDropChance = 0.5;
+    const waveScaling = Math.max(0.7, 1 - this.scene.gameState.wave / 25); // Slower decrease, minimum 70% of base chance
     const dropChance = Math.random();
     
     if (dropChance < baseDropChance * waveScaling) {
       // Increased coin drop ratio in early waves
-      const coinDropThreshold = Math.min(0.25, 0.15 + (5 - Math.min(5, this.scene.gameState.wave)) * 0.03);
+      const coinDropThreshold = Math.min(0.35, 0.25 + (5 - Math.min(5, this.scene.gameState.wave)) * 0.03);
       
       if (dropChance < coinDropThreshold) {
         // Spawn consolidated coins

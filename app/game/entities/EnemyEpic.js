@@ -76,26 +76,17 @@ class EnemyEpic extends EnemyAdvanced {
       this.aura = null;
     }
 
-    // Set higher coin value for epic enemies
-    const coinValue = 40; // Increased single coin value
-
-    // Initialize arrays if they don't exist
-    if (!this.scene.coins) {
-      this.scene.coins = [];
-    }
-    if (!this.scene.xpGems) {
-      this.scene.xpGems = [];
-    }
-
     // Determine drop type - 100% chance for drops
     const dropChance = Math.random();
-    // 40% chance for coins, 60% chance for XP gem
-    if (dropChance < 0.4) {
-      // Spawn a single high-value coin
-      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, coinValue);
-      if (coin) {
-        this.scene.coins.push(coin);
-      }
+    // 60% chance for coins, 40% chance for XP gem
+    if (dropChance < 0.6) {
+      // Calculate base coin value and scale with wave
+      const baseValue = 100; // Increased base value
+      const waveMultiplier = Math.min(3, 1 + (this.scene.gameState.wave * 0.1)); // Scales up to 3x by wave 20
+      const totalCoinValue = Math.floor(baseValue * waveMultiplier);
+      
+      // Use the coin consolidation system
+      Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, totalCoinValue);
     } else {
       // Spawn a single high-value XP gem
       const gem = new XPGem(
