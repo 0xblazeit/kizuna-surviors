@@ -166,8 +166,6 @@ class MainPlayer extends BasePlayer {
     const hasMoved = this.lastX !== this.sprite.x || this.lastY !== this.sprite.y;
 
     if (hasMoved) {
-      console.log(`Player moved from (${this.lastX}, ${this.lastY}) to (${this.sprite.x}, ${this.sprite.y})`);
-
       // Add trail effect if moving
       const currentTime = Date.now();
       if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
