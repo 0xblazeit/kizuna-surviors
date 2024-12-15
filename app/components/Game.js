@@ -964,10 +964,8 @@ const GameScene = Phaser.Class({
       this.xpGems.push(gem);
     }
 
-    // Before initializing coin pool
-    console.log("Starting coin initialization...");
-
     // Initialize coin pool before spawning coins
+    Coin.pool = []; // Reset the pool before initializing
     Coin.initializePool(this);
     console.log("Coin pool initialized, size:", Coin.pool.length);
 
