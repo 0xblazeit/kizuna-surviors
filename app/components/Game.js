@@ -94,7 +94,7 @@ const GameScene = Phaser.Class({
       gameEndTime: null,
       finalTimeAlive: 0,
       finalTimeAliveMS: 0,
-      gameDuration: 5000, // 5 seconds in milliseconds
+      gameDuration: 1500000, // 25 minutes in milliseconds
       isLevelCleared: false,
     };
 
