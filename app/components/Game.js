@@ -1937,8 +1937,8 @@ const GameScene = Phaser.Class({
         });
       }
 
-      // Update the restart text position to be below the stats
-      restartText.setY(this.scale.height / 2 + 250);
+      // Update the restart text position to be below the stats with more spacing
+      restartText.setY(this.scale.height / 2 + 280);
 
       // Add all elements to the levelClearedOverlay
       statsContainer.setAlpha(0);
