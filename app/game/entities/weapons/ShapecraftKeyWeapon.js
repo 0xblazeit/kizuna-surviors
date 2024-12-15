@@ -170,34 +170,46 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         seekingSpeed: 240,
       },
       8: {
-        damage: 30,
-        pierce: 5,
-        cooldown: 500,
-        range: 525,
-        speed: 320,
-        scale: 0.75,
-        projectileCount: 4,
+        damage: 35,
+        pierce: 6,
+        cooldown: 450,
+        range: 550,
+        speed: 340,
+        scale: 0.85,
+        projectileCount: 5,
         shapeTypes: ["triangle", "square", "pentagon", "octagon"],
-        trailAlpha: 0.9,
-        trailScale: 0.97,
-        trailSpacing: 0.06,
-        trailLength: 6,
-        rotationSpeed: 4.4,
-        seekingSpeed: 250,
-        glowIntensity: 1.2,
+        trailAlpha: 1.0,
+        trailScale: 0.98,
+        trailSpacing: 0.04,
+        trailLength: 12,
+        rotationSpeed: 5.0,
+        seekingSpeed: 280,
+        glowIntensity: 1.5,
         isMaxLevel: true,
         geometricConvergence: true,
-        convergenceBurstCount: 4,
-        convergenceDamage: 25,
-        convergenceRange: 200,
-        convergenceSpeed: 400,
-        convergenceScale: 0.5,
-        convergenceLifetime: 300,
+        convergenceBurstCount: 8,
+        convergenceDamage: 40,
+        convergenceRange: 250,
+        convergenceSpeed: 500,
+        convergenceScale: 0.7,
+        convergenceLifetime: 400,
+        pulsingEffect: true,
+        pulseFrequency: 2,
+        pulseScale: 1.2,
+        orbitalShards: true,
+        orbitalShardCount: 4,
+        orbitalRadius: 40,
+        orbitalSpeed: 3,
+        rainbowTrail: true,
+        energyField: true,
+        energyFieldRadius: 100,
+        energyFieldDamage: 15,
+        energyFieldPulseRate: 1.5,
       },
     };
 
     // Initialize at level 1
-    this.currentLevel = 3;
+    this.currentLevel = 8;
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
@@ -484,6 +496,68 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
       if (distanceFromStart > this.stats.range) {
         this.deactivateProjectile(proj);
       }
+
+      // Update epic effects
+      if (this.currentLevel === this.maxLevel && proj.active) {
+        // Pulsing effect
+        if (this.stats.pulsingEffect) {
+          const pulseTime = time * this.stats.pulseFrequency;
+          const pulseScale = 1 + Math.sin(pulseTime) * 0.2;
+          proj.sprite.setScale(this.stats.scale * pulseScale);
+        }
+
+        // Orbital shards
+        if (this.stats.orbitalShards) {
+          const orbitTime = time * this.stats.orbitalSpeed;
+          for (let i = 0; i < this.stats.orbitalShardCount; i++) {
+            const angle = (i * Math.PI * 2) / this.stats.orbitalShardCount + orbitTime;
+            const orbitX = proj.sprite.x + Math.cos(angle) * this.stats.orbitalRadius;
+            const orbitY = proj.sprite.y + Math.sin(angle) * this.stats.orbitalRadius;
+
+            // Create or update orbital shards
+            if (!proj.orbitalShards) proj.orbitalShards = [];
+            if (!proj.orbitalShards[i]) {
+              proj.orbitalShards[i] = this.scene.add.sprite(orbitX, orbitY, proj.sprite.texture);
+              proj.orbitalShards[i].setScale(this.stats.scale * 0.3);
+              proj.orbitalShards[i].setTint(this.maxLevelColors.primary);
+            }
+            proj.orbitalShards[i].setPosition(orbitX, orbitY);
+          }
+        }
+
+        // Rainbow trail effect
+        if (this.stats.rainbowTrail) {
+          const rainbow = Phaser.Display.Color.HSVColorWheel();
+          const index = Math.floor((time / 100) % rainbow.length);
+          const color = rainbow[index].color;
+          proj.sprite.setTint(color);
+        }
+
+        // Energy field effect
+        if (this.stats.energyField) {
+          const fieldAlpha = 0.3 + Math.sin(time * this.stats.energyFieldPulseRate) * 0.2;
+          if (!proj.energyField) {
+            proj.energyField = this.scene.add.circle(
+              proj.sprite.x,
+              proj.sprite.y,
+              this.stats.energyFieldRadius,
+              this.maxLevelColors.primary,
+              fieldAlpha
+            );
+          }
+          proj.energyField.setPosition(proj.sprite.x, proj.sprite.y);
+          proj.energyField.setAlpha(fieldAlpha);
+
+          // Damage enemies in energy field
+          const enemies = this.scene.enemies?.filter((e) => e && e.sprite && e.sprite.active && !e.isDead) || [];
+          enemies.forEach((enemy) => {
+            const distance = Phaser.Math.Distance.Between(proj.sprite.x, proj.sprite.y, enemy.sprite.x, enemy.sprite.y);
+            if (distance <= this.stats.energyFieldRadius) {
+              enemy.takeDamage(this.stats.energyFieldDamage * (delta / 1000));
+            }
+          });
+        }
+      }
     });
   }
 
@@ -643,6 +717,16 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
           sprite.setActive(false).setVisible(false);
         });
       }
+    }
+
+    // Clean up epic effects
+    if (projectile.orbitalShards) {
+      projectile.orbitalShards.forEach((shard) => shard.destroy());
+      projectile.orbitalShards = null;
+    }
+    if (projectile.energyField) {
+      projectile.energyField.destroy();
+      projectile.energyField = null;
     }
   }
 
