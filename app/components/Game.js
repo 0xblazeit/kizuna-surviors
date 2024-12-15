@@ -1829,6 +1829,128 @@ const GameScene = Phaser.Class({
         this.input.keyboard.on("keydown", keyHandler);
         this.input.on("pointerdown", restartGame);
       });
+
+      // In the showLevelClearedScreen function, after the levelClearedText animation:
+
+      // Add stats container with retro styling
+      const statsContainer = this.add.container(this.scale.width / 2, this.scale.height / 2 + 50);
+      statsContainer.setScrollFactor(0);
+      this.levelClearedOverlay.add(statsContainer);
+
+      // Add decorative border for stats
+      const statsBorder = this.add.rectangle(0, 70, 400, 200, 0x00ff00, 1);
+      statsBorder.setStrokeStyle(2, 0x00ff00);
+      statsContainer.add(statsBorder);
+
+      // Add semi-transparent background for stats
+      const statsBackground = this.add.rectangle(0, 70, 396, 196, 0x000000, 0.85);
+      statsContainer.add(statsBackground);
+
+      // Format time for display
+      const minutes = Math.floor(this.gameState.finalTimeAlive / 60);
+      const seconds = Math.floor(this.gameState.finalTimeAlive % 60);
+      const ms = Math.floor((this.gameState.finalTimeAliveMS % 1000) / 10);
+      const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
+        .toString()
+        .padStart(2, "0")}`;
+
+      // Create stats text with retro styling
+      const statsStyle = {
+        fontFamily: "VT323",
+        fontSize: "24px",
+        color: "#00ff00",
+        align: "left",
+        stroke: "#003300",
+        strokeThickness: 2,
+      };
+
+      // Stats header
+      const statsHeader = this.add
+        .text(0, -20, "FINAL STATS", {
+          ...statsStyle,
+          fontSize: "32px",
+          color: "#ffff00",
+        })
+        .setOrigin(0.5);
+      statsContainer.add(statsHeader);
+
+      // Create stats text array
+      const statsTexts = [
+        `TIME SURVIVED: ${timeString}`,
+        `WAVE REACHED: ${this.gameState.waveNumber}`,
+        `ENEMIES SLAIN: ${this.gameState.kills}`,
+        `GOLD EARNED: ${this.gameState.gold}`,
+      ];
+
+      // Add each stat with a slight delay and animation
+      statsTexts.forEach((text, index) => {
+        const yPos = 20 + index * 35;
+        const statText = this.add.text(-180, yPos, text, statsStyle).setAlpha(0);
+        statsContainer.add(statText);
+
+        // Animate each stat line
+        this.tweens.add({
+          targets: statText,
+          alpha: 1,
+          x: -170,
+          duration: 500,
+          ease: "Power2",
+          delay: 1000 + index * 200,
+        });
+      });
+
+      // Add pixel decoration at corners
+      const cornerSize = 10;
+      const corners = [
+        { x: -200, y: -20 }, // Top left
+        { x: 200, y: -20 }, // Top right
+        { x: -200, y: 160 }, // Bottom left
+        { x: 200, y: 160 }, // Bottom right
+      ];
+
+      corners.forEach((corner) => {
+        const pixel = this.add.rectangle(corner.x, corner.y, cornerSize, cornerSize, 0x00ff00);
+        statsContainer.add(pixel);
+      });
+
+      // Add "HIGH SCORE" text if applicable (you can add your own logic here)
+      if (this.gameState.kills > 100) {
+        // Example condition
+        const highScoreText = this.add
+          .text(0, 160, "NEW HIGH SCORE!", {
+            fontFamily: "VT323",
+            fontSize: "28px",
+            color: "#ffff00",
+            stroke: "#ff0000",
+            strokeThickness: 4,
+          })
+          .setOrigin(0.5);
+        statsContainer.add(highScoreText);
+
+        // Make it flash
+        this.tweens.add({
+          targets: highScoreText,
+          alpha: 0.2,
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+
+      // Update the restart text position to be below the stats
+      restartText.setY(this.scale.height / 2 + 200);
+
+      // Add all elements to the levelClearedOverlay
+      statsContainer.setAlpha(0);
+
+      // Fade in the stats container
+      this.tweens.add({
+        targets: statsContainer,
+        alpha: 1,
+        duration: 1000,
+        delay: 500,
+        ease: "Power2",
+      });
     };
 
     // In the create function, add this before setting up the WASTED overlay:
