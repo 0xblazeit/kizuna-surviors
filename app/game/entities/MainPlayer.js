@@ -48,7 +48,7 @@ class MainPlayer extends BasePlayer {
         healthBarHeight + 5,
         scene.userInfo?.username ||
           (scene.userInfo?.userAddress
-            ? `${scene.userInfo.userAddress.slice(0, 4)}...${scene.userInfo.userAddress.slice(-6)}`
+            ? `${scene.userInfo.userAddress.slice(0, 6)}...${scene.userInfo.userAddress.slice(-4)}`
             : ""),
         {
           fontFamily: "VT323",

@@ -1,0 +1,1 @@
+ALTER TABLE `gameStats` ALTER COLUMN "profile_image" TO "profile_image" text;

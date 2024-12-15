@@ -2203,8 +2203,8 @@ export default function Game() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Return early if not ready, missing info, game exists, or already initializing
-    if (!ready || !userAddress || !username || gameInstanceRef.current || initializingRef.current) {
+    // Return early if not ready, game exists, or already initializing
+    if (!ready || gameInstanceRef.current || initializingRef.current) {
       return;
     }
 
@@ -2222,9 +2222,9 @@ export default function Game() {
 
         if (typeof window !== "undefined" && window.Phaser) {
           const userInfo = {
-            userAddress: user.wallet.address,
-            username: user.twitter.username,
-            profileImage: user.twitter.profilePictureUrl,
+            userAddress: userAddress,
+            username: username,
+            profileImage: user?.twitter?.profilePictureUrl,
             accessToken,
             invalidateQueries: () => {
               queryClient.invalidateQueries({ queryKey: ["leaderboard"] });

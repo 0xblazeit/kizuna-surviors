@@ -86,7 +86,7 @@ export function Arena() {
             <p>Please connect your wallet</p>
           ) : (
             <>
-              <h3 className="mb-2 text-lg md:text-3xl">Welcome, {user?.twitter?.username}</h3>
+              <h3 className="mb-2 text-lg md:text-3xl">Welcome, {user?.twitter?.username || "Player"}</h3>
               <div className="space-y-1 text-sm md:text-2xl">
                 <p className="flex gap-1 items-center text-white/50">
                   Wallet:{" "}
@@ -99,7 +99,7 @@ export function Arena() {
                         className="cursor-pointer hover:underline"
                       >
                         0x{user?.wallet?.address.slice(2, 6)}...
-                        {user?.wallet?.address.slice(-5)}
+                        {user?.wallet?.address.slice(-4)}
                       </a>
                       <button
                         onClick={() => copyToClipboard(user?.wallet?.address)}

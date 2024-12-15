@@ -8,7 +8,7 @@ export const gameStats = sqliteTable("gameStats", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username"),
   walletAddress: text("wallet_address").notNull(),
-  profileImage: text("profile_image").notNull(),
+  profileImage: text("profile_image"),
   gold: integer("gold").notNull(),
   kills: integer("kills").notNull(),
   waveNumber: integer("wave_number").notNull(),
