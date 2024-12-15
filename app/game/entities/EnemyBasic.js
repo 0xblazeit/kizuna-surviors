@@ -509,18 +509,14 @@ class EnemyBasic extends BasePlayer {
           numCoins = 3;
         }
 
-        // Create coins in a spread pattern
+        // Create coins in a spread pattern using the coin pool
         const radius = 20; // Base radius for coin spread
-        for (let i = 0; i < numCoins; i++) {
-          const angle = (i / numCoins) * Math.PI * 2; // Evenly space coins in a circle
-          const offsetX = Math.cos(angle) * radius;
-          const offsetY = Math.sin(angle) * radius;
-
-          const coin = new Coin(this.scene, this.sprite.x + offsetX, this.sprite.y + offsetY, coinValue);
-          if (coin) {
-            this.scene.coins.push(coin);
-          }
-        }
+        const coins = Coin.spawnConsolidated(
+          this.scene, 
+          this.sprite.x, 
+          this.sprite.y, 
+          coinValue * numCoins
+        );
       } else {
         const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
         if (gem) {
