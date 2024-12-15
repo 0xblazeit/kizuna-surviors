@@ -15,6 +15,13 @@
       "when": 1734075479173,
       "tag": "0001_military_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1734251277857,
+      "tag": "0002_modern_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

@@ -1074,10 +1074,10 @@ const GameScene = Phaser.Class({
       color: "#88ff88",
     };
 
-    const welcomeText = `Welcome, ${this.userInfo?.username || "Player"}!`;
     const addressText = this.userInfo?.userAddress
       ? `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}`
       : "";
+    const welcomeText = `Welcome, ${this.userInfo?.username || addressText || "Player"}!`;
 
     this.welcomeText = this.add
       .text(centerX, startY + 40, welcomeText, welcomeConfig)
@@ -2287,7 +2287,7 @@ export default function Game() {
   }, [ready, user, userAddress, username, getAccessToken, queryClient]);
 
   // Show loading state if not ready or game is initializing
-  if (!ready || !userAddress || !username || initializingRef.current) {
+  if (!ready || initializingRef.current) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
         <div>Loading...</div>

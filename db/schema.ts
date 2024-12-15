@@ -6,7 +6,7 @@ const getCurrentESTTimestamp = sql`(strftime('%Y-%m-%d %H:%M:%S', datetime('now'
 
 export const gameStats = sqliteTable("gameStats", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  username: text("username").notNull(),
+  username: text("username"),
   walletAddress: text("wallet_address").notNull(),
   profileImage: text("profile_image").notNull(),
   gold: integer("gold").notNull(),
