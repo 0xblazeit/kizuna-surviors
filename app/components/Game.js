@@ -2223,6 +2223,27 @@ const GameScene = Phaser.Class({
       this.showWastedScreen();
     }
   },
+
+  // Add this method to the GameScene class
+  cleanup: function () {
+    // Clean up XP gems
+    if (this.xpGems) {
+      this.xpGems.forEach((gem) => {
+        if (gem && gem.sprite) {
+          gem.sprite.destroy();
+        }
+      });
+      this.xpGems = [];
+    }
+  },
+
+  shutdown: function () {
+    this.cleanup();
+  },
+
+  destroy: function () {
+    this.cleanup();
+  },
 });
 
 export default function Game() {
