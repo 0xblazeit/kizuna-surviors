@@ -19,6 +19,7 @@ import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import XPGem from "../game/entities/XPGem"; // Import XPGem
+import Coin from "../game/entities/Coin"; // Import Coin
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
@@ -962,6 +963,28 @@ const GameScene = Phaser.Class({
       const gem = new XPGem(this, x, y);
       this.xpGems.push(gem);
     }
+
+    // Initialize coin pool before spawning coins
+    Coin.pool = []; // Reset the pool before initializing
+    Coin.initializePool(this);
+    console.log("Coin pool initialized, size:", Coin.pool.length);
+
+    // Then spawn initial coins
+    console.log("Starting to spawn initial coins...");
+    for (let i = 0; i < 10; i++) {
+      const x = Phaser.Math.Between(50, worldWidth - 50);
+      const y = Phaser.Math.Between(50, worldHeight - 50);
+
+      // Randomly choose coin value from tiers
+      const tiers = Object.values(Coin.VALUE_TIERS);
+      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+
+      // Spawn consolidated coins at random positions
+      Coin.spawnConsolidated(this, x, y, randomTier);
+    }
+
+    // After spawning coins
+    console.log("Active coins in pool:", Coin.pool.filter((coin) => coin.isActive).length);
 
     // Listen for player death event
     this.events.on("playerDeath", () => {
@@ -2085,9 +2108,11 @@ const GameScene = Phaser.Class({
     // }
 
     // Update coins
-    if (this.coins) {
-      this.coins.forEach((coin) => coin.update(this.player));
-    }
+    Coin.pool.forEach((coin) => {
+      if (coin.isActive) {
+        coin.update(this.player);
+      }
+    });
 
     // Update XP gems
     if (this.xpGems) {
