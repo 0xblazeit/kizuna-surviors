@@ -18,7 +18,6 @@ export async function GET() {
 export async function POST(request) {
   try {
     console.log("GAME OVER RESULTS RECEIVED");
-    console.log("PRIVY SERVER AUTH - START");
     const data = await request.json();
 
     const authHeader = request.headers.get("authorization");
@@ -35,7 +34,7 @@ export async function POST(request) {
     if (!userId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
-    console.log("PRIVY SERVER AUTH - END");
+    console.log("PRIVY SERVER AUTH VALIDATED - END");
 
     // Convert UTC timestamp to EST
     const utcDate = new Date(data.timestamp);
