@@ -93,6 +93,8 @@ const GameScene = Phaser.Class({
       gameEndTime: null,
       finalTimeAlive: 0,
       finalTimeAliveMS: 0,
+      gameDuration: 10000, // 10 seconds in milliseconds
+      isLevelCleared: false,
     };
 
     // Debug log initial state
@@ -1491,6 +1493,7 @@ const GameScene = Phaser.Class({
           userAddress: this.userInfo.userAddress,
           username: this.userInfo.username,
           profileImage: this.userInfo.profileImage,
+          levelCleared: true, // Add this flag to distinguish from deaths
         }),
       })
         .then((response) => response.json())
@@ -1633,7 +1636,7 @@ const GameScene = Phaser.Class({
 
     // Create new timer with millisecond precision
     this.timerEvent = this.time.addEvent({
-      delay: 16, // Update roughly every frame (60fps)
+      delay: 16,
       callback: () => {
         if (this.gameState.gameStartTime && !this.gameState.gameEndTime) {
           const currentTime = Date.now();
@@ -1641,10 +1644,16 @@ const GameScene = Phaser.Class({
           this.gameState.gameTimer = Math.floor(elapsedMS / 1000);
           this.gameState.finalTimeAliveMS = elapsedMS;
 
-          // Update timer display with milliseconds
+          // Check if time limit is reached
+          if (elapsedMS >= this.gameState.gameDuration && !this.gameState.isLevelCleared) {
+            console.log("Time limit reached! Showing level cleared screen...");
+            this.showLevelClearedScreen();
+          }
+
+          // Update timer display
           const minutes = Math.floor(this.gameState.gameTimer / 60);
           const seconds = Math.floor(this.gameState.gameTimer % 60);
-          const ms = Math.floor((elapsedMS % 1000) / 10); // Get centiseconds (2 decimal places)
+          const ms = Math.floor((elapsedMS % 1000) / 10);
           this.timerText.setText(
             `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
               .toString()
@@ -1677,6 +1686,184 @@ const GameScene = Phaser.Class({
         }
       };
     }
+
+    // In the create function, update the showLevelClearedScreen function:
+    this.showLevelClearedScreen = () => {
+      if (this.gameState.isLevelCleared) return;
+
+      // Stop player movement and game physics immediately
+      this.physics.pause();
+
+      // Disable all input temporarily
+      this.input.keyboard.enabled = false;
+      this.input.enabled = false;
+
+      // Store final time
+      this.gameState.gameEndTime = Date.now();
+      const elapsedMS = this.gameState.gameEndTime - this.gameState.gameStartTime;
+      this.gameState.finalTimeAliveMS = elapsedMS;
+      this.gameState.finalTimeAlive = elapsedMS / 1000;
+
+      console.log("Level Cleared! Posting game stats with precise time:", {
+        timeAlive: this.gameState.finalTimeAlive,
+        timeAliveMS: this.gameState.finalTimeAliveMS,
+      });
+
+      // Post game stats
+      fetch("/api/game-over", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gold: this.gameState.gold,
+          kills: this.gameState.kills,
+          waveNumber: this.gameState.waveNumber,
+          timeAlive: this.gameState.finalTimeAlive,
+          timeAliveMS: this.gameState.finalTimeAliveMS,
+          timestamp: new Date().toISOString(),
+          userAddress: this.userInfo.userAddress,
+          username: this.userInfo.username,
+          profileImage: this.userInfo.profileImage,
+          levelCleared: true,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Game over response:", data);
+          if (this.userInfo.invalidateQueries) {
+            this.userInfo.invalidateQueries();
+          }
+        })
+        .catch((error) => console.error("Error posting game stats:", error));
+
+      this.gameState.isLevelCleared = true;
+      this.levelClearedOverlay.setVisible(true);
+
+      // Slow down time
+      this.time.timeScale = 0.5;
+
+      // Fade in black overlay
+      this.tweens.add({
+        targets: this.levelClearedOverlay.getAt(0),
+        alpha: 0.5,
+        duration: 1000,
+        ease: "Power2",
+      });
+
+      // Fade in and scale up LEVEL CLEARED text
+      const clearedText = this.levelClearedOverlay.getAt(1);
+      clearedText.setScale(0.5);
+      this.tweens.add({
+        targets: clearedText,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 1000,
+        ease: "Power2",
+      });
+
+      // Add restart text
+      const restartText = this.add.text(
+        this.scale.width / 2,
+        this.scale.height / 2 + 100,
+        "Click anywhere or press WASD/Arrow keys to play again",
+        {
+          fontFamily: "VT323",
+          fontSize: "24px",
+          color: "#FFFFFF",
+          stroke: "#000000",
+          strokeThickness: 2,
+          align: "center",
+        }
+      );
+      restartText.setOrigin(0.5);
+      restartText.setAlpha(0);
+      restartText.setScrollFactor(0);
+      this.levelClearedOverlay.add(restartText);
+
+      // Make text pulse
+      this.tweens.add({
+        targets: restartText,
+        alpha: { from: 0, to: 1 },
+        duration: 1000,
+        delay: 500,
+        ease: "Power2",
+        onComplete: () => {
+          this.tweens.add({
+            targets: restartText,
+            scale: 1.1,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.inOut",
+          });
+        },
+      });
+
+      // Clear any existing input handlers
+      this.input.keyboard.removeAllKeys(true);
+
+      const restartGame = () => {
+        this.input.keyboard.off("keydown", keyHandler);
+        this.input.off("pointerdown", restartGame);
+        this.time.timeScale = 1;
+        this.tweens.killAll();
+        this.scene.restart();
+      };
+
+      const keyHandler = (event) => {
+        const key = event.key.toUpperCase();
+        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
+          restartGame();
+        }
+      };
+
+      // Add longer delay (3 seconds) before enabling restart controls
+      this.time.delayedCall(3000, () => {
+        // Re-enable input
+        this.input.keyboard.enabled = true;
+        this.input.enabled = true;
+
+        // Add input listeners
+        this.input.keyboard.on("keydown", keyHandler);
+        this.input.on("pointerdown", restartGame);
+      });
+    };
+
+    // In the create function, add this before setting up the WASTED overlay:
+
+    // Create LEVEL CLEARED overlay container (hidden by default)
+    this.levelClearedOverlay = this.add.container(0, 0);
+    this.levelClearedOverlay.setDepth(1000); // Ensure it's above everything
+    this.levelClearedOverlay.setScrollFactor(0); // Fix entire container to camera
+
+    // Black overlay with fade (make it cover the entire game world)
+    const levelClearedBlackOverlay = this.add.rectangle(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      this.scale.width,
+      this.scale.height,
+      0x000000
+    );
+    levelClearedBlackOverlay.setAlpha(0);
+    this.levelClearedOverlay.add(levelClearedBlackOverlay);
+
+    // LEVEL CLEARED text (positioned at camera center)
+    const levelClearedText = this.add.text(this.scale.width / 2, this.scale.height / 2, "LEVEL CLEARED", {
+      fontFamily: "Arial Black",
+      fontSize: "64px", // Reduced from 128px to 64px
+      color: "#00FF00",
+      stroke: "#000000",
+      strokeThickness: 6, // Reduced stroke thickness to match smaller size
+      align: "center",
+    });
+    levelClearedText.setOrigin(0.5);
+    levelClearedText.setAlpha(0);
+    this.levelClearedOverlay.add(levelClearedText);
+
+    // Hide overlay initially
+    this.levelClearedOverlay.setVisible(false);
   },
 
   update: function (time, delta) {
