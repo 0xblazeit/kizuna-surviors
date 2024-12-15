@@ -87,16 +87,13 @@ class EnemyEpic extends EnemyAdvanced {
     const dropChance = Math.random();
     // 40% chance for coins, 60% chance for XP gem
     if (dropChance < 0.4) {
-      // Spawn a single high-value coin
-      const coin = new Coin(
+      // Spawn consolidated coins with higher value
+      Coin.spawnConsolidated(
         this.scene,
         this.sprite.x,
         this.sprite.y,
-        coinValue
+        coinValue * 3 // Epic enemies drop more valuable coins
       );
-      if (coin) {
-        this.scene.coins.push(coin);
-      }
     } else {
       // Spawn a single high-value XP gem
       const gem = new XPGem(

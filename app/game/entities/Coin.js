@@ -3,8 +3,11 @@ class Coin {
   static pool = [];
   static totalCoins = 0;
   static MAX_COINS = 75;
-  static ACTIVATION_DISTANCE = 300; // Only update coins within this range
-  static COLLECTION_DISTANCE = 50;
+  static ACTIVATION_DISTANCE = 400; // Increased activation distance
+  static COLLECTION_DISTANCE = 75;  // Increased collection distance for better feel
+  static MAGNETIC_DISTANCE = 150;   // New shorter magnetic range
+  static MAGNETIC_SPEED_MIN = 0.5;  // Slower initial magnetic speed
+  static MAGNETIC_SPEED_MAX = 4;    // Faster speed when very close
 
   // Coin value tiers for consolidation
   static VALUE_TIERS = {
@@ -111,12 +114,31 @@ class Coin {
   }
 
   update(player) {
-    if (!this.isActive || this.isCollected || !this.sprite || !player) return;
+    if (!this.isActive || this.isCollected || !this.sprite || !player || !player.sprite) return;
 
-    const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
+    // Use player sprite position instead of raw player position
+    const distance = Phaser.Math.Distance.Between(
+      this.sprite.x, 
+      this.sprite.y, 
+      player.sprite.x, 
+      player.sprite.y
+    );
 
     // Only process coins within activation distance
     if (distance > Coin.ACTIVATION_DISTANCE) return;
+
+    // Add a magnetic effect when coins are close, with increasing strength as you get closer
+    if (distance <= Coin.MAGNETIC_DISTANCE) {
+      const angle = Math.atan2(player.sprite.y - this.sprite.y, player.sprite.x - this.sprite.x);
+      
+      // Calculate magnetic speed based on distance
+      // Closer distance = faster movement
+      const distanceRatio = 1 - (distance / Coin.MAGNETIC_DISTANCE);
+      const speed = Coin.MAGNETIC_SPEED_MIN + (Coin.MAGNETIC_SPEED_MAX - Coin.MAGNETIC_SPEED_MIN) * distanceRatio;
+      
+      this.sprite.x += Math.cos(angle) * speed;
+      this.sprite.y += Math.sin(angle) * speed;
+    }
 
     if (distance <= Coin.COLLECTION_DISTANCE) {
       this.collect(player);
@@ -129,8 +151,8 @@ class Coin {
     // Simple collection animation
     this.scene.tweens.add({
       targets: this.sprite,
-      x: player.x,
-      y: player.y,
+      x: player.sprite.x,
+      y: player.sprite.y,
       alpha: 0,
       scale: 0.1,
       duration: 200,

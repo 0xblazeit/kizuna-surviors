@@ -43,10 +43,13 @@ class EnemyAdvanced extends EnemyBasic {
       // 30% chance for coin (18% total), 70% chance for XP gem (42% total)
       // Increased XP gem chance to make leveling smoother
       if (dropChance < 0.18) {
-        const coin = new Coin(this.scene, this.sprite.x, this.sprite.y);
-        if (coin) {
-          this.scene.coins.push(coin);
-        }
+        // Advanced enemies drop higher value coins
+        Coin.spawnConsolidated(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          25 * 2 // Advanced enemies drop more valuable coins
+        );
       } else {
         // Advanced enemies drop higher value XP gems
         const gem = new XPGem(
