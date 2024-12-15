@@ -198,7 +198,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     };
 
     // Initialize at level 1
-    this.currentLevel = 8;
+    this.currentLevel = 1;
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
