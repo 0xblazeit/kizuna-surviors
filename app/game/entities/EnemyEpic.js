@@ -66,15 +66,19 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
+
     // Clean up aura first
     if (this.aura) {
       this.aura.destroy();
       this.aura = null;
     }
-    
+
     // Set higher coin value for epic enemies
     const coinValue = 40; // Increased single coin value
-    
+
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -88,12 +92,7 @@ class EnemyEpic extends EnemyAdvanced {
     // 40% chance for coins, 60% chance for XP gem
     if (dropChance < 0.4) {
       // Spawn a single high-value coin
-      const coin = new Coin(
-        this.scene,
-        this.sprite.x,
-        this.sprite.y,
-        coinValue
-      );
+      const coin = new Coin(this.scene, this.sprite.x, this.sprite.y, coinValue);
       if (coin) {
         this.scene.coins.push(coin);
       }
@@ -111,9 +110,29 @@ class EnemyEpic extends EnemyAdvanced {
       }
     }
 
-    super.playDeathAnimation().then(() => {
-      // Call parent die method but skip its drop logic
-      super.onDeath();
+    // Increment kill counter
+    this.scene.gameState.kills++;
+    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
+    // Play death animation and cleanup
+    this.playDeathAnimation().then(() => {
+      // Remove from scene's enemy list
+      if (this.scene.enemies) {
+        const index = this.scene.enemies.indexOf(this);
+        if (index > -1) {
+          this.scene.enemies.splice(index, 1);
+        }
+      }
+
+      // Cleanup health bar
+      if (this.healthBar) {
+        this.healthBar.container.destroy();
+      }
+
+      // Destroy sprite
+      if (this.sprite) {
+        this.sprite.destroy();
+      }
     });
   }
 }
