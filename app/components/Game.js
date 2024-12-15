@@ -1833,7 +1833,7 @@ const GameScene = Phaser.Class({
       // In the showLevelClearedScreen function, after the levelClearedText animation:
 
       // Add stats container with retro styling
-      const statsContainer = this.add.container(this.scale.width / 2, this.scale.height / 2 + 50);
+      const statsContainer = this.add.container(this.scale.width / 2, this.scale.height / 2 + 80);
       statsContainer.setScrollFactor(0);
       this.levelClearedOverlay.add(statsContainer);
 
@@ -1938,7 +1938,7 @@ const GameScene = Phaser.Class({
       }
 
       // Update the restart text position to be below the stats
-      restartText.setY(this.scale.height / 2 + 200);
+      restartText.setY(this.scale.height / 2 + 250);
 
       // Add all elements to the levelClearedOverlay
       statsContainer.setAlpha(0);
