@@ -1656,7 +1656,23 @@ const GameScene = Phaser.Class({
               // Add another delay before enabling input
               this.time.delayedCall(2000, () => {
                 const handleInput = (event) => {
-                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                  // Check for both WASD and arrow keys
+                  const validKeys = [
+                    "W",
+                    "A",
+                    "S",
+                    "D", // WASD keys
+                    "UP",
+                    "DOWN",
+                    "LEFT",
+                    "RIGHT", // Arrow keys as strings
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight", // Alternative arrow key names
+                  ];
+
+                  if (validKeys.includes(event.key.toUpperCase()) || validKeys.includes(event.key)) {
                     this.input.keyboard.off("keydown", handleInput);
                     this.scene.start("GameScene");
                   }
@@ -1923,7 +1939,23 @@ const GameScene = Phaser.Class({
               // Add another delay before enabling input
               this.time.delayedCall(2000, () => {
                 const handleInput = (event) => {
-                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                  // Check for both WASD and arrow keys
+                  const validKeys = [
+                    "W",
+                    "A",
+                    "S",
+                    "D", // WASD keys
+                    "UP",
+                    "DOWN",
+                    "LEFT",
+                    "RIGHT", // Arrow keys as strings
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight", // Alternative arrow key names
+                  ];
+
+                  if (validKeys.includes(event.key.toUpperCase()) || validKeys.includes(event.key)) {
                     this.input.keyboard.off("keydown", handleInput);
                     this.scene.start("GameScene");
                   }
