@@ -116,7 +116,7 @@ export default function Navbar() {
                     <Wallet className="mr-2 w-4 h-4" />
                     <span>
                       {user?.wallet?.address
-                        ? `${user.wallet.address.slice(0, 4)}...${user.wallet.address.slice(-5)}`
+                        ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}`
                         : ""}
                     </span>
                   </DropdownMenuItem>
