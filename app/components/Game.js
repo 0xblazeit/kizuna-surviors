@@ -96,6 +96,7 @@ const GameScene = Phaser.Class({
       finalTimeAliveMS: 0,
       gameDuration: 1500000, // 25 minutes in milliseconds
       isLevelCleared: false,
+      gems: [], // Add gems array to track active gems
     };
 
     // Debug log initial state
@@ -233,6 +234,16 @@ const GameScene = Phaser.Class({
   },
 
   startGame: function () {
+    // Clear existing gems
+    if (this.gameState.gems) {
+      this.gameState.gems.forEach((gem) => {
+        if (gem && gem.sprite) {
+          gem.sprite.destroy();
+        }
+      });
+    }
+    this.gameState.gems = [];
+
     // Initial enemy spawn for first wave
     const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
     for (let i = 0; i < initialEnemies; i++) {
@@ -374,6 +385,15 @@ const GameScene = Phaser.Class({
         },
       });
     });
+
+    // Spawn new gems for the next wave
+    const numNewGems = Math.min(5 + Math.floor(this.gameState.waveNumber / 2), 10);
+    for (let i = 0; i < numNewGems; i++) {
+      const x = Phaser.Math.Between(50, this.scale.width * 2 - 50);
+      const y = Phaser.Math.Between(50, this.scale.height * 2 - 50);
+      const gem = new XPGem(this, x, y);
+      this.gameState.gems.push(gem);
+    }
   },
 
   getSpawnPosition: function () {
@@ -956,12 +976,28 @@ const GameScene = Phaser.Class({
     // Initialize XP gems array
     this.xpGems = [];
 
+    // Initialize gem collection
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.gemGroup,
+      (playerSprite, gemSprite) => {
+        const gem = this.gameState.gems.find((g) => g.sprite === gemSprite);
+        if (gem) {
+          this.collectGem(gem);
+          const index = this.gameState.gems.indexOf(gem);
+          if (index > -1) {
+            this.gameState.gems.splice(index, 1);
+          }
+        }
+      }
+    );
+
     // Spawn initial XP gems randomly across the map
     for (let i = 0; i < 14; i++) {
-      const x = Phaser.Math.Between(50, worldWidth - 50); // 50px padding from edges
-      const y = Phaser.Math.Between(50, worldHeight - 50);
+      const x = Phaser.Math.Between(50, width * 2 - 50); // 50px padding from edges
+      const y = Phaser.Math.Between(50, height * 2 - 50);
       const gem = new XPGem(this, x, y);
-      this.xpGems.push(gem);
+      this.gameState.gems.push(gem);
     }
 
     // Initialize coin pool before spawning coins
@@ -972,8 +1008,8 @@ const GameScene = Phaser.Class({
     // Then spawn initial coins
     console.log("Starting to spawn initial coins...");
     for (let i = 0; i < 10; i++) {
-      const x = Phaser.Math.Between(50, worldWidth - 50);
-      const y = Phaser.Math.Between(50, worldHeight - 50);
+      const x = Phaser.Math.Between(50, width * 2 - 50);
+      const y = Phaser.Math.Between(50, height * 2 - 50);
 
       // Randomly choose coin value from tiers
       const tiers = Object.values(Coin.VALUE_TIERS);
@@ -1091,13 +1127,6 @@ const GameScene = Phaser.Class({
         .setOrigin(0.5)
         .setScrollFactor(0)
         .setDepth(10000);
-    }
-
-    // Add to cleanup array
-    this.overlayElements = this.overlayElements || [];
-    this.overlayElements.push(this.welcomeText);
-    if (this.addressText) {
-      this.overlayElements.push(this.addressText);
     }
 
     // Add pixel-style bullet points
@@ -1439,7 +1468,7 @@ const GameScene = Phaser.Class({
     // );
 
     // Setup camera to follow player
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.setBounds(0, 0, width * 2, height * 2);
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09);
     this.cameras.main.setZoom(0.9);
 

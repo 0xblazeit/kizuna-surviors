@@ -75,7 +75,7 @@ class EnemyEpic extends EnemyAdvanced {
       this.aura.destroy();
       this.aura = null;
     }
-    
+
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -86,7 +86,7 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Determine drop type - 40% chance for drops
     const dropChance = Math.random();
-    if (dropChance < 0.4) {  
+    if (dropChance < 0.4) {
       // 40% chance for coins (16% total), 60% chance for XP gems (24% total)
       if (dropChance < 0.16) {
         // Epic enemies drop more valuable consolidated coins

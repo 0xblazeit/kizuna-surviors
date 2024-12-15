@@ -21,7 +21,7 @@ class EnemyAdvanced extends EnemyBasic {
 
     // Advanced enemy specific properties
     this.type = "advanced";
-    
+
     // Custom separation parameters for advanced enemies
     this.separationRadius = 80; // Larger separation radius due to bigger size
     this.baseSeparationForce = 0.6; // Stronger base separation
@@ -41,11 +41,11 @@ class EnemyAdvanced extends EnemyBasic {
       this.scene.xpGems = [];
     }
 
-    // Determine drop type - 60% chance for drops
+    // Determine drop type - 80% chance for drops (increased from 60%)
     const dropChance = Math.random();
-    if (dropChance < 0.60) {  
-      // 30% chance for coins (18% total), 70% chance for XP gems (42% total)
-      if (dropChance < 0.18) {
+    if (dropChance < 0.8) {
+      // 20% chance for coins (16% total), 80% chance for XP gems (64% total)
+      if (dropChance < 0.16) {
         // Advanced enemies drop higher value coins
         Coin.spawnConsolidated(
           this.scene,
