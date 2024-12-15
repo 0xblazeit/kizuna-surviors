@@ -177,34 +177,23 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         speed: 340,
         scale: 0.85,
         projectileCount: 5,
-        shapeTypes: ["triangle", "square", "pentagon", "octagon"],
+        shapeTypes: ["triangle", "square"],
         trailAlpha: 1.0,
         trailScale: 0.98,
-        trailSpacing: 0.04,
-        trailLength: 12,
+        trailSpacing: 0.06,
+        trailLength: 8,
         rotationSpeed: 5.0,
         seekingSpeed: 280,
         glowIntensity: 1.5,
         isMaxLevel: true,
         geometricConvergence: true,
-        convergenceBurstCount: 8,
+        convergenceBurstCount: 4,
         convergenceDamage: 40,
         convergenceRange: 250,
         convergenceSpeed: 500,
         convergenceScale: 0.7,
         convergenceLifetime: 400,
-        pulsingEffect: true,
-        pulseFrequency: 2,
-        pulseScale: 1.2,
-        orbitalShards: true,
-        orbitalShardCount: 4,
-        orbitalRadius: 40,
-        orbitalSpeed: 3,
         rainbowTrail: true,
-        energyField: true,
-        energyFieldRadius: 100,
-        energyFieldDamage: 15,
-        energyFieldPulseRate: 1.5,
       },
     };
 
@@ -504,25 +493,6 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
           const pulseTime = time * this.stats.pulseFrequency;
           const pulseScale = 1 + Math.sin(pulseTime) * 0.2;
           proj.sprite.setScale(this.stats.scale * pulseScale);
-        }
-
-        // Orbital shards
-        if (this.stats.orbitalShards) {
-          const orbitTime = time * this.stats.orbitalSpeed;
-          for (let i = 0; i < this.stats.orbitalShardCount; i++) {
-            const angle = (i * Math.PI * 2) / this.stats.orbitalShardCount + orbitTime;
-            const orbitX = proj.sprite.x + Math.cos(angle) * this.stats.orbitalRadius;
-            const orbitY = proj.sprite.y + Math.sin(angle) * this.stats.orbitalRadius;
-
-            // Create or update orbital shards
-            if (!proj.orbitalShards) proj.orbitalShards = [];
-            if (!proj.orbitalShards[i]) {
-              proj.orbitalShards[i] = this.scene.add.sprite(orbitX, orbitY, proj.sprite.texture);
-              proj.orbitalShards[i].setScale(this.stats.scale * 0.3);
-              proj.orbitalShards[i].setTint(this.maxLevelColors.primary);
-            }
-            proj.orbitalShards[i].setPosition(orbitX, orbitY);
-          }
         }
 
         // Rainbow trail effect
