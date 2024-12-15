@@ -27,7 +27,6 @@ export async function POST(request) {
 
     // Extract the token (remove 'Bearer ' prefix if present)
     const token = authHeader.replace("Bearer ", "");
-    console.log("TOKEN: ", token);
     // Verify the user's token
     const { userId } = await privy.verifyAuthToken(token);
 
