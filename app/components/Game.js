@@ -1493,139 +1493,186 @@ const GameScene = Phaser.Class({
     this.wastedOverlay.setVisible(false);
 
     // Create function to show WASTED screen
-    this.showWastedScreen = () => {
-      if (this.gameState.isGameOver) return;
+    this.showWastedScreen = async () => {
+      if (this.gameState.isGameOver) {
+        console.log("Game already over, preventing duplicate call");
+        return;
+      }
 
-      console.log("Posting game stats with precise time:", {
-        timeAlive: this.gameState.finalTimeAlive,
-        timeAliveMS: this.gameState.finalTimeAliveMS,
-      });
+      this.gameState.isGameOver = true;
+      console.log("Setting game over state");
 
-      fetch("/api/game-over", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.userInfo.accessToken}`,
-        },
-        body: JSON.stringify({
+      try {
+        const accessToken = await this.userInfo.getAccessToken();
+        console.log("Got fresh access token");
+
+        // Prepare stats for display
+        const gameStats = {
           gold: this.gameState.gold,
           kills: this.gameState.kills,
           waveNumber: this.gameState.waveNumber,
           timeAlive: this.gameState.finalTimeAlive || (Date.now() - this.gameState.gameStartTime) / 1000,
           timeAliveMS: this.gameState.finalTimeAliveMS,
-          timestamp: new Date().toISOString(),
-          userAddress: this.userInfo.userAddress,
-          username: this.userInfo.username,
-          profileImage: this.userInfo.profileImage,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Game over response:", data);
-          // Invalidate the query after successful POST
-          if (this.userInfo.invalidateQueries) {
-            this.userInfo.invalidateQueries();
-          }
-        })
-        .catch((error) => console.error("Error posting game stats:", error));
+        };
 
-      this.gameState.isGameOver = true;
-      this.wastedOverlay.setVisible(true);
+        const response = await fetch("/api/game-over", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            ...gameStats,
+            timestamp: new Date().toISOString(),
+            userAddress: this.userInfo.userAddress,
+            username: this.userInfo.username,
+            profileImage: this.userInfo.profileImage,
+          }),
+        });
 
-      // Slow down time
-      this.time.timeScale = 0.5;
+        const data = await response.json();
+        console.log("Game over API call completed successfully:", data);
 
-      // Fade in black overlay
-      this.tweens.add({
-        targets: this.wastedOverlay.getAt(0),
-        alpha: 0.5,
-        duration: 1000,
-        ease: "Power2",
-      });
+        if (this.userInfo.invalidateQueries) {
+          this.userInfo.invalidateQueries();
+        }
 
-      // Fade in and scale up WASTED text
-      const wastedText = this.wastedOverlay.getAt(1);
-      wastedText.setScale(0.5);
-      this.tweens.add({
-        targets: wastedText,
-        alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 1000,
-        ease: "Power2",
-      });
+        // Show the WASTED overlay
+        this.wastedOverlay.setVisible(true);
 
-      // Add "Click anywhere or press WASD/Arrow keys to restart" text
-      const restartText = this.add.text(
-        this.scale.width / 2,
-        this.scale.height / 2 + 100,
-        "Click anywhere or press WASD/Arrow keys to restart",
-        {
+        // Add visual feedback with animations
+        this.tweens.add({
+          targets: [this.wastedOverlay.getAt(0)],
+          alpha: 0.8,
+          duration: 1000,
+          ease: "Power2",
+        });
+
+        // WASTED text with retro effect
+        const wastedText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.3, "WASTED", {
+            fontFamily: "VT323",
+            fontSize: "128px",
+            color: "#ff0000",
+            stroke: "#000000",
+            strokeThickness: 8,
+            shadow: { color: "#000000", fill: true, offsetX: 2, offsetY: 2, blur: 8 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.wastedOverlay.add(wastedText);
+
+        // Stats display with retro style
+        const formatTime = (ms) => {
+          const seconds = Math.floor(ms / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+        };
+
+        const statsStyle = {
           fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#FFFFFF",
-          stroke: "#000000",
+          fontSize: "32px",
+          color: "#00ff00",
+          stroke: "#003300",
           strokeThickness: 2,
-          align: "center",
-        }
-      );
-      restartText.setOrigin(0.5);
-      restartText.setAlpha(0);
-      restartText.setScrollFactor(0);
-      this.wastedOverlay.add(restartText);
+          shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+        };
 
-      // Make text pulse slightly
-      this.tweens.add({
-        targets: restartText,
-        alpha: { from: 0, to: 1 },
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-        onComplete: () => {
+        const statsTexts = [
+          `GOLD COLLECTED: ${gameStats.gold}`,
+          `ENEMIES SLAIN: ${gameStats.kills}`,
+          `WAVE REACHED: ${gameStats.waveNumber}`,
+          `TIME SURVIVED: ${formatTime(gameStats.timeAliveMS)}`,
+        ];
+
+        const statsY = this.scale.height * 0.45;
+        const statsSpacing = 40;
+
+        const statElements = statsTexts.map((text, index) => {
+          const statText = this.add
+            .text(this.scale.width / 2, statsY + index * statsSpacing, text, statsStyle)
+            .setOrigin(0.5)
+            .setAlpha(0);
+          this.wastedOverlay.add(statText);
+          return statText;
+        });
+
+        // Animate WASTED text
+        this.tweens.add({
+          targets: wastedText,
+          alpha: 1,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 1000,
+          ease: "Power2",
+        });
+
+        // Animate stats with cascade effect
+        statElements.forEach((statText, index) => {
           this.tweens.add({
-            targets: restartText,
-            scale: 1.1,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.inOut",
+            targets: statText,
+            alpha: 1,
+            x: this.scale.width / 2,
+            duration: 500,
+            delay: 1000 + index * 200,
+            ease: "Power2",
           });
-        },
-      });
+        });
 
-      // Function to restart the game
-      const restartGame = () => {
-        // Remove all event listeners
-        this.input.keyboard.off("keydown", keyHandler);
-        this.input.off("pointerdown", restartGame);
+        // Add "Press any key to continue" text (initially invisible)
+        const continueText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.8, "Press any movement key to continue", {
+            fontFamily: "VT323",
+            fontSize: "32px",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 4,
+            shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.wastedOverlay.add(continueText);
 
-        // Reset time scale
-        this.time.timeScale = 1;
+        // Delay before showing continue text and enabling input
+        this.time.delayedCall(3000, () => {
+          // First fade in the continue text
+          this.tweens.add({
+            targets: continueText,
+            alpha: 1,
+            duration: 500,
+            ease: "Power2",
+            onComplete: () => {
+              // Start blinking animation
+              this.tweens.add({
+                targets: continueText,
+                alpha: 0.3,
+                duration: 1000,
+                ease: "Power2",
+                yoyo: true,
+                repeat: -1,
+              });
 
-        // Stop all tweens
-        this.tweens.killAll();
+              // Add another delay before enabling input
+              this.time.delayedCall(2000, () => {
+                const handleInput = (event) => {
+                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                    this.input.keyboard.off("keydown", handleInput);
+                    this.scene.start("GameScene");
+                  }
+                };
 
-        // Restart the scene
-        this.scene.restart();
-      };
-
-      // Keyboard handler for WASD and Arrow keys
-      const keyHandler = (event) => {
-        const key = event.key.toUpperCase();
-        // Check for WASD or Arrow keys
-        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
-          restartGame();
-        }
-      };
-
-      // Add input listeners after a short delay to prevent accidental restarts
-      this.time.delayedCall(500, () => {
-        // Add keyboard listener
-        this.input.keyboard.on("keydown", keyHandler);
-
-        // Add mouse click listener for the entire game window
-        this.input.on("pointerdown", restartGame);
-      });
+                // Only add the input listener after both delays
+                this.input.keyboard.on("keydown", handleInput);
+                console.log("Input handler enabled");
+              });
+            },
+          });
+        });
+      } catch (error) {
+        console.error("Error in showWastedScreen:", error);
+        this.gameState.isGameOver = true;
+      }
     };
 
     // Listen for player death event
@@ -1711,270 +1758,189 @@ const GameScene = Phaser.Class({
     }
 
     // In the create function, update the showLevelClearedScreen function:
-    this.showLevelClearedScreen = () => {
-      if (this.gameState.isLevelCleared) return;
+    this.showLevelClearedScreen = async () => {
+      if (this.gameState.isLevelCleared || this.gameState.isGameOver) {
+        console.log("Level already cleared or game over, preventing duplicate call");
+        return;
+      }
 
-      // Stop player movement and game physics immediately
-      this.physics.pause();
+      this.gameState.isLevelCleared = true;
+      this.gameState.isGameOver = true;
+      console.log("Setting level cleared state");
 
-      // Disable all input temporarily
-      this.input.keyboard.enabled = false;
-      this.input.enabled = false;
+      try {
+        const accessToken = await this.userInfo.getAccessToken();
+        console.log("Got fresh access token for level clear");
 
-      // Store final time
-      this.gameState.gameEndTime = Date.now();
-      const elapsedMS = this.gameState.gameEndTime - this.gameState.gameStartTime;
-      this.gameState.finalTimeAliveMS = elapsedMS;
-      this.gameState.finalTimeAlive = elapsedMS / 1000;
-
-      console.log("Level Cleared! Posting game stats with precise time:", {
-        timeAlive: this.gameState.finalTimeAlive,
-        timeAliveMS: this.gameState.finalTimeAliveMS,
-      });
-
-      // Post game stats
-      fetch("/api/game-over", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.userInfo.accessToken}`,
-        },
-        body: JSON.stringify({
+        // Prepare stats for display
+        const gameStats = {
           gold: this.gameState.gold,
           kills: this.gameState.kills,
           waveNumber: this.gameState.waveNumber,
           timeAlive: this.gameState.finalTimeAlive,
           timeAliveMS: this.gameState.finalTimeAliveMS,
-          timestamp: new Date().toISOString(),
-          userAddress: this.userInfo.userAddress,
-          username: this.userInfo.username,
-          profileImage: this.userInfo.profileImage,
-          levelCleared: true,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Game over response:", data);
-          if (this.userInfo.invalidateQueries) {
-            this.userInfo.invalidateQueries();
-          }
-        })
-        .catch((error) => console.error("Error posting game stats:", error));
+        };
 
-      this.gameState.isLevelCleared = true;
-      this.levelClearedOverlay.setVisible(true);
+        const response = await fetch("/api/game-over", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            ...gameStats,
+            timestamp: new Date().toISOString(),
+            userAddress: this.userInfo.userAddress,
+            username: this.userInfo.username,
+            profileImage: this.userInfo.profileImage,
+            levelCleared: true,
+          }),
+        });
 
-      // Slow down time
-      this.time.timeScale = 0.5;
+        const data = await response.json();
+        console.log("Level cleared API call completed successfully:", data);
 
-      // Fade in black overlay
-      this.tweens.add({
-        targets: this.levelClearedOverlay.getAt(0),
-        alpha: 0.5,
-        duration: 1000,
-        ease: "Power2",
-      });
-
-      // Fade in and scale up LEVEL CLEARED text
-      const clearedText = this.levelClearedOverlay.getAt(1);
-      clearedText.setScale(0.5);
-      this.tweens.add({
-        targets: clearedText,
-        alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 1000,
-        ease: "Power2",
-      });
-
-      // Add restart text
-      const restartText = this.add.text(
-        this.scale.width / 2,
-        this.scale.height / 2 + 100,
-        "Click anywhere or press WASD/Arrow keys to play again",
-        {
-          fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#FFFFFF",
-          stroke: "#000000",
-          strokeThickness: 2,
-          align: "center",
+        if (this.userInfo.invalidateQueries) {
+          this.userInfo.invalidateQueries();
         }
-      );
-      restartText.setOrigin(0.5);
-      restartText.setAlpha(0);
-      restartText.setScrollFactor(0);
-      this.levelClearedOverlay.add(restartText);
 
-      // Make text pulse
-      this.tweens.add({
-        targets: restartText,
-        alpha: { from: 0, to: 1 },
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-        onComplete: () => {
-          this.tweens.add({
-            targets: restartText,
-            scale: 1.1,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.inOut",
-          });
-        },
-      });
+        // Show the level cleared overlay
+        this.levelClearedOverlay.setVisible(true);
 
-      // Clear any existing input handlers
-      this.input.keyboard.removeAllKeys(true);
-
-      const restartGame = () => {
-        this.input.keyboard.off("keydown", keyHandler);
-        this.input.off("pointerdown", restartGame);
-        this.time.timeScale = 1;
-        this.tweens.killAll();
-        this.scene.restart();
-      };
-
-      const keyHandler = (event) => {
-        const key = event.key.toUpperCase();
-        if (["W", "A", "S", "D", "ARROWUP", "ARROWLEFT", "ARROWDOWN", "ARROWRIGHT"].includes(key)) {
-          restartGame();
-        }
-      };
-
-      // Add longer delay (3 seconds) before enabling restart controls
-      this.time.delayedCall(3000, () => {
-        // Re-enable input
-        this.input.keyboard.enabled = true;
-        this.input.enabled = true;
-
-        // Add input listeners
-        this.input.keyboard.on("keydown", keyHandler);
-        this.input.on("pointerdown", restartGame);
-      });
-
-      // In the showLevelClearedScreen function, after the levelClearedText animation:
-
-      // Add stats container with retro styling
-      const statsContainer = this.add.container(this.scale.width / 2, this.scale.height / 2 + 80);
-      statsContainer.setScrollFactor(0);
-      this.levelClearedOverlay.add(statsContainer);
-
-      // Add decorative border for stats
-      const statsBorder = this.add.rectangle(0, 70, 400, 200, 0x00ff00, 1);
-      statsBorder.setStrokeStyle(2, 0x00ff00);
-      statsContainer.add(statsBorder);
-
-      // Add semi-transparent background for stats
-      const statsBackground = this.add.rectangle(0, 70, 396, 196, 0x000000, 0.85);
-      statsContainer.add(statsBackground);
-
-      // Format time for display
-      const minutes = Math.floor(this.gameState.finalTimeAlive / 60);
-      const seconds = Math.floor(this.gameState.finalTimeAlive % 60);
-      const ms = Math.floor((this.gameState.finalTimeAliveMS % 1000) / 10);
-      const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
-        .toString()
-        .padStart(2, "0")}`;
-
-      // Create stats text with retro styling
-      const statsStyle = {
-        fontFamily: "VT323",
-        fontSize: "24px",
-        color: "#00ff00",
-        align: "left",
-        stroke: "#003300",
-        strokeThickness: 2,
-      };
-
-      // Stats header
-      const statsHeader = this.add
-        .text(0, -20, "FINAL STATS", {
-          ...statsStyle,
-          fontSize: "32px",
-          color: "#ffff00",
-        })
-        .setOrigin(0.5);
-      statsContainer.add(statsHeader);
-
-      // Create stats text array
-      const statsTexts = [
-        `TIME SURVIVED: ${timeString}`,
-        `WAVE REACHED: ${this.gameState.waveNumber}`,
-        `ENEMIES SLAIN: ${this.gameState.kills}`,
-        `GOLD EARNED: ${this.gameState.gold}`,
-      ];
-
-      // Add each stat with a slight delay and animation
-      statsTexts.forEach((text, index) => {
-        const yPos = 20 + index * 35;
-        const statText = this.add.text(-180, yPos, text, statsStyle).setAlpha(0);
-        statsContainer.add(statText);
-
-        // Animate each stat line
+        // Background fade
         this.tweens.add({
-          targets: statText,
-          alpha: 1,
-          x: -170,
-          duration: 500,
+          targets: [this.levelClearedOverlay.getAt(0)],
+          alpha: 0.8,
+          duration: 1000,
           ease: "Power2",
-          delay: 1000 + index * 200,
         });
-      });
 
-      // Add pixel decoration at corners
-      const cornerSize = 10;
-      const corners = [
-        { x: -200, y: -20 }, // Top left
-        { x: 200, y: -20 }, // Top right
-        { x: -200, y: 160 }, // Bottom left
-        { x: 200, y: 160 }, // Bottom right
-      ];
-
-      corners.forEach((corner) => {
-        const pixel = this.add.rectangle(corner.x, corner.y, cornerSize, cornerSize, 0x00ff00);
-        statsContainer.add(pixel);
-      });
-
-      // Add "HIGH SCORE" text if applicable (you can add your own logic here)
-      if (this.gameState.kills > 100) {
-        // Example condition
-        const highScoreText = this.add
-          .text(0, 160, "NEW HIGH SCORE!", {
+        // Victory text with retro effect
+        const victoryText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.3, "LEVEL CLEARED!", {
             fontFamily: "VT323",
-            fontSize: "28px",
-            color: "#ffff00",
-            stroke: "#ff0000",
-            strokeThickness: 4,
+            fontSize: "96px",
+            color: "#00ff00",
+            stroke: "#003300",
+            strokeThickness: 8,
+            shadow: { color: "#000000", fill: true, offsetX: 2, offsetY: 2, blur: 8 },
           })
-          .setOrigin(0.5);
-        statsContainer.add(highScoreText);
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.levelClearedOverlay.add(victoryText);
 
-        // Make it flash
-        this.tweens.add({
-          targets: highScoreText,
-          alpha: 0.2,
-          duration: 500,
-          yoyo: true,
-          repeat: -1,
+        // Stats display
+        const formatTime = (ms) => {
+          const seconds = Math.floor(ms / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+        };
+
+        const statsStyle = {
+          fontFamily: "VT323",
+          fontSize: "32px",
+          color: "#00ffff",
+          stroke: "#003333",
+          strokeThickness: 2,
+          shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+        };
+
+        const statsTexts = [
+          `GOLD COLLECTED: ${gameStats.gold}`,
+          `ENEMIES SLAIN: ${gameStats.kills}`,
+          `FINAL WAVE: ${gameStats.waveNumber}`,
+          `COMPLETION TIME: ${formatTime(gameStats.timeAliveMS)}`,
+        ];
+
+        const statsY = this.scale.height * 0.45;
+        const statsSpacing = 40;
+
+        const statElements = statsTexts.map((text, index) => {
+          const statText = this.add
+            .text(this.scale.width / 2, statsY + index * statsSpacing, text, statsStyle)
+            .setOrigin(0.5)
+            .setAlpha(0);
+          this.levelClearedOverlay.add(statText);
+          return statText;
         });
+
+        // Animate victory text
+        this.tweens.add({
+          targets: victoryText,
+          alpha: 1,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 1000,
+          ease: "Power2",
+        });
+
+        // Animate stats with cascade effect
+        statElements.forEach((statText, index) => {
+          this.tweens.add({
+            targets: statText,
+            alpha: 1,
+            x: this.scale.width / 2,
+            duration: 500,
+            delay: 1000 + index * 200,
+            ease: "Power2",
+          });
+        });
+
+        // Continue text with retro styling
+        const continueText = this.add
+          .text(this.scale.width / 2, this.scale.height * 0.8, "Press any movement key to continue", {
+            fontFamily: "VT323",
+            fontSize: "32px",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 4,
+            shadow: { color: "#000000", fill: true, offsetX: 1, offsetY: 1, blur: 2 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.levelClearedOverlay.add(continueText);
+
+        // Delay before showing continue text
+        this.time.delayedCall(10000, () => {
+          // First fade in the continue text
+          this.tweens.add({
+            targets: continueText,
+            alpha: 1,
+            duration: 500,
+            ease: "Power2",
+            onComplete: () => {
+              // Start blinking animation
+              this.tweens.add({
+                targets: continueText,
+                alpha: 0.3,
+                duration: 1000,
+                ease: "Power2",
+                yoyo: true,
+                repeat: -1,
+              });
+
+              // Add another delay before enabling input
+              this.time.delayedCall(2000, () => {
+                const handleInput = (event) => {
+                  if (["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"].includes(event.key.toUpperCase())) {
+                    this.input.keyboard.off("keydown", handleInput);
+                    this.scene.start("GameScene");
+                  }
+                };
+
+                // Only add the input listener after both delays
+                this.input.keyboard.on("keydown", handleInput);
+                console.log("Input handler enabled");
+              });
+            },
+          });
+        });
+      } catch (error) {
+        console.error("Error in showLevelClearedScreen:", error);
+        this.gameState.isLevelCleared = true;
+        this.gameState.isGameOver = true;
       }
-
-      // Update the restart text position to be below the stats with more spacing
-      restartText.setY(this.scale.height / 2 + 280);
-
-      // Add all elements to the levelClearedOverlay
-      statsContainer.setAlpha(0);
-
-      // Fade in the stats container
-      this.tweens.add({
-        targets: statsContainer,
-        alpha: 1,
-        duration: 1000,
-        delay: 500,
-        ease: "Power2",
-      });
     };
 
     // In the create function, add this before setting up the WASTED overlay:
@@ -2225,7 +2191,7 @@ export default function Game() {
             userAddress: userAddress,
             username: username,
             profileImage: user?.twitter?.profilePictureUrl,
-            accessToken,
+            getAccessToken: getAccessToken, // Pass the function instead of the token
             invalidateQueries: () => {
               queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
               queryClient.invalidateQueries({ queryKey: ["memberCount"] });
