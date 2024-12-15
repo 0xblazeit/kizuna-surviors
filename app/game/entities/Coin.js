@@ -40,17 +40,27 @@ class Coin {
     // Distribute value across coin tiers
     const tiers = Object.values(this.VALUE_TIERS).sort((a, b) => b - a);
 
-    // Limit max coins per drop based on total value
-    const MAX_COINS_PER_DROP = Math.min(3, Math.ceil(totalValue / 100)); // Scale coins with value but cap at 3
+    // Early game spawns more coins but with lower values
+    const isEarlyGame = scene.gameState.wave <= 5;
+    const MAX_COINS_PER_DROP = isEarlyGame 
+      ? Math.min(4, Math.ceil(totalValue / 25)) // More coins in early game
+      : Math.min(3, Math.ceil(totalValue / 100)); // Fewer but higher value coins later
 
     let coinsSpawned = 0;
 
     while (remainingValue > 0 && coinsSpawned < MAX_COINS_PER_DROP) {
-      // Find highest value tier that fits in remaining value
-      const tier = tiers.find((t) => t <= remainingValue) || tiers[tiers.length - 1];
+      // In early game, prefer lower value tiers to spawn more coins
+      let tier;
+      if (isEarlyGame) {
+        // Start with lower value tiers in early game
+        tier = tiers.reverse().find((t) => t <= remainingValue) || tiers[0];
+      } else {
+        // Use higher value tiers in later waves
+        tier = tiers.find((t) => t <= remainingValue) || tiers[tiers.length - 1];
+      }
 
-      // Random position within a smaller radius to keep coins closer
-      const radius = 15; // Reduced from 20 to 15
+      // Random position within a small radius
+      const radius = isEarlyGame ? 20 : 15; // Slightly larger spread in early game
       const angle = (coinsSpawned / MAX_COINS_PER_DROP) * Math.PI * 2; // Evenly distribute coins
       const spawnX = x + Math.cos(angle) * radius;
       const spawnY = y + Math.sin(angle) * radius;

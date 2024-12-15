@@ -493,15 +493,23 @@ class EnemyBasic extends BasePlayer {
     const waveMultiplier = Math.min(3, Math.floor(this.scene.gameState.wave / 5) + 1); // Cap at 3x after wave 15
     const coinValue = baseValue * waveMultiplier;
 
-    // Determine drop type - scale down drop chance in later waves
-    const dropChance = Math.random() * (1 + this.scene.gameState.wave / 20); // Drop chance decreases as waves progress
-    if (dropChance < 0.25) {
-      if (dropChance < 0.1) {
-        // Spawn consolidated coins instead of multiple individual ones
+    // Improved drop chance calculation for early waves
+    // Start with higher base chance and gradually decrease
+    const baseDropChance = 0.4; // Increased from 0.25
+    const waveScaling = Math.max(0.6, 1 - this.scene.gameState.wave / 25); // Slower decrease, minimum 60% of base chance
+    const dropChance = Math.random();
+    
+    if (dropChance < baseDropChance * waveScaling) {
+      // Increased coin drop ratio in early waves
+      const coinDropThreshold = Math.min(0.25, 0.15 + (5 - Math.min(5, this.scene.gameState.wave)) * 0.03);
+      
+      if (dropChance < coinDropThreshold) {
+        // Spawn consolidated coins
         Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, coinValue);
       } else {
-        // XP gem drop chance remains the same
-        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
+        // XP gem with adjusted value for early waves
+        const gemValue = Math.max(30, 50 - (5 - Math.min(5, this.scene.gameState.wave)) * 5);
+        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, gemValue, 0.12);
         if (gem) {
           this.scene.xpGems.push(gem);
         }
