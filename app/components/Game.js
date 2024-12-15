@@ -1074,10 +1074,10 @@ const GameScene = Phaser.Class({
       color: "#88ff88",
     };
 
-    const welcomeText = `Welcome, ${this.userInfo?.username || "Player"}!`;
     const addressText = this.userInfo?.userAddress
       ? `${this.userInfo.userAddress.slice(0, 6)}...${this.userInfo.userAddress.slice(-4)}`
       : "";
+    const welcomeText = `Welcome, ${this.userInfo?.username || addressText || "Player"}!`;
 
     this.welcomeText = this.add
       .text(centerX, startY + 40, welcomeText, welcomeConfig)
@@ -1505,6 +1505,7 @@ const GameScene = Phaser.Class({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${this.userInfo.accessToken}`,
         },
         body: JSON.stringify({
           gold: this.gameState.gold,
@@ -1516,7 +1517,6 @@ const GameScene = Phaser.Class({
           userAddress: this.userInfo.userAddress,
           username: this.userInfo.username,
           profileImage: this.userInfo.profileImage,
-          levelCleared: true, // Add this flag to distinguish from deaths
         }),
       })
         .then((response) => response.json())
@@ -1737,6 +1737,7 @@ const GameScene = Phaser.Class({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${this.userInfo.accessToken}`,
         },
         body: JSON.stringify({
           gold: this.gameState.gold,
@@ -2193,66 +2194,100 @@ const GameScene = Phaser.Class({
 });
 
 export default function Game() {
-  const { ready, user } = usePrivy();
+  const { ready, user, getAccessToken } = usePrivy();
   const userAddress = user?.wallet?.address;
   const username = user?.twitter?.username;
   const gameRef = useRef(null);
-  const queryClient = useQueryClient(); // Get the query client
+  const gameInstanceRef = useRef(null);
+  const initializingRef = useRef(false); // Add ref to track initialization state
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!ready || !userAddress || !username) return;
-
-    if (typeof window !== "undefined" && window.Phaser) {
-      const userInfo = {
-        userAddress: user.wallet.address,
-        username: user.twitter.username,
-        profileImage: user.twitter.profilePictureUrl,
-        invalidateQueries: () => {
-          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
-          queryClient.invalidateQueries({ queryKey: ["memberCount"] });
-          queryClient.invalidateQueries({ queryKey: ["gameTotalPlays"] });
-          queryClient.invalidateQueries({ queryKey: ["nfts"] });
-        },
-      };
-
-      // Create a custom scene class that includes the user info
-      class CustomGameScene extends GameScene {
-        constructor() {
-          super();
-          this.userInfo = userInfo;
-        }
-      }
-
-      const config = {
-        type: Phaser.AUTO,
-        parent: gameRef.current,
-        width: 800,
-        height: 600,
-        backgroundColor: "#000000",
-        pixelArt: true,
-        physics: {
-          default: "arcade",
-          arcade: {
-            gravity: { y: 0 },
-            debug: false,
-          },
-        },
-        input: {
-          activePointers: 1,
-          pixelPerfect: false,
-        },
-        scene: [MenuScene, CustomGameScene, UpgradeMenuScene],
-      };
-
-      const game = new Phaser.Game(config);
-
-      return () => {
-        game.destroy(true);
-      };
+    // Return early if not ready, game exists, or already initializing
+    if (!ready || gameInstanceRef.current || initializingRef.current) {
+      return;
     }
-  }, [ready, user, userAddress, username]);
 
-  if (!ready || !userAddress || !username) {
+    const initializeGame = async () => {
+      // Set initializing flag
+      initializingRef.current = true;
+
+      try {
+        const accessToken = await getAccessToken();
+
+        // Check again if game exists (in case of double mount)
+        if (gameInstanceRef.current) {
+          return;
+        }
+
+        if (typeof window !== "undefined" && window.Phaser) {
+          const userInfo = {
+            userAddress: userAddress,
+            username: username,
+            profileImage: user?.twitter?.profilePictureUrl,
+            accessToken,
+            invalidateQueries: () => {
+              queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+              queryClient.invalidateQueries({ queryKey: ["memberCount"] });
+              queryClient.invalidateQueries({ queryKey: ["gameTotalPlays"] });
+              queryClient.invalidateQueries({ queryKey: ["nfts"] });
+            },
+          };
+
+          class CustomGameScene extends GameScene {
+            constructor() {
+              super();
+              this.userInfo = userInfo;
+            }
+          }
+
+          const config = {
+            type: Phaser.AUTO,
+            parent: gameRef.current,
+            width: 800,
+            height: 600,
+            backgroundColor: "#000000",
+            pixelArt: true,
+            physics: {
+              default: "arcade",
+              arcade: {
+                gravity: { y: 0 },
+                debug: false,
+              },
+            },
+            input: {
+              activePointers: 1,
+              pixelPerfect: false,
+            },
+            scene: [MenuScene, CustomGameScene, UpgradeMenuScene],
+          };
+
+          // Final check before creating game instance
+          if (!gameInstanceRef.current) {
+            gameInstanceRef.current = new Phaser.Game(config);
+          }
+        }
+      } catch (error) {
+        console.error("Error getting access token:", error);
+        // Reset initializing flag on error
+        initializingRef.current = false;
+      }
+    };
+
+    initializeGame();
+
+    // Cleanup function
+    return () => {
+      if (gameInstanceRef.current) {
+        gameInstanceRef.current.destroy(true);
+        gameInstanceRef.current = null;
+      }
+      initializingRef.current = false;
+    };
+  }, [ready, user, userAddress, username, getAccessToken, queryClient]);
+
+  // Show loading state if not ready or game is initializing
+  if (!ready || initializingRef.current) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
         <div>Loading...</div>

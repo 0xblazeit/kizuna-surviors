@@ -61,7 +61,7 @@ export default function Navbar() {
         });
       }
 
-      router.push("/arena");
+      // router.push("/arena");
     },
     onError: (error) => {
       console.log("login error..", error);

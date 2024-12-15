@@ -29,6 +29,10 @@ class EnemyAdvanced extends EnemyBasic {
   }
 
   die() {
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
+
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
       this.scene.coins = [];
@@ -37,18 +41,17 @@ class EnemyAdvanced extends EnemyBasic {
       this.scene.xpGems = [];
     }
 
-    // Determine drop type - 60% chance for any drop (increased from 50%)
+    // Determine drop type - 60% chance for drops
     const dropChance = Math.random();
     if (dropChance < 0.60) {  
-      // 30% chance for coin (18% total), 70% chance for XP gem (42% total)
-      // Increased XP gem chance to make leveling smoother
+      // 30% chance for coins (18% total), 70% chance for XP gems (42% total)
       if (dropChance < 0.18) {
         // Advanced enemies drop higher value coins
         Coin.spawnConsolidated(
           this.scene,
           this.sprite.x,
           this.sprite.y,
-          25 * 2 // Advanced enemies drop more valuable coins
+          50 // Higher value for advanced enemies
         );
       } else {
         // Advanced enemies drop higher value XP gems
@@ -56,8 +59,8 @@ class EnemyAdvanced extends EnemyBasic {
           this.scene,
           this.sprite.x,
           this.sprite.y,
-          150, // Increased base value
-          0.15
+          100, // Higher base value
+          0.13
         );
         if (gem) {
           this.scene.xpGems.push(gem);
@@ -65,7 +68,30 @@ class EnemyAdvanced extends EnemyBasic {
       }
     }
 
-    super.die();
+    // Increment kill counter
+    this.scene.gameState.kills++;
+    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
+    // Play death animation and cleanup
+    this.playDeathAnimation().then(() => {
+      // Remove from scene's enemy list
+      if (this.scene.enemies) {
+        const index = this.scene.enemies.indexOf(this);
+        if (index > -1) {
+          this.scene.enemies.splice(index, 1);
+        }
+      }
+
+      // Cleanup health bar
+      if (this.healthBar) {
+        this.healthBar.container.destroy();
+      }
+
+      // Destroy sprite
+      if (this.sprite) {
+        this.sprite.destroy();
+      }
+    });
   }
 }
 

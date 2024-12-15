@@ -114,7 +114,10 @@ function LeaderboardTable({ data }) {
                         />
                       </div>
                       <span className="text-[15px] font-semibold md:text-xl tracking-tight text-white/80">
-                        {player.username || "—"}
+                        {player.userName ||
+                          (player.walletAddress
+                            ? `${player.walletAddress.slice(0, 6)}...${player.walletAddress.slice(-4)}`
+                            : "—")}
                       </span>
                       {isYou && (
                         <span className="flex gap-0.5 items-center px-1.5 py-0.5 text-xs font-medium rounded-full text-white/90 bg-white/10">

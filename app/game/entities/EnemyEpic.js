@@ -66,14 +66,15 @@ class EnemyEpic extends EnemyAdvanced {
   }
 
   die() {
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
+
     // Clean up aura first
     if (this.aura) {
       this.aura.destroy();
       this.aura = null;
     }
-    
-    // Set higher coin value for epic enemies
-    const coinValue = 40; // Increased single coin value
     
     // Initialize arrays if they don't exist
     if (!this.scene.coins) {
@@ -83,34 +84,56 @@ class EnemyEpic extends EnemyAdvanced {
       this.scene.xpGems = [];
     }
 
-    // Determine drop type - 100% chance for drops
+    // Determine drop type - 40% chance for drops
     const dropChance = Math.random();
-    // 40% chance for coins, 60% chance for XP gem
-    if (dropChance < 0.4) {
-      // Spawn consolidated coins with higher value
-      Coin.spawnConsolidated(
-        this.scene,
-        this.sprite.x,
-        this.sprite.y,
-        coinValue * 3 // Epic enemies drop more valuable coins
-      );
-    } else {
-      // Spawn a single high-value XP gem
-      const gem = new XPGem(
-        this.scene,
-        this.sprite.x,
-        this.sprite.y,
-        80, // Higher base XP value
-        0.2 // Slightly larger scale to indicate higher value
-      );
-      if (gem) {
-        this.scene.xpGems.push(gem);
+    if (dropChance < 0.4) {  
+      // 40% chance for coins (16% total), 60% chance for XP gems (24% total)
+      if (dropChance < 0.16) {
+        // Epic enemies drop more valuable consolidated coins
+        Coin.spawnConsolidated(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          120 // High value for epic enemies
+        );
+      } else {
+        // Epic enemies drop higher value XP gems
+        const gem = new XPGem(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          150, // Higher base value
+          0.15
+        );
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
       }
     }
 
-    super.playDeathAnimation().then(() => {
-      // Call parent die method but skip its drop logic
-      super.onDeath();
+    // Increment kill counter
+    this.scene.gameState.kills++;
+    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
+    // Play death animation and cleanup
+    this.playDeathAnimation().then(() => {
+      // Remove from scene's enemy list
+      if (this.scene.enemies) {
+        const index = this.scene.enemies.indexOf(this);
+        if (index > -1) {
+          this.scene.enemies.splice(index, 1);
+        }
+      }
+
+      // Cleanup health bar
+      if (this.healthBar) {
+        this.healthBar.container.destroy();
+      }
+
+      // Destroy sprite
+      if (this.sprite) {
+        this.sprite.destroy();
+      }
     });
   }
 }

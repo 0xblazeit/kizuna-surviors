@@ -42,11 +42,21 @@ class MainPlayer extends BasePlayer {
     };
 
     // Add username text below health bar
-    this.usernameText = scene.add.text(0, healthBarHeight + 5, scene.userInfo?.username || '', {
-      fontFamily: 'VT323',
-      fontSize: '14px',
-      color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    this.usernameText = scene.add
+      .text(
+        0,
+        healthBarHeight + 5,
+        scene.userInfo?.username ||
+          (scene.userInfo?.userAddress
+            ? `${scene.userInfo.userAddress.slice(0, 6)}...${scene.userInfo.userAddress.slice(-4)}`
+            : ""),
+        {
+          fontFamily: "VT323",
+          fontSize: "14px",
+          color: "#ffffff",
+        }
+      )
+      .setOrigin(0.5, 0);
 
     // Add components to container
     this.healthBar.container.add([this.healthBar.background, this.healthBar.bar, this.usernameText]);

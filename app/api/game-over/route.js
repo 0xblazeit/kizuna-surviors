@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../db";
 import { gameStats } from "../../../db/schema";
+import { PrivyClient } from "@privy-io/server-auth";
+
+// Initialize Privy client
+const privy = new PrivyClient(process.env.NEXT_PUBLIC_PRIVY_APP_ID, process.env.PRIVY_APP_SECRET);
 
 export async function GET() {
   try {
@@ -13,7 +17,23 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    console.log("GAME OVER RESULTS RECEIVED");
     const data = await request.json();
+
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "No authorization header" }, { status: 401 });
+    }
+
+    // Extract the token (remove 'Bearer ' prefix if present)
+    const token = authHeader.replace("Bearer ", "");
+    // Verify the user's token
+    const { userId } = await privy.verifyAuthToken(token);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+    console.log("PRIVY SERVER AUTH VALIDATED - END");
 
     // Convert UTC timestamp to EST
     const utcDate = new Date(data.timestamp);
