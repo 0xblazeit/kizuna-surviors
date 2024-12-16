@@ -79,6 +79,18 @@ export class AwakenWeapon extends BaseWeapon {
     }
   }
 
+  levelUp() {
+    if (this.currentLevel >= 8) {
+      console.log("AwakenWeapon already at max level!");
+      return false;
+    }
+
+    this.currentLevel++;
+    this.updateStats(this.currentLevel);
+    console.log(`AwakenWeapon leveled up to ${this.currentLevel}! New stats:`, this.stats);
+    return true;
+  }
+
   findTargets() {
     // Get all enemies from the scene
     const enemies = this.scene.enemies || [];
