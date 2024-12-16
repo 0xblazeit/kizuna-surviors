@@ -2,6 +2,11 @@
 
 Use NFT(s) found across various collections/worlds as in game playable assets/unlockables in a 2D roguelike survival game inspired by "Vampire Survivors" where players unleash chaos in a relentless bullet firestorm to fend off endless waves of enemies while upgrading weapons. Token gated by NFT(s) found on-chain @ [Shape L2](https://shape.network/).
 
+ACCESS TOKENS:
+SHAPE_CRAFT_KEY_CONTRACT = "0x05aA491820662b131d285757E5DA4b74BD0F0e5F";
+AWAKEN_EYE_CONTRACT = "0xF3851e1b7824BD920350E6Fe9B890bb76d01C9f7";
+SHAPECRAFT_SURVIVORS_GENESIS_CONTRACT = "0xb96f9C2345395Aa7b1A3f3984e398436457e5561";
+
 URL: https://shapecraft-survivors.vercel.app
 
 Tech Stack:
