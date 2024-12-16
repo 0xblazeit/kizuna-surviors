@@ -1,4 +1,19 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ShapeCraft Survivors
+
+Use NFT(s) found across various collections/worlds as in game playable assets/unlockables in a 2D roguelike survival game inspired by "Vampire Survivors" where players unleash chaos in a relentless bullet firestorm to fend off endless waves of enemies while upgrading weapons. Token gated by NFT(s) found on-chain @ [Shape L2](https://shape.network/).
+
+URL: https://shapecraft-survivors.vercel.app
+
+Tech Stack:
+
+- Javascript
+- NextJs
+- Phaser game engine
+- Turso / SQLite
+- Drizzle ORM
+- Web3:
+- Privy Auth + Embedded Wallet
+- Alchemy SDK NFT(s)
 
 ## Getting Started
 
@@ -12,6 +27,22 @@ yarn dev
 pnpm dev
 # or
 bun dev
+```
+
+Update the .env file with your API keys
+
+```bash
+#DATABASE
+TURSO_CONNECTION_URL=
+TURSO_AUTH_TOKEN=
+#AUTH
+NEXT_PUBLIC_PRIVY_APP_ID=
+PRIVY_APP_SECRET=
+#ETH
+ALCHEMY_API_KEY=
+#NEXT
+NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_DOMAIN=
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
