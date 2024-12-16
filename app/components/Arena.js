@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import Leaderboard from "./Leaderboard";
 import { AccessDenied } from "./AccessDenied";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Image from "next/image";
 
 async function fetchWalletBalance(walletAddress) {
   if (!walletAddress) return null;
@@ -83,7 +84,15 @@ export function Arena() {
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
-            <p>Please connect your wallet</p>
+            <div className="flex items-center justify-center w-full h-full">
+              <Image 
+                src="/ss-logo.svg"
+                alt="SS Logo"
+                width={150}
+                height={150}
+                className="opacity-80 hover:opacity-100 transition-opacity"
+              />
+            </div>
           ) : (
             <>
               <h3 className="mb-2 text-lg md:text-3xl">Welcome, {user?.twitter?.username || "Player"}</h3>
