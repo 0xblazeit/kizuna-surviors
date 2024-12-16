@@ -18,6 +18,17 @@ export function AccessDenied() {
         </p>
         <p className="flex flex-col gap-2 justify-center items-center text-2xl leading-relaxed text-white">
           <span className="flex gap-1 items-center">
+            <PawPrint className="w-6 h-6" />
+            <a
+              className="text-white underline"
+              href="https://highlight.xyz/mint/shape:0xb96f9C2345395Aa7b1A3f3984e398436457e5561"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Shapecraft Survivors Genesis
+            </a>
+          </span>
+          <span className="flex gap-1 items-center">
             <Key className="w-6 h-6" />
             <a
               className="text-white underline"
@@ -37,17 +48,6 @@ export function AccessDenied() {
               rel="noreferrer"
             >
               Awakened
-            </a>
-          </span>
-          <span className="flex gap-1 items-center">
-            <PawPrint className="w-6 h-6" />
-            <a
-            //   className="text-white underline"
-            //   href="https://highlight.xyz/mint/shape:0xF3851e1b7824BD920350E6Fe9B890bb76d01C9f7"
-            //   target="_blank"
-            //   rel="noreferrer"
-            >
-              ░░░░ ░░░░░░
             </a>
           </span>
         </p>

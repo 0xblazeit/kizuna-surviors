@@ -27,6 +27,7 @@ const nextConfig = {
         pathname: "/profile_images/**",
       },
     ],
+    domains: ["arweave.net"],
   },
 };
 
