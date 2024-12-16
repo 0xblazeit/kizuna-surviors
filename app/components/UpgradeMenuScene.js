@@ -166,15 +166,50 @@ const UpgradeMenuScene = Phaser.Class({
         })
         .setOrigin(0.5);
 
-      // Add level text
-      const levelText = this.add
-        .text(x, y + 40, `Level ${weapon.currentLevel}`, {
-          fontFamily: "VT323",
-          fontSize: "20px",
-          color: "#ffff00",
-          align: "center",
-        })
-        .setOrigin(0.5);
+      // Add level stars in two rows
+      const maxLevel = 8; // Maximum level for the weapon
+      const starsPerRow = 4; // Stars per row
+      const starSpacing = 20; // Space between stars
+      const rowSpacing = 20; // Space between rows
+      const startStarX = x - ((starsPerRow - 1) * starSpacing) / 2;
+      const startStarY = y + 30; // Starting Y position for first row
+
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < starsPerRow; col++) {
+          const starIndex = row * starsPerRow + col;
+          const starX = startStarX + col * starSpacing;
+          const starY = startStarY + row * rowSpacing;
+
+          // Add filled or empty star based on current level
+          const starSymbol = starIndex < weapon.currentLevel ? "★" : "☆";
+          const starColor = starIndex < weapon.currentLevel ? "#ffff00" : "#666666";
+
+          this.add
+            .text(starX, starY, starSymbol, {
+              fontFamily: "VT323",
+              fontSize: "24px",
+              color: starColor,
+              align: "center",
+            })
+            .setOrigin(0.5)
+            .setStroke("#000000", 3);
+        }
+      }
+
+      // Add level indicator text
+      this.add
+        .text(
+          x + ((starsPerRow - 1) * starSpacing) / 2 + 30,
+          startStarY + rowSpacing / 2,
+          `${weapon.currentLevel}/${maxLevel}`,
+          {
+            fontFamily: "VT323",
+            fontSize: "16px",
+            color: "#aaaaaa",
+            align: "left",
+          }
+        )
+        .setOrigin(0, 0.5);
 
       // Add stats text
       const stats = weapon.stats;
@@ -184,11 +219,12 @@ const UpgradeMenuScene = Phaser.Class({
       if (stats.cooldown) statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
 
       this.add
-        .text(x, y + 80, statsText.join("\n"), {
+        .text(x, startStarY + rowSpacing * 2 + 45, statsText.join("\n"), {
           fontFamily: "VT323",
           fontSize: "16px",
           color: "#aaaaaa",
           align: "center",
+          lineSpacing: 8,
         })
         .setOrigin(0.5);
 
