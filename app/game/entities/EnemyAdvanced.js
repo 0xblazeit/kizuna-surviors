@@ -12,8 +12,8 @@ class EnemyAdvanced extends EnemyBasic {
       attackSpeed: 1.2, // 20% faster attacks
       attackDamage: 12, // 50% more damage
       scale: 0.18, // Just slightly larger than basic enemies (0.4)
-      trailTint: 0xffff00, // Gold trail for advanced enemies
-      attackRange: 145, // 50% more range than basic enemies
+      trailTint: 0xffff00,
+      attackRange: 110,
       ...config,
     };
 
@@ -21,7 +21,7 @@ class EnemyAdvanced extends EnemyBasic {
 
     // Advanced enemy specific properties
     this.type = "advanced";
-    
+
     // Custom separation parameters for advanced enemies
     this.separationRadius = 80; // Larger separation radius due to bigger size
     this.baseSeparationForce = 0.6; // Stronger base separation
@@ -43,7 +43,7 @@ class EnemyAdvanced extends EnemyBasic {
 
     // Determine drop type - 60% chance for drops
     const dropChance = Math.random();
-    if (dropChance < 0.60) {  
+    if (dropChance < 0.6) {
       // 30% chance for coins (18% total), 70% chance for XP gems (42% total)
       if (dropChance < 0.18) {
         // Advanced enemies drop higher value coins
