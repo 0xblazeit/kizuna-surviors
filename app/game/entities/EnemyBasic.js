@@ -496,11 +496,11 @@ class EnemyBasic extends BasePlayer {
       coinValue = 50; // Epic enemies drop even more
     }
 
-    // Determine drop type - 25% chance for any drop
+    // Determine drop type - 35% chance for any drop
     const dropChance = Math.random();
-    if (dropChance < 0.25) {
-      // 40% chance for coins (10% total), 60% chance for XP gem (15% total)
-      if (dropChance < 0.1) {
+    if (dropChance < 0.35) {
+      // 30% chance for coins (10.5% total), 70% chance for XP gem (24.5% total)
+      if (dropChance < 0.105) {
         // Determine number of coins based on enemy type
         let numCoins = 1;
         if (this.type === "advanced") {
