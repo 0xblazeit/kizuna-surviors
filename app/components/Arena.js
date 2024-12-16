@@ -67,7 +67,7 @@ export function Arena() {
     enabled: !!user?.wallet?.address,
   });
 
-  const hasAccess = accessData?.isShapeCraftKeyHolder || accessData?.isAwakenEyeHolder;
+  const hasAccess = accessData?.isShapeCraftKeyHolder || accessData?.isAwakenEyeHolder || accessData?.isSSGHolder;
 
   const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);

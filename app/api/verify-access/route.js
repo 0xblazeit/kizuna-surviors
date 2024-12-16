@@ -6,7 +6,7 @@ export const revalidate = 0;
 
 const SHAPE_CRAFT_KEY_CONTRACT = "0x05aA491820662b131d285757E5DA4b74BD0F0e5F";
 const AWAKEN_EYE_CONTRACT = "0xF3851e1b7824BD920350E6Fe9B890bb76d01C9f7";
-
+const SSG_CONTRACT = "0xb96f9C2345395Aa7b1A3f3984e398436457e5561";
 export async function GET(req) {
   const walletAddress = req.nextUrl.searchParams.get("wallet");
 
@@ -49,12 +49,16 @@ export async function GET(req) {
       (nft) => nft.contract.address.toLowerCase() === AWAKEN_EYE_CONTRACT.toLowerCase()
     );
 
+    // Add SSG holder check
+    const isSSGHolder = nfts.ownedNfts.some((nft) => nft.contract.address.toLowerCase() === SSG_CONTRACT.toLowerCase());
+
     return NextResponse.json(
       {
         totalCount: nfts.totalCount,
         nfts: formattedNfts,
         isShapeCraftKeyHolder,
         isAwakenEyeHolder,
+        isSSGHolder,
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
