@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { generateAvatar } from "@/lib/utils";
-import { Trophy, Medal, MedalMilitary, PawPrint } from "@phosphor-icons/react";
+import { Trophy, Medal, MedalMilitary, PawPrint, CaretDown } from "@phosphor-icons/react";
 import { usePrivy } from "@privy-io/react-auth";
 
 function LeaderboardTable({ data }) {
@@ -79,7 +79,12 @@ function LeaderboardTable({ data }) {
           <tr>
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">#</th>
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Player</th>
-            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Gold</th>
+            <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">
+              <div className="flex items-center justify-end gap-1">
+                Gold
+                <CaretDown weight="bold" className="w-3 h-3" />
+              </div>
+            </th>
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Kills</th>
             <th className="p-2 text-sm font-medium tracking-wider text-center uppercase text-white/70">Wave</th>
             <th className="p-2 text-sm font-medium tracking-wider text-right uppercase text-white/70">Time</th>
