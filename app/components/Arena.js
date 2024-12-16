@@ -84,7 +84,7 @@ export function Arena() {
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
-            <div className="flex items-center justify-center w-full h-full">
+            <div className="flex flex-col items-center justify-center w-full h-full gap-4">
               <Image 
                 src="/ss-logo.svg"
                 alt="SS Logo"
@@ -92,6 +92,7 @@ export function Arena() {
                 height={150}
                 className="opacity-80 hover:opacity-100 transition-opacity"
               />
+              <p className="text-white/80 text-lg">Please connect your wallet</p>
             </div>
           ) : (
             <>
