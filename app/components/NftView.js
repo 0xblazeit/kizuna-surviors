@@ -80,10 +80,7 @@ export function NftView({ walletAddress }) {
 
           return (
             <Link
-              href={`https://highlight.xyz/mint/shape:0x05aA491820662b131d285757E5DA4b74BD0F0e5F:31b18ae4b8b0b0be466ec33560d51935?tokenId=${parseInt(
-                nft.tokenId,
-                16
-              )}`}
+              href={`https://highlight.xyz/mint/shape:${nft.contractAddress}?tokenId=${parseInt(nft.tokenId, 16)}`}
               key={`${nftId}`}
               className="block"
               target="_blank"
