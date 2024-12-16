@@ -1843,7 +1843,6 @@ const GameScene = Phaser.Class({
             userAddress: this.userInfo.userAddress,
             username: this.userInfo.username,
             profileImage: this.userInfo.profileImage,
-            levelCleared: true,
           }),
         });
 
