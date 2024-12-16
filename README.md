@@ -17,8 +17,8 @@ Tech Stack:
 - Turso / SQLite
 - Drizzle ORM
 - Web3:
-- Privy Auth + Embedded Wallet
-- Alchemy SDK NFT(s)
+  - Privy Auth + Embedded Wallet
+  - Alchemy SDK NFT(s)
 
 ## Getting Started
 
