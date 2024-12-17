@@ -408,11 +408,25 @@ const GameScene = Phaser.Class({
 
     const spawnPos = this.getSpawnPosition();
     let enemy = null;
+    const gameTimeElapsed = Date.now() - this.gameState.gameStartTime;
     const roll = Math.random();
 
-    // Early waves: Basic and Shooter enemies
-    if (this.gameState.waveNumber <= 5) {
-      if (roll < 0.6) {
+    // First 25 seconds: Only basic enemies
+    if (gameTimeElapsed < 25000) {
+      enemy = this.getEnemyFromPool("basic");
+      if (enemy) {
+        const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
+        enemy.updateSprite(randomSprite);
+        enemy.updateStats({
+          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+        });
+      }
+    }
+    // Waves 1-5: Basic and Advanced enemies
+    else if (this.gameState.waveNumber <= 5) {
+      if (roll < 0.7) {
         enemy = this.getEnemyFromPool("basic");
         if (enemy) {
           const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
@@ -421,6 +435,100 @@ const GameScene = Phaser.Class({
             maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
             moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
             attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else {
+        enemy = this.getEnemyFromPool("advanced");
+        if (enemy) {
+          const randomSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      }
+    }
+    // Waves 6-10: Add Shooter enemies
+    else if (this.gameState.waveNumber <= 10) {
+      if (roll < 0.4) {
+        enemy = this.getEnemyFromPool("basic");
+        if (enemy) {
+          const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else if (roll < 0.7) {
+        enemy = this.getEnemyFromPool("advanced");
+        if (enemy) {
+          const randomSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else if (roll < 0.85) {
+        enemy = this.getEnemyFromPool("shooter");
+        if (enemy) {
+          enemy.updateStats({
+            maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else {
+        enemy = this.getEnemyFromPool("epic");
+        if (enemy) {
+          const randomSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.2 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 16 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      }
+    }
+    // Waves 11+: Increase Epic and Shooter presence
+    else {
+      if (roll < 0.25) {
+        enemy = this.getEnemyFromPool("basic");
+        if (enemy) {
+          const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else if (roll < 0.45) {
+        enemy = this.getEnemyFromPool("advanced");
+        if (enemy) {
+          const randomSprite = ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
+      } else if (roll < 0.75) {
+        enemy = this.getEnemyFromPool("epic");
+        if (enemy) {
+          const randomSprite = ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 2.2 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 16 * this.gameState.waveScaling.damageMultiplier,
           });
         }
       } else {
