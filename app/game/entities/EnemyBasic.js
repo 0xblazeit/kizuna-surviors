@@ -511,12 +511,7 @@ class EnemyBasic extends BasePlayer {
 
         // Create coins in a spread pattern using the coin pool
         const radius = 20; // Base radius for coin spread
-        const coins = Coin.spawnConsolidated(
-          this.scene, 
-          this.sprite.x, 
-          this.sprite.y, 
-          coinValue * numCoins
-        );
+        const coins = Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, coinValue * numCoins);
       } else {
         const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
         if (gem) {
@@ -553,6 +548,47 @@ class EnemyBasic extends BasePlayer {
     // Deal damage to the player
     const damageDealt = this.stats.attackDamage;
     this.targetPlayer.takeDamage(damageDealt);
+  }
+
+  reset() {
+    this.active = false;
+    this.visible = false;
+    this.isDead = false;
+    if (this.sprite) {
+      this.sprite.setActive(false);
+      this.sprite.setVisible(false);
+    }
+  }
+
+  updateSprite(spriteKey) {
+    if (this.sprite) {
+      this.sprite.setTexture(spriteKey);
+    }
+  }
+
+  updateStats(newStats) {
+    Object.assign(this.stats, newStats);
+    this.stats.currentHealth = this.stats.maxHealth;
+  }
+
+  setActive(value) {
+    this.active = value;
+    if (this.sprite) {
+      this.sprite.setActive(value);
+    }
+  }
+
+  setVisible(value) {
+    this.visible = value;
+    if (this.sprite) {
+      this.sprite.setVisible(value);
+    }
+  }
+
+  setPosition(x, y) {
+    if (this.sprite) {
+      this.sprite.setPosition(x, y);
+    }
   }
 }
 

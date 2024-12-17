@@ -55,6 +55,25 @@ const GameScene = Phaser.Class({
 
   initialize: function GameScene() {
     Phaser.Scene.call(this, { key: "GameScene" });
+
+    // Initialize enemy pools
+    this.resetEnemyPools();
+  },
+
+  resetEnemyPools: function () {
+    this.enemyPools = {
+      basic: [],
+      advanced: [],
+      epic: [],
+      shooter: [],
+    };
+
+    this.poolSizes = {
+      basic: 50,
+      advanced: 30,
+      epic: 20,
+      shooter: 20,
+    };
   },
 
   init: function () {
@@ -237,37 +256,43 @@ const GameScene = Phaser.Class({
   },
 
   startGame: function () {
-    // Initial enemy spawn for first wave
-    const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
-    for (let i = 0; i < initialEnemies; i++) {
+    console.log("Starting game with immediate enemy spawns");
+    this.gameState.gameStarted = true;
+    this.enemies = []; // Reset enemies array
+
+    // Immediately spawn initial enemies
+    for (let i = 0; i < 5; i++) {
       const spawnPos = this.getSpawnPosition();
-      const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
+      const enemy = this.getEnemyFromPool("basic");
+      if (enemy) {
+        const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
+        enemy.updateSprite(randomSprite);
+        enemy.updateStats({
+          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+        });
 
-      const enemy = new EnemyBasic(this, spawnPos.x, spawnPos.y, randomSprite, {
-        type: "basic",
-        scale: 0.3,
-        maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-        attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-        moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-      });
-
-      enemy.sprite.once("destroy", () => {
-        const index = this.enemies.indexOf(enemy);
-        if (index > -1) {
-          this.enemies.splice(index, 1);
-          this.gameState.enemiesRemainingInWave--;
-
-          // Check if wave is complete AND no enemies are left
-          if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
-            this.startNextWave();
-          }
+        // Ensure enemy is properly positioned and visible
+        enemy.setPosition(spawnPos.x, spawnPos.y);
+        if (enemy.sprite) {
+          enemy.sprite.setPosition(spawnPos.x, spawnPos.y);
+          enemy.sprite.setActive(true);
+          enemy.sprite.setVisible(true);
+          enemy.sprite.alpha = 1;
+          enemy.sprite.setDepth(5);
         }
-      });
 
-      this.enemies.push(enemy);
+        this.enemies.push(enemy);
+        console.log("Initial enemy spawned at", spawnPos, "sprite visible:", enemy.sprite?.visible);
+      }
     }
 
-    // Start enemy spawn timer
+    // Update game state
+    this.gameState.maxEnemies = 20; // Set reasonable initial max
+    this.gameState.enemiesRemainingInWave = 20;
+
+    // Start continuous enemy spawning
     this.enemySpawnTimer = this.time.addEvent({
       delay: this.gameState.spawnRate,
       callback: this.spawnEnemies,
@@ -276,11 +301,15 @@ const GameScene = Phaser.Class({
     });
 
     // Initialize weapons
-    this.weapons.forEach((weapon) => {
-      if (weapon.initialize) {
-        weapon.initialize();
-      }
-    });
+    if (this.weapons) {
+      this.weapons.forEach((weapon) => {
+        if (weapon.initialize) {
+          weapon.initialize();
+        }
+      });
+    }
+
+    console.log("Game started with", this.enemies.length, "initial enemies");
   },
 
   startNextWave: function () {
@@ -300,6 +329,16 @@ const GameScene = Phaser.Class({
     this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
     this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
 
+    // Reset enemy spawn timer with new rate
+    if (this.enemySpawnTimer) {
+      this.enemySpawnTimer.reset({
+        delay: this.gameState.spawnRate,
+        callback: this.spawnEnemies,
+        callbackScope: this,
+        loop: true,
+      });
+    }
+
     // Update wave text
     if (this.waveText) {
       this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
@@ -307,134 +346,145 @@ const GameScene = Phaser.Class({
 
     // Create wave announcement
     this.createWaveAnnouncement();
+
+    // Set enemies remaining for this wave
+    this.gameState.enemiesRemainingInWave = Math.min(20 + this.gameState.waveNumber * 5, 100);
   },
 
   getSpawnPosition: function () {
-    const minSpawnDistance = 500; // Increased from 300
-    const maxSpawnDistance = 800; // Increased from 500
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const camera = this.cameras.main;
+    const margin = 100; // Spawn margin outside camera view
+    const playerX = this.player.x;
+    const playerY = this.player.y;
 
-    // Use wave number to rotate spawn points for variety
-    const baseAngle = this.gameState.waveNumber * goldenAngle;
+    let x, y;
+    do {
+      // Randomly choose a side to spawn (0: top, 1: right, 2: bottom, 3: left)
+      const side = Math.floor(Math.random() * 4);
 
-    // Get random distance between min and max
-    const distance = Phaser.Math.Between(minSpawnDistance, maxSpawnDistance);
+      switch (side) {
+        case 0: // Top
+          x = playerX + Phaser.Math.Between(-camera.width, camera.width);
+          y = playerY - camera.height / 2 - margin;
+          break;
+        case 1: // Right
+          x = playerX + camera.width / 2 + margin;
+          y = playerY + Phaser.Math.Between(-camera.height, camera.height);
+          break;
+        case 2: // Bottom
+          x = playerX + Phaser.Math.Between(-camera.width, camera.width);
+          y = playerY + camera.height / 2 + margin;
+          break;
+        case 3: // Left
+          x = playerX - camera.width / 2 - margin;
+          y = playerY + Phaser.Math.Between(-camera.height, camera.height);
+          break;
+      }
+    } while (x < 0 || x > this.physics.world.bounds.width || y < 0 || y > this.physics.world.bounds.height);
 
-    // Calculate angle using golden ratio for better distribution
-    const angle = baseAngle + Math.random() * Math.PI * 2;
-
-    // Calculate position relative to player
-    const spawnX = this.player.x + Math.cos(angle) * distance;
-    const spawnY = this.player.y + Math.sin(angle) * distance;
-
-    // Clamp to world bounds with padding
-    const padding = 50;
-    return {
-      x: Phaser.Math.Clamp(spawnX, padding, this.physics.world.bounds.width - padding),
-      y: Phaser.Math.Clamp(spawnY, padding, this.physics.world.bounds.height - padding),
-    };
+    return { x, y };
   },
 
   spawnEnemies: function () {
-    // Remove the check for enemiesRemainingInWave since we want endless waves
+    console.log("Attempting to spawn enemies...", {
+      currentEnemies: this.enemies.length,
+      maxEnemies: this.gameState.maxEnemies,
+      remainingInWave: this.gameState.enemiesRemainingInWave,
+    });
+
+    // Clean up invalid enemies first
+    this.enemies = this.enemies.filter((enemy) => enemy && enemy.sprite && !enemy.isDead);
+
     if (this.enemies.length >= this.gameState.maxEnemies) {
+      console.log("Max enemies reached, skipping spawn");
       return;
     }
 
-    // Get spawn position
-    const spawnPos = this.getSpawnPosition();
-    const x = spawnPos.x;
-    const y = spawnPos.y;
+    if (this.gameState.enemiesRemainingInWave <= 0) {
+      console.log("Starting next wave");
+      this.startNextWave();
+      return;
+    }
 
-    let enemy;
+    const spawnPos = this.getSpawnPosition();
+    let enemy = null;
     const roll = Math.random();
 
-    // Simplified wave-based spawning that scales indefinitely
+    // Early waves: Basic and Shooter enemies
     if (this.gameState.waveNumber <= 5) {
-      // Early waves: Basic and Shooter enemies
       if (roll < 0.6) {
-        enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
-          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.4,
-        });
+        enemy = this.getEnemyFromPool("basic");
+        if (enemy) {
+          const randomSprite = ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)];
+          enemy.updateSprite(randomSprite);
+          enemy.updateStats({
+            maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
       } else {
-        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
-          type: "shooter",
-          scale: 0.3,
-          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
-          attackRange: 250,
-          projectileSpeed: 200,
-          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
-        });
-      }
-    } else {
-      // Later waves: Mix of all enemy types with adjusted probabilities
-      if (roll < 0.25) {
-        enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
-          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.4,
-        });
-      } else if (roll < 0.5) {
-        enemy = new EnemyAdvanced(
-          this,
-          x,
-          y,
-          ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)],
-          {
-            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
-            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
-            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
-            scale: 0.5,
-          }
-        );
-      } else if (roll < 0.8) {
-        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
-          type: "shooter",
-          scale: 0.3,
-          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
-          attackRange: 250,
-          projectileSpeed: 200,
-          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
-        });
-      } else {
-        enemy = new EnemyEpic(this, x, y, ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)], {
-          maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 2.2 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 16 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.6,
-        });
+        enemy = this.getEnemyFromPool("shooter");
+        if (enemy) {
+          enemy.updateStats({
+            maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
+            moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
+            attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
+          });
+        }
       }
     }
 
-    // Add to physics system and enemies array
     if (enemy) {
-      this.physics.add.existing(enemy);
-      this.enemies.push(enemy);
-
-      // Update spawn timer with dynamic rate
-      if (!this.enemySpawnTimer.paused) {
-        const currentWaveSpawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
-        );
-
-        this.enemySpawnTimer.reset({
-          delay: currentWaveSpawnRate,
-          callback: this.spawnEnemies,
-          callbackScope: this,
-          loop: true,
-        });
+      // Ensure enemy is properly positioned and visible
+      enemy.setPosition(spawnPos.x, spawnPos.y);
+      if (enemy.sprite) {
+        enemy.sprite.setPosition(spawnPos.x, spawnPos.y);
+        enemy.sprite.setActive(true);
+        enemy.sprite.setVisible(true);
+        enemy.sprite.alpha = 1;
+        enemy.sprite.setDepth(5);
       }
+
+      this.enemies.push(enemy);
+      this.gameState.enemiesRemainingInWave--;
+      console.log("Enemy spawned successfully at", spawnPos, "sprite visible:", enemy.sprite?.visible);
+    } else {
+      console.log("Failed to get enemy from pool");
     }
   },
 
   create: function () {
+    // Clean up any existing state first
+    this.cleanup();
+
+    // Ensure enemy pools are initialized
+    this.resetEnemyPools();
+
+    // Initialize new game state
+    this.gameState = {
+      gameStarted: false,
+      timerStarted: false,
+      baseEnemiesPerWave: 15,
+      maxEnemies: 50,
+      spawnRate: 1000,
+      minSpawnRate: 400,
+      waveNumber: 1,
+      enemiesRemainingInWave: 15,
+      waveScaling: {
+        healthMultiplier: 1,
+        damageMultiplier: 1,
+        speedMultiplier: 1,
+        spawnRateMultiplier: 1,
+      },
+      isGameOver: false,
+      isLevelCleared: false,
+      gold: 0,
+      kills: 0,
+      xp: 0,
+      level: 1,
+    };
+
     const { width, height } = this.scale;
 
     // Initialize enemy sprite arrays
@@ -1457,7 +1507,7 @@ const GameScene = Phaser.Class({
         });
 
         const data = await response.json();
-        console.log("Game over API call completed successfully:", data);
+        console.log("Game Saved:", data);
 
         if (this.userInfo.invalidateQueries) {
           this.userInfo.invalidateQueries();
@@ -1600,6 +1650,7 @@ const GameScene = Phaser.Class({
 
                   if (validKeys.includes(event.key.toUpperCase()) || validKeys.includes(event.key)) {
                     this.input.keyboard.off("keydown", handleInput);
+                    this.cleanup(); // Clean up before restarting
                     this.scene.start("GameScene");
                   }
                 };
@@ -1916,6 +1967,7 @@ const GameScene = Phaser.Class({
 
                   if (validKeys.includes(event.key.toUpperCase()) || validKeys.includes(event.key)) {
                     this.input.keyboard.off("keydown", handleInput);
+                    this.cleanup(); // Clean up before restarting
                     this.scene.start("GameScene");
                   }
                 };
@@ -1967,9 +2019,62 @@ const GameScene = Phaser.Class({
 
     // Hide overlay initially
     this.levelClearedOverlay.setVisible(false);
+
+    // Initialize enemy pools
+    this.initializeEnemyPools();
+    console.log("Enemy pools initialized");
+    this.checkEnemyPools();
+
+    // Create timer event that will also trigger game start
+    this.timerEvent = this.time.addEvent({
+      delay: 16, // 60fps update
+      callback: () => {
+        if (!this.gameState.timerStarted) {
+          // Check for movement to start the game
+          const keys = this.input.keyboard.createCursorKeys();
+          const wasd = {
+            up: this.input.keyboard.addKey("W"),
+            down: this.input.keyboard.addKey("S"),
+            left: this.input.keyboard.addKey("A"),
+            right: this.input.keyboard.addKey("D"),
+          };
+
+          if (
+            keys.left.isDown ||
+            keys.right.isDown ||
+            keys.up.isDown ||
+            keys.down.isDown ||
+            wasd.left.isDown ||
+            wasd.right.isDown ||
+            wasd.up.isDown ||
+            wasd.down.isDown
+          ) {
+            console.log("Movement detected, starting game");
+            this.gameState.timerStarted = true;
+            this.gameState.gameStartTime = Date.now();
+            this.startGame(); // This will now be called when timer starts
+          }
+        } else if (!this.gameState.isGameOver) {
+          // Update timer display
+          const currentTime = Date.now();
+          const elapsedMS = currentTime - this.gameState.gameStartTime;
+          const minutes = Math.floor(elapsedMS / 60000);
+          const seconds = Math.floor((elapsedMS % 60000) / 1000);
+          const ms = Math.floor((elapsedMS % 1000) / 10);
+          this.timerText.setText(
+            `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms
+              .toString()
+              .padStart(2, "0")}`
+          );
+        }
+      },
+      callbackScope: this,
+      loop: true,
+    });
   },
 
   update: function (time, delta) {
+    // Check if game should start
     if (!this.gameState.gameStarted) {
       const keys = this.input.keyboard.createCursorKeys();
       const wasd = {
@@ -1989,9 +2094,6 @@ const GameScene = Phaser.Class({
         wasd.up.isDown ||
         wasd.down.isDown
       ) {
-        this.gameState.gameStarted = true;
-        this.gameState.gameStartTime = Date.now();
-        console.log("Game started! Start time:", this.gameState.gameStartTime); // Debug log
         this.startGame();
       }
       return;
@@ -2151,15 +2253,74 @@ const GameScene = Phaser.Class({
 
   // Add this method to the GameScene class
   cleanup: function () {
-    // Clean up XP gems
-    if (this.xpGems) {
-      this.xpGems.forEach((gem) => {
-        if (gem && gem.sprite) {
-          gem.sprite.destroy();
+    // Clear all enemies
+    if (this.enemies) {
+      this.enemies.forEach((enemy) => {
+        if (enemy && enemy.sprite) {
+          enemy.setActive(false);
+          enemy.setVisible(false);
+          enemy.sprite.destroy();
         }
       });
-      this.xpGems = [];
+      this.enemies = [];
     }
+
+    // Clear enemy pools
+    if (this.enemyPools) {
+      Object.values(this.enemyPools).forEach((pool) => {
+        pool.forEach((enemy) => {
+          if (enemy && enemy.sprite) {
+            enemy.setActive(false);
+            enemy.setVisible(false);
+            enemy.sprite.destroy();
+          }
+        });
+      });
+    }
+
+    // Reset pools instead of nullifying
+    this.resetEnemyPools();
+
+    // Clear timers
+    if (this.enemySpawnTimer) {
+      this.enemySpawnTimer.destroy();
+    }
+    if (this.timerEvent) {
+      this.timerEvent.destroy();
+    }
+
+    // Clear weapons
+    if (this.weapons) {
+      this.weapons.forEach((weapon) => {
+        if (weapon && weapon.cleanup) {
+          weapon.cleanup();
+        }
+      });
+    }
+
+    // Reset game state
+    this.gameState = {
+      gameStarted: false,
+      timerStarted: false,
+      baseEnemiesPerWave: 15,
+      maxEnemies: 50,
+      spawnRate: 1000,
+      minSpawnRate: 400,
+      waveNumber: 1,
+      enemiesRemainingInWave: 15,
+      waveScaling: {
+        healthMultiplier: 1,
+        damageMultiplier: 1,
+        speedMultiplier: 1,
+        spawnRateMultiplier: 1,
+      },
+      isGameOver: false,
+      isLevelCleared: false,
+      gold: 0,
+      kills: 0,
+      xp: 0,
+      level: 1,
+    };
   },
 
   shutdown: function () {
@@ -2239,6 +2400,118 @@ const GameScene = Phaser.Class({
         },
       });
     }
+  },
+
+  initializeEnemyPools: function () {
+    // First, ensure pools exist
+    this.enemyPools = {
+      basic: [],
+      advanced: [],
+      epic: [],
+      shooter: [],
+    };
+
+    this.poolSizes = {
+      basic: 50,
+      advanced: 30,
+      epic: 20,
+      shooter: 20,
+    };
+
+    // Now initialize basic enemies
+    for (let i = 0; i < this.poolSizes.basic; i++) {
+      const enemy = new EnemyBasic(this, 0, 0, ENEMY_SPRITES[0], {
+        maxHealth: 100,
+        moveSpeed: 1.8,
+        attackDamage: 8,
+        scale: 0.4,
+      });
+      enemy.setActive(false);
+      enemy.setVisible(false);
+      this.enemyPools.basic.push(enemy);
+    }
+
+    // Initialize advanced enemies
+    for (let i = 0; i < this.poolSizes.advanced; i++) {
+      const enemy = new EnemyAdvanced(this, 0, 0, ENEMY_ADVANCED_SPRITES[0], {
+        maxHealth: 300,
+        moveSpeed: 2.0,
+        attackDamage: 12,
+        scale: 0.5,
+      });
+      enemy.setActive(false);
+      enemy.setVisible(false);
+      this.enemyPools.advanced.push(enemy);
+    }
+
+    // Initialize epic enemies
+    for (let i = 0; i < this.poolSizes.epic; i++) {
+      const enemy = new EnemyEpic(this, 0, 0, ENEMY_EPIC_SPRITES[0], {
+        maxHealth: 600,
+        moveSpeed: 2.2,
+        attackDamage: 16,
+        scale: 0.6,
+      });
+      enemy.setActive(false);
+      enemy.setVisible(false);
+      this.enemyPools.epic.push(enemy);
+    }
+
+    // Initialize shooter enemies
+    for (let i = 0; i < this.poolSizes.shooter; i++) {
+      const enemy = new EnemyShooter(this, 0, 0, "enemy-shooter", {
+        type: "shooter",
+        scale: 0.3,
+        maxHealth: 80,
+        moveSpeed: 1.4,
+        attackRange: 250,
+        projectileSpeed: 200,
+        attackDamage: 10,
+      });
+      enemy.setActive(false);
+      enemy.setVisible(false);
+      this.enemyPools.shooter.push(enemy);
+    }
+
+    console.log("Enemy pools initialized with sizes:", {
+      basic: this.enemyPools.basic.length,
+      advanced: this.enemyPools.advanced.length,
+      epic: this.enemyPools.epic.length,
+      shooter: this.enemyPools.shooter.length,
+    });
+  },
+
+  getEnemyFromPool: function (type) {
+    const pool = this.enemyPools[type];
+    const enemy = pool.find((e) => !e.active);
+
+    if (enemy) {
+      console.log(`Getting ${type} enemy from pool`);
+      enemy.active = true;
+      enemy.visible = true;
+      enemy.isDead = false;
+
+      if (enemy.sprite) {
+        enemy.sprite.setActive(true);
+        enemy.sprite.setVisible(true);
+        enemy.sprite.alpha = 1;
+        enemy.sprite.setDepth(5); // Ensure it's visible above background
+      }
+
+      return enemy;
+    }
+
+    console.warn(`No available ${type} enemies in pool`);
+    return null;
+  },
+
+  checkEnemyPools: function () {
+    console.log("Enemy Pools Status:", {
+      basic: this.enemyPools.basic.filter((e) => !e.active).length + " available",
+      advanced: this.enemyPools.advanced.filter((e) => !e.active).length + " available",
+      epic: this.enemyPools.epic.filter((e) => !e.active).length + " available",
+      shooter: this.enemyPools.shooter.filter((e) => !e.active).length + " available",
+    });
   },
 });
 
