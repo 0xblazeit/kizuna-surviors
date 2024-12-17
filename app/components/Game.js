@@ -283,97 +283,26 @@ const GameScene = Phaser.Class({
     // Increment wave number
     this.gameState.waveNumber++;
 
-    // Scale difficulty based on wave number
-    const waveScaling = Math.log2(this.gameState.waveNumber + 1); // Logarithmic scaling
+    // Scale difficulty based on wave number (logarithmic scaling for better balance)
+    const waveScaling = Math.log2(this.gameState.waveNumber + 1);
     this.gameState.waveScaling = {
-      healthMultiplier: 1 + waveScaling * 0.5, // Health increases by 50% per scaling
-      damageMultiplier: 1 + waveScaling * 0.3, // Damage increases by 30% per scaling
-      speedMultiplier: 1 + waveScaling * 0.1, // Speed increases by 10% per scaling
-      spawnRateMultiplier: 1 + waveScaling * 0.2, // Spawn rate increases by 20% per scaling
+      healthMultiplier: 1 + waveScaling * 0.5,
+      damageMultiplier: 1 + waveScaling * 0.3,
+      speedMultiplier: 1 + Math.min(1, waveScaling * 0.1), // Cap speed scaling
+      spawnRateMultiplier: 1 + waveScaling * 0.2,
     };
 
-    // Calculate enemies for next wave
-    this.gameState.baseEnemiesPerWave = Math.min(100, Math.floor(20 + this.gameState.waveNumber * 5));
-    this.gameState.enemiesRemainingInWave = this.gameState.baseEnemiesPerWave;
-    this.gameState.maxEnemies = Math.min(60, 20 + Math.floor(this.gameState.waveNumber * 2));
+    // Update spawn parameters
+    this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
     this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
 
-    // Update wave text with animation
+    // Update wave text
     if (this.waveText) {
       this.waveText.setText(`Wave: ${this.gameState.waveNumber}`);
     }
 
     // Create wave announcement
-    const waveAnnouncement = this.add
-      .text(this.cameras.main.centerX, 100, `Wave ${this.gameState.waveNumber}`, {
-        fontFamily: "VT323",
-        fontSize: "48px",
-        color: "#0000ff",
-        stroke: "#000000",
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(1000)
-      .setAlpha(0); // Start invisible for fade in
-
-    // Add wave stats
-    const waveStats = this.add
-      .text(
-        this.cameras.main.centerX,
-        160,
-        `Enemies: ${this.gameState.baseEnemiesPerWave}\nHealth: +${Math.floor(
-          (this.gameState.waveScaling.healthMultiplier - 1) * 100
-        )}%\nDamage: +${Math.floor((this.gameState.waveScaling.damageMultiplier - 1) * 100)}%`,
-        {
-          fontFamily: "VT323",
-          fontSize: "24px",
-          color: "#ffff00",
-          stroke: "#000000",
-          strokeThickness: 2,
-          align: "center",
-        }
-      )
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(1000)
-      .setAlpha(0); // Start invisible for fade in
-
-    // Add dramatic entrance animation
-    this.tweens.add({
-      targets: [waveAnnouncement, waveStats],
-      alpha: 1,
-      y: "+=20",
-      duration: 1500,
-      ease: "Back.easeOut",
-    });
-
-    // Scale pulse animation for wave number
-    this.tweens.add({
-      targets: waveAnnouncement,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      duration: 200,
-      yoyo: true,
-      repeat: 2,
-      ease: "Sine.easeInOut",
-    });
-
-    // Keep visible for longer, then fade out
-    this.time.delayedCall(3000, () => {
-      // Wait 3 seconds before starting fade
-      this.tweens.add({
-        targets: [waveAnnouncement, waveStats],
-        alpha: 0,
-        y: "-=30",
-        duration: 1000,
-        ease: "Power2",
-        onComplete: () => {
-          waveAnnouncement.destroy();
-          waveStats.destroy();
-        },
-      });
-    });
+    this.createWaveAnnouncement();
   },
 
   getSpawnPosition: function () {
@@ -403,12 +332,8 @@ const GameScene = Phaser.Class({
   },
 
   spawnEnemies: function () {
-    // Don't spawn if we've reached max concurrent enemies OR if no enemies remaining in wave
-    if (this.enemies.length >= this.gameState.maxEnemies || this.gameState.enemiesRemainingInWave <= 0) {
-      // If no enemies remaining and no enemies alive, start next wave immediately
-      if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
-        this.startNextWave();
-      }
+    // Remove the check for enemiesRemainingInWave since we want endless waves
+    if (this.enemies.length >= this.gameState.maxEnemies) {
       return;
     }
 
@@ -442,7 +367,7 @@ const GameScene = Phaser.Class({
         });
       }
     } else {
-      // Later waves: Mix of all enemy types
+      // Later waves: Mix of all enemy types with adjusted probabilities
       if (roll < 0.25) {
         enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
           maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
@@ -484,20 +409,24 @@ const GameScene = Phaser.Class({
     }
 
     // Add to physics system and enemies array
-    this.physics.add.existing(enemy);
-    this.enemies.push(enemy);
+    if (enemy) {
+      this.physics.add.existing(enemy);
+      this.enemies.push(enemy);
 
-    // Decrease remaining enemies count
-    this.gameState.enemiesRemainingInWave--;
+      // Update spawn timer with dynamic rate
+      if (!this.enemySpawnTimer.paused) {
+        const currentWaveSpawnRate = Math.max(
+          this.gameState.minSpawnRate,
+          this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
+        );
 
-    // Update spawn timer if needed
-    if (!this.enemySpawnTimer.paused) {
-      this.enemySpawnTimer.reset({
-        delay: this.gameState.spawnRate,
-        callback: this.spawnEnemies,
-        callbackScope: this,
-        loop: true,
-      });
+        this.enemySpawnTimer.reset({
+          delay: currentWaveSpawnRate,
+          callback: this.spawnEnemies,
+          callbackScope: this,
+          loop: true,
+        });
+      }
     }
   },
 
@@ -1348,8 +1277,8 @@ const GameScene = Phaser.Class({
         };
 
         // Update spawn parameters
-        this.gameState.maxEnemies = Math.min(100, 20 + this.gameState.waveNumber * 5);
-        this.gameState.spawnRate = Math.max(200, 800 - this.gameState.waveNumber * 50);
+        this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
+        this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
 
         // Update spawn timer
         this.enemySpawnTimer.reset({
@@ -1363,29 +1292,7 @@ const GameScene = Phaser.Class({
         }
 
         // Create wave announcement
-        const waveAnnouncement = this.add
-          .text(this.cameras.main.centerX, 100, `Wave ${this.gameState.waveNumber}`, {
-            fontFamily: "VT323",
-            fontSize: "48px",
-            color: "#0000ff",
-            stroke: "#000000",
-            strokeThickness: 4,
-          })
-          .setOrigin(0.5)
-          .setScrollFactor(0)
-          .setDepth(1000);
-
-        // Fade out announcement
-        this.tweens.add({
-          targets: waveAnnouncement,
-          alpha: 0,
-          y: 50,
-          duration: 2000,
-          ease: "Power2",
-          onComplete: () => {
-            waveAnnouncement.destroy();
-          },
-        });
+        this.createWaveAnnouncement();
       },
       callbackScope: this,
       loop: true,
@@ -2242,6 +2149,77 @@ const GameScene = Phaser.Class({
 
   destroy: function () {
     this.cleanup();
+  },
+
+  createWaveAnnouncement: function () {
+    // Create wave announcement text
+    const waveText = this.add.text(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY - 50,
+      `Wave ${this.gameState.waveNumber}`,
+      {
+        fontFamily: "VT323",
+        fontSize: "64px",
+        color: "#00ff00",
+        stroke: "#000000",
+        strokeThickness: 4,
+        shadow: { color: "#000000", fill: true, offsetX: 2, offsetY: 2, blur: 8 },
+      }
+    );
+
+    // Set text properties
+    waveText.setOrigin(0.5);
+    waveText.setScrollFactor(0);
+    waveText.setDepth(1000);
+    waveText.setAlpha(0);
+
+    // Create animation sequence
+    this.tweens.add({
+      targets: waveText,
+      alpha: { from: 0, to: 1 },
+      y: { from: this.cameras.main.centerY - 100, to: this.cameras.main.centerY - 50 },
+      ease: "Power2",
+      duration: 500,
+      yoyo: true,
+      hold: 1000,
+      onComplete: () => {
+        waveText.destroy();
+      },
+    });
+
+    // Optional: Add difficulty indicator for later waves
+    if (this.gameState.waveNumber > 5) {
+      const difficultyText = this.add.text(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY + 10,
+        `Difficulty Multiplier: ${this.gameState.waveScaling.healthMultiplier.toFixed(1)}x`,
+        {
+          fontFamily: "VT323",
+          fontSize: "32px",
+          color: "#ff0000",
+          stroke: "#000000",
+          strokeThickness: 2,
+        }
+      );
+
+      difficultyText.setOrigin(0.5);
+      difficultyText.setScrollFactor(0);
+      difficultyText.setDepth(1000);
+      difficultyText.setAlpha(0);
+
+      this.tweens.add({
+        targets: difficultyText,
+        alpha: { from: 0, to: 1 },
+        y: { from: this.cameras.main.centerY + 20, to: this.cameras.main.centerY + 10 },
+        ease: "Power2",
+        duration: 500,
+        yoyo: true,
+        hold: 1000,
+        onComplete: () => {
+          difficultyText.destroy();
+        },
+      });
+    }
   },
 });
 

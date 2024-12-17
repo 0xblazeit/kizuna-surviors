@@ -52,7 +52,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
     // Level-up configurations
     this.levelConfigs = {
       1: {
-        damage: 2,
+        damage: 4,
         pierce: 2,
         cooldown: 1200,
         range: 350,
@@ -69,7 +69,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         glowIntensity: 0.8,
       },
       2: {
-        damage: 3,
+        damage: 5,
         pierce: 2,
         cooldown: 1100,
         range: 375,
@@ -86,7 +86,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         glowIntensity: 0.85,
       },
       3: {
-        damage: 5,
+        damage: 7,
         pierce: 3,
         cooldown: 1000,
         range: 400,
@@ -103,7 +103,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         glowIntensity: 0.9,
       },
       4: {
-        damage: 7,
+        damage: 9,
         pierce: 3,
         cooldown: 900,
         range: 425,
@@ -120,7 +120,7 @@ export default class ShapecraftKeyWeapon extends BaseWeapon {
         glowIntensity: 0.95,
       },
       5: {
-        damage: 10,
+        damage: 12,
         pierce: 4,
         cooldown: 800,
         range: 450,
