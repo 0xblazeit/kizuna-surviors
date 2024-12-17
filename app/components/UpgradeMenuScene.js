@@ -144,6 +144,8 @@ const UpgradeMenuScene = Phaser.Class({
             return "weapon-shapecraft-key";
           case "Awakened":
             return "weapon-awaken";
+          case "Pudgy Penguin":
+            return "weapon-pudgy-penguin";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);
             return "weapon-dog-projectile";

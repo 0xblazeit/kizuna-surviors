@@ -20,6 +20,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import XPGem from "../game/entities/XPGem"; // Import XPGem
 import Coin from "../game/entities/Coin"; // Import Coin
+import { PudgyPenguinWeapon } from "../game/entities/weapons/PudgyPenguinWeapon"; // Add this line
 
 // Enemy sprite constants
 const ENEMY_SPRITES = [
@@ -226,6 +227,9 @@ const GameScene = Phaser.Class({
     });
     this.load.svg("weapon-skull-projectile", "/assets/game/weapons/weapon-skull-projectile.svg?v=1", {
       scale: 1.2,
+    });
+    this.load.svg("weapon-pudgy-penguin", "/assets/game/weapons/weapon-pudgy-penguin.svg?v=1", {
+      scale: 0.5,
     });
 
     // Load XP gem with correct path
@@ -579,6 +583,7 @@ const GameScene = Phaser.Class({
     let milkIcon = null; // Store milk icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
     let awakeIcon = null; // Store awake icon reference
+    let penguinIcon = null; // Store penguin icon reference
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -611,7 +616,8 @@ const GameScene = Phaser.Class({
             cellIndex === 4 ||
             cellIndex === 5 ||
             cellIndex === 6 ||
-            cellIndex === 7
+            cellIndex === 7 ||
+            cellIndex === 8
           ) {
             // Update selected weapon index
             this.gameState.selectedWeaponIndex = cellIndex;
@@ -712,6 +718,17 @@ const GameScene = Phaser.Class({
             uiRowY + row * gridCellSize,
             "weapon-awaken",
             7,
+            gridCells
+          );
+        }
+
+        // Add pudgy penguin icon to ninth cell (row 1, col 2)
+        if (row === 1 && col === 2) {
+          penguinIcon = createWeaponIcon(
+            gridX + col * gridCellSize,
+            uiRowY + row * gridCellSize,
+            "weapon-pudgy-penguin",
+            8,
             gridCells
           );
         }
@@ -931,6 +948,7 @@ const GameScene = Phaser.Class({
       new MilkWeapon(this, this.player),
       new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
+      new PudgyPenguinWeapon(this, this.player), // Add this line
     ];
 
     this.weaponInitialized = true;
@@ -1186,6 +1204,7 @@ const GameScene = Phaser.Class({
       new MilkWeapon(this, this.player),
       new AwakenWeapon(this, this.player),
       new ShapecraftKeyWeapon(this, this.player),
+      new PudgyPenguinWeapon(this, this.player), // Add this line
     ];
 
     // Create enemy spawn timer with simpler configuration
