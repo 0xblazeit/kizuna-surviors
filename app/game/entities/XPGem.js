@@ -81,46 +81,91 @@ class XPGem {
 
     const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
 
-    if (distance <= 50) {
-      // Mark as collected
+    // Define attraction parameters
+    const ACTIVATION_DISTANCE = 150;
+    const COLLECTION_DISTANCE = 40;
+    const BASE_SPEED = 2;
+    const ORBITAL_SPEED = 0.1;
+
+    // Only process gems within activation distance
+    if (distance <= ACTIVATION_DISTANCE) {
+      // Calculate angle to player
+      const angleToPlayer = Math.atan2(player.y - this.sprite.y, player.x - this.sprite.x);
+
+      // Add a time-based orbital offset
+      const orbitalOffset = Math.sin(this.scene.time.now * ORBITAL_SPEED) * 0.5;
+
+      // Calculate speed based on distance (faster when closer)
+      const speedMultiplier = 1 - distance / ACTIVATION_DISTANCE;
+      const currentSpeed = BASE_SPEED + speedMultiplier * 3;
+
+      // Calculate the new position
+      const adjustedAngle = angleToPlayer + orbitalOffset;
+      const dx = Math.cos(adjustedAngle) * currentSpeed;
+      const dy = Math.sin(adjustedAngle) * currentSpeed;
+
+      // Move sprite and glow together as one unit
+      const newX = this.sprite.x + dx;
+      const newY = this.sprite.y + dy;
+
+      this.sprite.setPosition(newX, newY);
+      this.glow.setPosition(newX, newY);
+    }
+
+    if (distance <= COLLECTION_DISTANCE) {
+      // Mark as collected immediately to prevent double collection
       this.isCollected = true;
-      XPGem.totalGems--; // Decrease total gems when collected
+      XPGem.totalGems--;
 
-      // Grant XP to player
-      player.gainXP(this.xpValue);
+      // Store XP value before destroying the gem
+      const xpValue = this.xpValue;
+      const gemX = this.sprite.x;
+      const gemY = this.sprite.y;
 
-      // Add collection animation
+      // Grant XP to player first
+      player.gainXP(xpValue);
+
+      // Add collection animation with a spiral effect
       this.scene.tweens.add({
         targets: [this.sprite, this.glow],
         scale: 0,
         alpha: 0,
-        y: this.sprite.y - 20,
-        duration: 200,
-        ease: "Power2",
+        angle: 360,
+        y: gemY - 20,
+        duration: 300,
+        ease: "Back.easeIn",
         onComplete: () => {
-          this.sprite.destroy();
-          this.glow.destroy();
-          this.sprite = null;
-          this.glow = null;
+          if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+          }
+          if (this.glow) {
+            this.glow.destroy();
+            this.glow = null;
+          }
         },
       });
 
-      // Add floating text effect
+      // Add floating text effect with bounce
       const floatingText = this.scene.add
-        .text(this.sprite.x, this.sprite.y, `+${this.xpValue} XP`, {
+        .text(gemX, gemY, `+${xpValue} XP`, {
           fontFamily: "VT323",
           fontSize: "20px",
-          color: "#4CAF50", // Green color for XP
+          color: "#4CAF50",
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(1000); // Ensure text appears above other elements
 
       this.scene.tweens.add({
         targets: floatingText,
-        y: floatingText.y - 40,
+        y: gemY - 40,
         alpha: 0,
+        scale: { from: 1, to: 1.5 },
         duration: 1000,
-        ease: "Power2",
-        onComplete: () => floatingText.destroy(),
+        ease: "Bounce.easeOut",
+        onComplete: () => {
+          floatingText.destroy();
+        },
       });
     }
   }
