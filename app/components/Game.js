@@ -2008,15 +2008,12 @@ const GameScene = Phaser.Class({
             const dy = enemy.y - this.player.y;
             const distanceSquared = dx * dx + dy * dy;
 
-            if (distanceSquared > 2000 * 2000) { // If enemy is more than 2000 pixels away
-              // Despawn and recycle the enemy
+            if (distanceSquared > 1500 * 1500) { // If enemy is more than 1500 pixels away
+              // Mark for cleanup in next pool cleanup cycle
               enemy.isDead = true;
-              if (this.enemyPool) {
-                this.enemyPool.despawn(enemy);
-              }
             } else {
               // Only perform full update if enemy is on screen or close to it
-              const onScreen = Math.abs(dx) < 1000 && Math.abs(dy) < 1000;
+              const onScreen = Math.abs(dx) < 800 && Math.abs(dy) < 800;
               if (onScreen) {
                 enemy.update(time, delta);
               } else if (typeof enemy.updateOffScreen === "function") {

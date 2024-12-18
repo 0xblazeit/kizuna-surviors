@@ -41,10 +41,12 @@ export class EnemyPool {
       shooter: [],
     };
     this.activeEnemies = new Set();
-    this.poolSize = 200; // Increased initial pool size
-    this.maxPoolSize = 300; // Increased maximum pool size
+    this.poolSize = 200; // Initial pool size
+    this.maxPoolSize = 300; // Maximum pool size
     this.lastCleanupTime = 0;
-    this.cleanupInterval = 2000; // Cleanup more frequently (every 2 seconds)
+    this.cleanupInterval = 5000; // Cleanup every 5 seconds
+    this.cleanupThreshold = 1500; // Distance threshold for cleanup
+    this.maxCleanupPerInterval = 50; // Max enemies to cleanup per interval
   }
 
   initialize() {
@@ -239,33 +241,83 @@ export class EnemyPool {
   }
 
   _cleanupInactiveEnemies() {
+    if (!this.scene.player) return;
+
     let totalCleaned = 0;
+    const playerPos = {
+      x: this.scene.player.x,
+      y: this.scene.player.y
+    };
+
+    // Keep track of cleaned enemies to avoid double counting
+    const cleanedEnemies = new Set();
+
     Object.entries(this.pools).forEach(([type, pool]) => {
-      // Find enemies that can be recycled
+      if (totalCleaned >= this.maxCleanupPerInterval) return;
+
+      // First, clean up inactive/dead enemies
       pool.forEach(enemy => {
-        if (!enemy.active || enemy.isDead || !enemy.sprite || !enemy.sprite.active || 
-            (enemy.sprite.x < -1000 || enemy.sprite.x > 4000 || enemy.sprite.y < -1000 || enemy.sprite.y > 4000)) {
-          // Reset enemy state
-          enemy.isDead = false;
-          enemy.active = false;
-          if (enemy.sprite) {
-            enemy.sprite.setActive(false);
-            enemy.sprite.setVisible(false);
-            enemy.sprite.setPosition(-1000, -1000);
-          }
+        if (totalCleaned >= this.maxCleanupPerInterval || cleanedEnemies.has(enemy)) return;
+        
+        if (!enemy.active || enemy.isDead || !enemy.sprite || !enemy.sprite.active) {
+          this._resetEnemy(enemy);
+          cleanedEnemies.add(enemy);
           totalCleaned++;
-          this.activeEnemies.delete(enemy);
         }
       });
 
+      // Then clean up distant enemies
+      const activeEnemies = pool.filter(enemy => 
+        enemy.active && 
+        enemy.sprite && 
+        !cleanedEnemies.has(enemy)
+      );
+
+      // Sort by distance and clean up furthest enemies
+      const enemiesWithDistance = activeEnemies
+        .map(enemy => ({
+          enemy,
+          distanceSquared: Math.pow(enemy.sprite.x - playerPos.x, 2) + Math.pow(enemy.sprite.y - playerPos.y, 2)
+        }))
+        .sort((a, b) => b.distanceSquared - a.distanceSquared);
+
+      for (const {enemy, distanceSquared} of enemiesWithDistance) {
+        if (totalCleaned >= this.maxCleanupPerInterval || cleanedEnemies.has(enemy)) break;
+        
+        if (distanceSquared > this.cleanupThreshold * this.cleanupThreshold) {
+          this._resetEnemy(enemy);
+          cleanedEnemies.add(enemy);
+          totalCleaned++;
+        }
+      }
+
       // Log pool status
-      const activeCount = pool.filter(enemy => enemy.active && enemy.sprite && enemy.sprite.active).length;
-      console.log(`🧹 Pool ${type}: ${activeCount} active / ${pool.length} total`);
+      const activeCount = pool.filter(enemy => 
+        enemy.active && 
+        enemy.sprite && 
+        enemy.sprite.active && 
+        !cleanedEnemies.has(enemy)
+      ).length;
+      
+      if (activeCount > 0) {
+        console.log(`🧹 Pool ${type}: ${activeCount} active / ${pool.length} total`);
+      }
     });
 
     if (totalCleaned > 0) {
-      console.log(`♻️ Cleaned up ${totalCleaned} inactive enemies`);
+      console.log(`♻️ Recycled ${totalCleaned} enemies`);
     }
+  }
+
+  _resetEnemy(enemy) {
+    enemy.isDead = false;
+    enemy.active = false;
+    if (enemy.sprite) {
+      enemy.sprite.setActive(false);
+      enemy.sprite.setVisible(false);
+      enemy.sprite.setPosition(-1000, -1000);
+    }
+    this.activeEnemies.delete(enemy);
   }
 
   cleanup() {
