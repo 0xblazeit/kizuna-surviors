@@ -353,7 +353,7 @@ const GameScene = Phaser.Class({
 
       // Try to spawn enemy with retries
       for (let attempt = 0; attempt < 2; attempt++) {
-        if (this.gameState.waveNumber <= 5) {
+        if (this.gameState.waveNumber <= 2) {
           // Early waves: Basic enemies only
           enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
         } else {
@@ -370,7 +370,7 @@ const GameScene = Phaser.Class({
         }
 
         if (enemy) break; // Successfully spawned
-        
+
         // Force cleanup and try again
         this.enemyPool._cleanupInactiveEnemies();
       }
@@ -2008,7 +2008,8 @@ const GameScene = Phaser.Class({
             const dy = enemy.y - this.player.y;
             const distanceSquared = dx * dx + dy * dy;
 
-            if (distanceSquared > 1500 * 1500) { // If enemy is more than 1500 pixels away
+            if (distanceSquared > 1500 * 1500) {
+              // If enemy is more than 1500 pixels away
               // Mark for cleanup in next pool cleanup cycle
               enemy.isDead = true;
             } else {
