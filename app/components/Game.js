@@ -42,7 +42,7 @@ const GameScene = Phaser.Class({
       isGameOver: false,
       coins: 0,
       maxEnemies: 50, // Increased initial max enemies
-      spawnRate: 800, // Faster initial spawn rate
+      spawnRate: 2000, // Slower initial spawn rate
       minSpawnRate: 150, // Even faster minimum spawn rate
       enemyWaveTimer: 0,
       waveNumber: 1,
