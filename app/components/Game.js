@@ -350,19 +350,36 @@ const GameScene = Phaser.Class({
       const spawnPos = this.getSpawnPosition();
       let enemy = null;
       const roll = Math.random();
+      const wave = this.gameState.waveNumber;
 
       // Try to spawn enemy with retries
       for (let attempt = 0; attempt < 2; attempt++) {
-        if (this.gameState.waveNumber <= 2) {
-          // Early waves: Basic enemies only
-          enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-        } else {
-          // Later waves: Mix of enemy types
-          if (roll < 0.4) {
+        if (wave <= 2) {
+          // Waves 1-2: Basic enemies only
+          enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+        } else if (wave <= 4) {
+          // Waves 3-4: Basic + Shooters
+          if (roll < 0.7) {
+            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else {
+            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          }
+        } else if (wave <= 6) {
+          // Waves 5-6: Basic + Shooter + Advanced
+          if (roll < 0.5) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
           } else if (roll < 0.7) {
             enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.9) {
+          } else {
+            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          }
+        } else {
+          // Wave 7+: All enemy types with increased shooter presence
+          if (roll < 0.35) {
+            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else if (roll < 0.6) {
+            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+          } else if (roll < 0.75) {
             enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
           } else {
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
