@@ -148,7 +148,7 @@ class EnemyBasic extends BasePlayer {
       if (distance > this.minDistance) {
         // Apply separation from other enemies
         const separation = this.calculateSeparation();
-        
+
         // Normalize direction
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
@@ -166,7 +166,8 @@ class EnemyBasic extends BasePlayer {
       }
 
       // Create trail effect
-      if (time > this.lastTrailTime + 100) { // Adjust timing for trail frequency
+      if (time > this.lastTrailTime + 100) {
+        // Adjust timing for trail frequency
         this.createTrailEffect();
         this.lastTrailTime = time;
       }
@@ -209,7 +210,7 @@ class EnemyBasic extends BasePlayer {
 
     // Check distance to other enemies
     if (this.scene.enemies) {
-      this.scene.enemies.forEach(other => {
+      this.scene.enemies.forEach((other) => {
         // Skip null, dead, or self enemies
         if (!other || other === this || other.isDead || !other.sprite || !other.sprite.active) {
           return;
@@ -230,18 +231,15 @@ class EnemyBasic extends BasePlayer {
 
       // Average and scale the separation force
       if (neighborCount > 0) {
-        separation.x = separation.x / neighborCount * this.baseSeparationForce;
-        separation.y = separation.y / neighborCount * this.baseSeparationForce;
+        separation.x = (separation.x / neighborCount) * this.baseSeparationForce;
+        separation.y = (separation.y / neighborCount) * this.baseSeparationForce;
 
         // Scale up separation when close to player
         if (this.targetPlayer) {
-          const playerDist = Phaser.Math.Distance.Between(
-            this.x, this.y,
-            this.targetPlayer.x, this.targetPlayer.y
-          );
+          const playerDist = Phaser.Math.Distance.Between(this.x, this.y, this.targetPlayer.x, this.targetPlayer.y);
           const playerProximityScale = Math.max(
             1,
-            (this.attackRange * 2 - playerDist) / (this.attackRange * 2) * this.maxSeparationForce
+            ((this.attackRange * 2 - playerDist) / (this.attackRange * 2)) * this.maxSeparationForce
           );
           separation.x *= playerProximityScale;
           separation.y *= playerProximityScale;
@@ -267,10 +265,10 @@ class EnemyBasic extends BasePlayer {
       targets: trail,
       alpha: 0,
       duration: 200,
-      ease: 'Power2',
+      ease: "Power2",
       onComplete: () => {
         trail.destroy();
-      }
+      },
     });
   }
 
@@ -294,7 +292,7 @@ class EnemyBasic extends BasePlayer {
           scaleY: this.sprite.scaleY * 1.2,
           duration: 100,
           yoyo: true,
-          ease: 'Quad.easeInOut'
+          ease: "Quad.easeInOut",
         });
       }
     }
@@ -302,7 +300,7 @@ class EnemyBasic extends BasePlayer {
 
   die() {
     if (this.isDead) return;
-    
+
     this.isDead = true;
     this.movementEnabled = false;
 
@@ -325,7 +323,7 @@ class EnemyBasic extends BasePlayer {
 
         // Start next wave if all enemies are cleared and no more are spawning
         if (this.scene.gameState.enemiesRemainingInWave <= 0 && this.scene.enemies.length <= 1) {
-          console.log('Wave cleared, starting next wave');
+          console.log("Wave cleared, starting next wave");
           this.scene.startNextWave();
         }
       }
@@ -336,7 +334,7 @@ class EnemyBasic extends BasePlayer {
         this.scene.enemies.splice(index, 1);
       }
     }
-    
+
     // Spawn rewards before despawning
     this.spawnRewards();
 
@@ -347,13 +345,13 @@ class EnemyBasic extends BasePlayer {
         alpha: 0,
         scale: this.sprite.scale * 1.5,
         duration: 300,
-        ease: 'Power2',
+        ease: "Power2",
         onComplete: () => {
           // Despawn through the pool after death animation
           if (this.scene && this.scene.enemyPool) {
             this.scene.enemyPool.despawn(this);
           }
-        }
+        },
       });
     } else {
       // If no sprite, despawn immediately
@@ -375,7 +373,7 @@ class EnemyBasic extends BasePlayer {
 
     // Handle death
     if (this.health <= 0 && !this.isDead) {
-      this.die();  // Call die() instead of handling death here
+      this.die(); // Call die() instead of handling death here
       return;
     }
 
@@ -423,7 +421,8 @@ class EnemyBasic extends BasePlayer {
 
     // Re-enable movement after stagger duration
     this.scene.time.delayedCall(this.staggerDuration, () => {
-      if (!this.isDead) {  // Only re-enable if not dead
+      if (!this.isDead) {
+        // Only re-enable if not dead
         this.movementEnabled = true;
         this.isStaggered = false;
       }
@@ -623,12 +622,7 @@ class EnemyBasic extends BasePlayer {
 
     // Spawn coins (30% chance)
     if (Math.random() < 0.3) {
-      const coins = Coin.spawnConsolidated(
-        this.scene,
-        this.sprite.x,
-        this.sprite.y,
-        coinValue
-      );
+      const coins = Coin.spawnConsolidated(this.scene, this.sprite.x, this.sprite.y, coinValue);
 
       // Add spawned coins to scene's coin array
       if (coins && this.scene.coins) {
@@ -643,11 +637,7 @@ class EnemyBasic extends BasePlayer {
         x: (Math.random() - 0.5) * 20,
         y: (Math.random() - 0.5) * 20,
       };
-      const xpGem = new XPGem(
-        this.scene,
-        this.sprite.x + offset.x,
-        this.sprite.y + offset.y
-      );
+      const xpGem = new XPGem(this.scene, this.sprite.x + offset.x, this.sprite.y + offset.y);
       if (this.scene.xpGems) {
         this.scene.xpGems.push(xpGem);
       }

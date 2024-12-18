@@ -40,7 +40,13 @@ export class EnemyPool {
       epic: [],
       shooter: [],
     };
-    this.activeEnemies = new Set();
+    // Track active enemies per type
+    this.activeEnemies = {
+      basic: new Set(),
+      advanced: new Set(),
+      epic: new Set(),
+      shooter: new Set(),
+    };
     this.poolSize = 200; // Initial pool size
     this.maxPoolSize = 300; // Maximum pool size
     this.lastCleanupTime = 0;
@@ -51,16 +57,22 @@ export class EnemyPool {
 
   initialize() {
     console.log("🏊‍♂️ Initializing enemy pools...");
+
+    // Define pool sizes for each type
+    const poolSizes = {
+      basic: this.poolSize,
+      advanced: Math.floor(this.poolSize * 0.5),
+      epic: Math.floor(this.poolSize * 0.5),
+      shooter: Math.floor(this.poolSize * 0.5),
+    };
+
     // Pre-create enemies for each type
-    for (let i = 0; i < this.poolSize; i++) {
-      this._createEnemy("basic");
-      if (i < this.poolSize * 0.5) { // Create fewer of the advanced types
-        this._createEnemy("advanced");
-        this._createEnemy("epic");
-        this._createEnemy("shooter");
+    Object.entries(poolSizes).forEach(([type, size]) => {
+      for (let i = 0; i < size; i++) {
+        this._createEnemy(type);
       }
-    }
-    console.log(`✅ Pools initialized with ${this.poolSize} basic enemies and ${Math.floor(this.poolSize * 0.5)} of each advanced type`);
+      console.log(`✅ Created pool for ${type} enemies: ${size}`);
+    });
   }
 
   _createEnemy(type) {
@@ -120,12 +132,12 @@ export class EnemyPool {
     const pool = this.pools[type];
 
     // First try to find an inactive enemy
-    enemy = pool.find(e => !e.active && !e.isDead);
+    enemy = pool.find((e) => !e.active && !e.isDead);
 
     // If no inactive enemy found, try to force cleanup and search again
     if (!enemy) {
       this._cleanupInactiveEnemies();
-      enemy = pool.find(e => !e.active && !e.isDead);
+      enemy = pool.find((e) => !e.active && !e.isDead);
     }
 
     // If still no enemy and we haven't hit max size, create new one
@@ -136,9 +148,8 @@ export class EnemyPool {
 
     // If we still don't have an enemy, try to recycle the oldest one
     if (!enemy) {
-      enemy = pool.find(e => 
-        e.sprite && 
-        (e.sprite.x < -1000 || e.sprite.x > 4000 || e.sprite.y < -1000 || e.sprite.y > 4000)
+      enemy = pool.find(
+        (e) => e.sprite && (e.sprite.x < -1000 || e.sprite.x > 4000 || e.sprite.y < -1000 || e.sprite.y > 4000)
       );
       if (enemy) {
         this.despawn(enemy);
@@ -148,7 +159,7 @@ export class EnemyPool {
     // Configure and activate the enemy if we found one
     if (enemy) {
       this._configureEnemy(enemy, type, x, y, config);
-      console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies.size}/${pool.length})`);
+      console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies[type].size}/${pool.length})`);
       return enemy;
     }
 
@@ -168,7 +179,7 @@ export class EnemyPool {
       enemy.sprite.setActive(true);
       enemy.sprite.setVisible(true);
       enemy.sprite.setPosition(x, y);
-      
+
       // Reset visual effects
       enemy.sprite.setAlpha(1);
       enemy.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
@@ -186,7 +197,7 @@ export class EnemyPool {
     enemy.maxHealth = finalConfig.maxHealth;
     enemy.moveSpeed = finalConfig.moveSpeed;
     enemy.attackDamage = finalConfig.attackDamage;
-    
+
     // Reset combat timers
     enemy.lastAttackTime = 0;
     enemy.lastMoveTime = 0;
@@ -207,7 +218,7 @@ export class EnemyPool {
     }
 
     // Track active enemy
-    this.activeEnemies.add(enemy);
+    this.activeEnemies[type].add(enemy);
   }
 
   despawn(enemy) {
@@ -229,7 +240,7 @@ export class EnemyPool {
     }
 
     // Remove from active enemies set
-    this.activeEnemies.delete(enemy);
+    this.activeEnemies[enemy.type].delete(enemy);
   }
 
   _getBaseConfig(type) {
@@ -238,19 +249,19 @@ export class EnemyPool {
     const configs = {
       basic: {
         maxHealth: 100 * waveScaling.healthMultiplier,
-        moveSpeed: 0.4 * waveScaling.speedMultiplier,
+        moveSpeed: 0.5 * waveScaling.speedMultiplier,
         attackDamage: 8 * waveScaling.damageMultiplier,
-        scale: 0.4,
+        scale: 0.55,
       },
       advanced: {
         maxHealth: 300 * waveScaling.healthMultiplier,
-        moveSpeed: 1.0 * waveScaling.speedMultiplier,
+        moveSpeed: 0.7 * waveScaling.speedMultiplier,
         attackDamage: 12 * waveScaling.damageMultiplier,
         scale: 0.5,
       },
       epic: {
         maxHealth: 600 * waveScaling.healthMultiplier,
-        moveSpeed: 1.0 * waveScaling.speedMultiplier,
+        moveSpeed: 0.75 * waveScaling.speedMultiplier,
         attackDamage: 16 * waveScaling.damageMultiplier,
         scale: 0.6,
       },
@@ -258,7 +269,7 @@ export class EnemyPool {
         maxHealth: 80 * waveScaling.healthMultiplier,
         moveSpeed: 1.0 * waveScaling.speedMultiplier,
         attackDamage: 10 * waveScaling.damageMultiplier,
-        scale: 0.3,
+        scale: 0.5,
         attackRange: 250,
         projectileSpeed: 200,
       },
@@ -273,7 +284,7 @@ export class EnemyPool {
     let totalCleaned = 0;
     const playerPos = {
       x: this.scene.player.x,
-      y: this.scene.player.y
+      y: this.scene.player.y,
     };
 
     // Keep track of cleaned enemies to avoid double counting
@@ -283,9 +294,9 @@ export class EnemyPool {
       if (totalCleaned >= this.maxCleanupPerInterval) return;
 
       // First, clean up inactive/dead enemies
-      pool.forEach(enemy => {
+      pool.forEach((enemy) => {
         if (totalCleaned >= this.maxCleanupPerInterval || cleanedEnemies.has(enemy)) return;
-        
+
         if (!enemy.active || enemy.isDead || !enemy.sprite || !enemy.sprite.active) {
           this._resetEnemy(enemy);
           cleanedEnemies.add(enemy);
@@ -294,23 +305,19 @@ export class EnemyPool {
       });
 
       // Then clean up distant enemies
-      const activeEnemies = pool.filter(enemy => 
-        enemy.active && 
-        enemy.sprite && 
-        !cleanedEnemies.has(enemy)
-      );
+      const activeEnemies = pool.filter((enemy) => enemy.active && enemy.sprite && !cleanedEnemies.has(enemy));
 
       // Sort by distance and clean up furthest enemies
       const enemiesWithDistance = activeEnemies
-        .map(enemy => ({
+        .map((enemy) => ({
           enemy,
-          distanceSquared: Math.pow(enemy.sprite.x - playerPos.x, 2) + Math.pow(enemy.sprite.y - playerPos.y, 2)
+          distanceSquared: Math.pow(enemy.sprite.x - playerPos.x, 2) + Math.pow(enemy.sprite.y - playerPos.y, 2),
         }))
         .sort((a, b) => b.distanceSquared - a.distanceSquared);
 
-      for (const {enemy, distanceSquared} of enemiesWithDistance) {
+      for (const { enemy, distanceSquared } of enemiesWithDistance) {
         if (totalCleaned >= this.maxCleanupPerInterval || cleanedEnemies.has(enemy)) break;
-        
+
         if (distanceSquared > this.cleanupThreshold * this.cleanupThreshold) {
           this._resetEnemy(enemy);
           cleanedEnemies.add(enemy);
@@ -319,13 +326,10 @@ export class EnemyPool {
       }
 
       // Log pool status
-      const activeCount = pool.filter(enemy => 
-        enemy.active && 
-        enemy.sprite && 
-        enemy.sprite.active && 
-        !cleanedEnemies.has(enemy)
+      const activeCount = pool.filter(
+        (enemy) => enemy.active && enemy.sprite && enemy.sprite.active && !cleanedEnemies.has(enemy)
       ).length;
-      
+
       if (activeCount > 0) {
         console.log(`🧹 Pool ${type}: ${activeCount} active / ${pool.length} total`);
       }
@@ -344,7 +348,7 @@ export class EnemyPool {
       enemy.sprite.setVisible(false);
       enemy.sprite.setPosition(-1000, -1000);
     }
-    this.activeEnemies.delete(enemy);
+    this.activeEnemies[enemy.type].delete(enemy);
   }
 
   cleanup() {
@@ -354,8 +358,8 @@ export class EnemyPool {
         enemy.destroy();
       });
       this.pools[type] = [];
+      this.activeEnemies[type].clear();
     }
-    this.activeEnemies.clear();
   }
 }
 
