@@ -192,6 +192,12 @@ export class EnemyPool {
   despawn(enemy) {
     if (!enemy) return;
 
+    // If the enemy was killed but hasn't processed death yet, call die()
+    if (enemy.health <= 0 && !enemy.isDead) {
+      enemy.die();
+      return; // die() will call despawn again after death animation
+    }
+
     // Reset enemy state
     enemy.isDead = false;
     enemy.active = false;

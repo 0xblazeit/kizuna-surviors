@@ -329,8 +329,17 @@ class EnemyBasic extends BasePlayer {
           this.scene.startNextWave();
         }
       }
+
+      // Remove from scene's enemy array if present
+      const index = this.scene.enemies.indexOf(this);
+      if (index > -1) {
+        this.scene.enemies.splice(index, 1);
+      }
     }
     
+    // Spawn rewards before despawning
+    this.spawnRewards();
+
     if (this.sprite) {
       // Death animation
       this.scene.tweens.add({
@@ -340,16 +349,18 @@ class EnemyBasic extends BasePlayer {
         duration: 300,
         ease: 'Power2',
         onComplete: () => {
-          // Instead of destroying, we'll despawn the enemy
+          // Despawn through the pool after death animation
           if (this.scene && this.scene.enemyPool) {
             this.scene.enemyPool.despawn(this);
           }
         }
       });
+    } else {
+      // If no sprite, despawn immediately
+      if (this.scene && this.scene.enemyPool) {
+        this.scene.enemyPool.despawn(this);
+      }
     }
-
-    // Spawn rewards
-    this.spawnRewards();
   }
 
   takeDamage(amount, sourceX, sourceY) {
@@ -364,22 +375,7 @@ class EnemyBasic extends BasePlayer {
 
     // Handle death
     if (this.health <= 0 && !this.isDead) {
-      this.isDead = true;
-      
-      // Remove from scene's enemy array
-      const index = this.scene.enemies.indexOf(this);
-      if (index > -1) {
-        this.scene.enemies.splice(index, 1);
-      }
-
-      // Spawn rewards
-      this.spawnRewards();
-
-      // Instead of destroying, we'll despawn the enemy
-      if (this.scene && this.scene.enemyPool) {
-        this.scene.enemyPool.despawn(this);
-      }
-
+      this.die();  // Call die() instead of handling death here
       return;
     }
 
