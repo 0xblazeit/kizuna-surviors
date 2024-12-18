@@ -362,7 +362,7 @@ const GameScene = Phaser.Class({
           if (roll < 0.7) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
           } else {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
           }
         } else if (wave <= 6) {
           // Waves 5-6: Basic + Shooters + Epic (rare)
