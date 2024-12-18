@@ -9,7 +9,7 @@ class EnemyShooter extends EnemyBasic {
       defense: 0,
       attackSpeed: 1,
       attackDamage: 15, 
-      scale: 0.4,
+      scale: 0.6, // Increased scale for better visibility
       trailTint: 0xff4d4d, 
       attackRange: 800, 
       ...config,
@@ -31,6 +31,55 @@ class EnemyShooter extends EnemyBasic {
     this.projectileLifetime = 4000; 
     this.attackCooldown = 2000; 
     this.minAttackDistance = 100; 
+
+    // Make sure sprite is visible and configured properly
+    if (!this.sprite) {
+      console.log("⚠️ Creating new sprite for shooter enemy");
+      this.sprite = scene.add.sprite(x, y, texture);
+    }
+
+    // Always ensure physics is set up
+    if (!this.sprite.body) {
+      scene.physics.add.existing(this.sprite);
+    }
+
+    // Configure sprite properties
+    this.sprite.setScale(shooterConfig.scale);
+    this.sprite.setDepth(5);
+    this.sprite.setActive(true);
+    this.sprite.setVisible(true);
+    
+    // Configure physics body
+    this.sprite.body.setCollideWorldBounds(true);
+    this.sprite.body.setCircle(20); // Adjust hitbox size
+    this.sprite.body.setOffset(12, 12); // Center the hitbox
+    this.sprite.body.setBounce(0.1);
+    this.sprite.body.setDrag(100);
+
+    // Set target player
+    this.targetPlayer = scene.player;
+    
+    // Make sure movement is enabled
+    this.movementEnabled = true;
+    this.moveSpeed = shooterConfig.moveSpeed;
+
+    // Initialize movement state
+    this.movementState = {
+      direction: "right",
+      isMoving: false,
+    };
+
+    console.log("🎯 Shooter enemy created:", {
+      texture: this.sprite?.texture.key,
+      scale: this.sprite?.scale,
+      visible: this.sprite?.visible,
+      x: this.sprite?.x,
+      y: this.sprite?.y,
+      hasPhysics: this.sprite?.body ? "yes" : "no",
+      targetPlayer: this.targetPlayer ? "set" : "missing",
+      moveSpeed: this.moveSpeed,
+      movementEnabled: this.movementEnabled
+    });
     
     // Initialize projectile pool
     this.initProjectilePool();
@@ -45,12 +94,13 @@ class EnemyShooter extends EnemyBasic {
       const projectile = this.scene.add.sprite(0, 0, 'weapon-skull-projectile');
       projectile.setActive(false);
       projectile.setVisible(false);
-      projectile.setScale(0.4);
+      projectile.setScale(0.6); // Increased scale for better visibility
       projectile.setDepth(5);
       
       // Add to physics
       this.scene.physics.add.existing(projectile);
-      projectile.body.setCircle(10); // Adjust hitbox size as needed
+      projectile.body.setCircle(8); // Smaller hitbox for projectile
+      projectile.body.setOffset(8, 8); // Center the hitbox
       
       this.projectilePool.push(projectile);
     }
@@ -136,32 +186,89 @@ class EnemyShooter extends EnemyBasic {
     this.deactivateProjectile(projectile);
   }
 
-  update() {
-    super.update();
+  update(time, delta) {
+    if (!this.active || this.isDead || !this.targetPlayer || !this.sprite || !this.sprite.body) {
+      return;
+    }
 
-    const currentTime = Date.now();
+    // Update position based on physics body
+    this.x = this.sprite.x;
+    this.y = this.sprite.y;
 
-    // Only attack if cooldown is ready and within range
-    if (this.targetPlayer && !this.isDead && !this.isStaggered) {
-      const distance = Phaser.Math.Distance.Between(
-        this.sprite.x,
-        this.sprite.y,
-        this.targetPlayer.sprite.x,
-        this.targetPlayer.sprite.y
-      );
+    // Calculate distance to player
+    const dx = this.targetPlayer.sprite.x - this.sprite.x;
+    const dy = this.targetPlayer.sprite.y - this.sprite.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // If within attack range but not too close
-      if (distance <= this.attackRange && 
-          distance >= this.minAttackDistance && 
-          currentTime - this.lastAttackTime >= this.attackCooldown) {
-        this.shootProjectile();
-        this.lastAttackTime = currentTime;
+    // Log position and movement state (every 60 frames)
+    if (time % 60 === 0) {
+      console.log("🎯 Shooter enemy state:", {
+        x: this.sprite.x,
+        y: this.sprite.y,
+        distance,
+        movementEnabled: this.movementEnabled,
+        active: this.active,
+        isDead: this.isDead,
+        velocity: { x: this.sprite.body.velocity.x, y: this.sprite.body.velocity.y }
+      });
+    }
+
+    // Handle movement
+    if (this.movementEnabled && !this.isStaggered) {
+      // Calculate separation from other enemies
+      const separation = this.calculateSeparation();
+
+      // If too close to player, move away
+      if (distance < this.minAttackDistance) {
+        const awayX = -dx / distance;
+        const awayY = -dy / distance;
+        this.sprite.body.setVelocity(
+          (awayX * this.moveSpeed + separation.x) * 60,
+          (awayY * this.moveSpeed + separation.y) * 60
+        );
+      }
+      // If too far from player, move closer
+      else if (distance > this.attackRange) {
+        const towardX = dx / distance;
+        const towardY = dy / distance;
+        this.sprite.body.setVelocity(
+          (towardX * this.moveSpeed + separation.x) * 60,
+          (towardY * this.moveSpeed + separation.y) * 60
+        );
+      }
+      // If at good distance, just apply separation
+      else {
+        this.sprite.body.setVelocity(
+          separation.x * 60,
+          separation.y * 60
+        );
+      }
+
+      // Update sprite facing direction
+      if (dx < 0) {
+        this.sprite.setFlipX(true);
+      } else {
+        this.sprite.setFlipX(false);
+      }
+
+      // Create trail effect
+      if (time > this.lastTrailTime + 100) {
+        this.createTrailEffect();
+        this.lastTrailTime = time;
       }
     }
 
-    // Update projectile rotations to face their movement direction
+    // Handle shooting
+    if (!this.isStaggered && distance <= this.attackRange && 
+        distance >= this.minAttackDistance && 
+        Date.now() - this.lastAttackTime >= this.attackCooldown) {
+      this.shootProjectile();
+      this.lastAttackTime = Date.now();
+    }
+
+    // Update projectiles
     this.projectiles.forEach(projectile => {
-      if (projectile.body.velocity.length() > 0) {
+      if (projectile.active && projectile.body.velocity.length() > 0) {
         projectile.rotation = Math.atan2(projectile.body.velocity.y, projectile.body.velocity.x);
       }
     });

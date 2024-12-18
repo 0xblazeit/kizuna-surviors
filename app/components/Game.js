@@ -356,7 +356,7 @@ const GameScene = Phaser.Class({
       for (let attempt = 0; attempt < 2; attempt++) {
         if (wave <= 2) {
           // Waves 1-2: Basic enemies only
-          enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
         } else if (wave <= 4) {
           // Waves 3-4: Basic + Shooters
           if (roll < 0.7) {
@@ -934,6 +934,7 @@ const GameScene = Phaser.Class({
 
     // Initialize enemy pool after scene is created
     this.enemyPool.initialize();
+    console.log("🎯 Enemy pool initialized");
 
     // Create start game overlay with retro style
     const overlayConfig = {
