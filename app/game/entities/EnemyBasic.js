@@ -26,6 +26,7 @@ class EnemyBasic extends BasePlayer {
     this.staggerDuration = 500; // Added separate stagger duration
     this.knockbackForce = 5; // Reduced from 150 to 30
     this.isDead = false; // Add flag to track death state
+    this.active = true; // Add active state tracking
 
     // Movement properties
     this.targetPlayer = null;
@@ -553,6 +554,15 @@ class EnemyBasic extends BasePlayer {
     // Deal damage to the player
     const damageDealt = this.stats.attackDamage;
     this.targetPlayer.takeDamage(damageDealt);
+  }
+
+  destroy() {
+    // Instead of destroying, we'll despawn the enemy
+    if (this.scene && this.scene.enemyPool) {
+      this.scene.enemyPool.despawn(this);
+    } else {
+      super.destroy();
+    }
   }
 }
 
