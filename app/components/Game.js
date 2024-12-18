@@ -354,31 +354,33 @@ const GameScene = Phaser.Class({
 
       // Try to spawn enemy with retries
       for (let attempt = 0; attempt < 2; attempt++) {
-        if (wave <= 2) {
-          // Waves 1-2: Basic enemies only
+        if (wave <= 1) {
+          // Wave 1: Basic enemies only
           enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-        } else if (wave <= 4) {
-          // Waves 3-4: Basic + Shooters
-          if (roll < 0.7) {
+        } else if (wave <= 2) {
+          // Wave 2: Mostly basic enemies with rare advanced (15% chance)
+          if (roll < 0.85) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
           } else {
             enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
           }
         } else if (wave <= 6) {
-          // Waves 5-6: Basic + Shooters + Epic (rare)
+          // Waves 3-6: Basic + Advanced + Shooter (rare)
           if (roll < 0.5) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
           } else if (roll < 0.85) {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
           } else {
-            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
           }
         } else {
           // Wave 7+: All enemy types with increasing epic chance
-          const epicChance = Math.min(0.3, 0.1 + (wave - 7) * 0.03);
-          if (roll < 0.4) {
+          const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
+          if (roll < 0.3) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.7 + epicChance) {
+          } else if (roll < 0.55) {
+            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+          } else if (roll < 0.75 + epicChance) {
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
           } else {
             enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);

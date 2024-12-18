@@ -251,11 +251,11 @@ export class EnemyPool {
         maxHealth: 100 * waveScaling.healthMultiplier,
         moveSpeed: (0.6 + Math.random() * 0.5) * waveScaling.speedMultiplier,
         attackDamage: 8 * waveScaling.damageMultiplier,
-        scale: 0.4 + Math.random() * 0.1,
+        scale: 0.3 + Math.random() * 0.2,
       },
       advanced: {
         maxHealth: 300 * waveScaling.healthMultiplier,
-        moveSpeed: (0.6 + Math.random() * 0.4) * waveScaling.speedMultiplier,
+        moveSpeed: (0.7 + Math.random() * 0.4) * waveScaling.speedMultiplier,
         attackDamage: 12 * waveScaling.damageMultiplier,
         scale: 0.4 + Math.random() * 0.15,
       },
@@ -270,7 +270,7 @@ export class EnemyPool {
         moveSpeed: (0.5 + Math.random() * 0.2) * waveScaling.speedMultiplier,
         attackDamage: 10 * waveScaling.damageMultiplier,
         scale: 0.27 + Math.random() * 0.15,
-        attackRange: 250,
+        attackRange: 250 + Math.random() * 200,
         projectileSpeed: 200,
       },
     };
