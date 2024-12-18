@@ -159,10 +159,20 @@ export class EnemyPool {
   _configureEnemy(enemy, type, x, y, config) {
     // Reset enemy to default state
     enemy.active = true;
+    enemy.isDead = false;
+    enemy.isStaggered = false;
+    enemy.movementEnabled = true;
+
     if (enemy.sprite) {
+      // Reset position and visibility
       enemy.sprite.setActive(true);
       enemy.sprite.setVisible(true);
       enemy.sprite.setPosition(x, y);
+      
+      // Reset visual effects
+      enemy.sprite.setAlpha(1);
+      enemy.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+      enemy.sprite.clearTint();
     }
     enemy.x = x;
     enemy.y = y;
@@ -176,6 +186,12 @@ export class EnemyPool {
     enemy.maxHealth = finalConfig.maxHealth;
     enemy.moveSpeed = finalConfig.moveSpeed;
     enemy.attackDamage = finalConfig.attackDamage;
+    
+    // Reset combat timers
+    enemy.lastAttackTime = 0;
+    enemy.lastMoveTime = 0;
+    enemy.lastTrailTime = 0;
+
     if (enemy.sprite) {
       enemy.sprite.setScale(finalConfig.scale);
     }
@@ -183,6 +199,11 @@ export class EnemyPool {
     if (type === "shooter") {
       enemy.attackRange = finalConfig.attackRange;
       enemy.projectileSpeed = finalConfig.projectileSpeed;
+    }
+
+    // Cancel any existing tweens on the sprite
+    if (enemy.sprite && this.scene) {
+      this.scene.tweens.killTweensOf(enemy.sprite);
     }
 
     // Track active enemy
