@@ -41,8 +41,10 @@ export class EnemyPool {
       shooter: [],
     };
     this.activeEnemies = new Set();
-    this.poolSize = 60; // Increased pool size
-    this.maxPoolSize = 100; // Maximum pool size
+    this.poolSize = 200; // Increased initial pool size
+    this.maxPoolSize = 300; // Increased maximum pool size
+    this.lastCleanupTime = 0;
+    this.cleanupInterval = 2000; // Cleanup more frequently (every 2 seconds)
   }
 
   initialize() {
@@ -50,11 +52,13 @@ export class EnemyPool {
     // Pre-create enemies for each type
     for (let i = 0; i < this.poolSize; i++) {
       this._createEnemy("basic");
-      this._createEnemy("advanced");
-      this._createEnemy("epic");
-      this._createEnemy("shooter");
+      if (i < this.poolSize * 0.5) { // Create fewer of the advanced types
+        this._createEnemy("advanced");
+        this._createEnemy("epic");
+        this._createEnemy("shooter");
+      }
     }
-    console.log(`✅ Pools initialized with ${this.poolSize} enemies per type`);
+    console.log(`✅ Pools initialized with ${this.poolSize} basic enemies and ${Math.floor(this.poolSize * 0.5)} of each advanced type`);
   }
 
   _createEnemy(type) {
@@ -103,27 +107,51 @@ export class EnemyPool {
   }
 
   spawn(type, x, y, config = {}) {
+    // Try to cleanup if needed
+    const now = Date.now();
+    if (now - this.lastCleanupTime > this.cleanupInterval) {
+      this._cleanupInactiveEnemies();
+      this.lastCleanupTime = now;
+    }
+
     let enemy;
+    const pool = this.pools[type];
 
-    // Try to get an inactive enemy from the pool
-    if (this.pools[type].length > 0) {
-      enemy = this.pools[type].find((e) => !e.active);
+    // First try to find an inactive enemy
+    enemy = pool.find(e => !e.active && !e.isDead);
+
+    // If no inactive enemy found, try to force cleanup and search again
+    if (!enemy) {
+      this._cleanupInactiveEnemies();
+      enemy = pool.find(e => !e.active && !e.isDead);
     }
 
-    // If no inactive enemy found and pool isn't at max size, create a new one
-    if (!enemy && this.pools[type].length < this.maxPoolSize) {
-      console.log(`🔄 Creating new ${type} enemy - pool size: ${this.pools[type].length}`);
+    // If still no enemy and we haven't hit max size, create new one
+    if (!enemy && pool.length < this.maxPoolSize) {
+      console.log(`🔄 Creating new ${type} enemy - pool size: ${pool.length}`);
       enemy = this._createEnemy(type);
-    } else if (!enemy) {
-      console.log(`⚠️ Pool exhausted for ${type} enemies and at max size (${this.maxPoolSize})`);
-      return null;
     }
 
-    // Configure and activate the enemy
-    this._configureEnemy(enemy, type, x, y, config);
+    // If we still don't have an enemy, try to recycle the oldest one
+    if (!enemy) {
+      enemy = pool.find(e => 
+        e.sprite && 
+        (e.sprite.x < -1000 || e.sprite.x > 4000 || e.sprite.y < -1000 || e.sprite.y > 4000)
+      );
+      if (enemy) {
+        this.despawn(enemy);
+      }
+    }
 
-    console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies.size}/${this.pools[type].length})`);
-    return enemy;
+    // Configure and activate the enemy if we found one
+    if (enemy) {
+      this._configureEnemy(enemy, type, x, y, config);
+      console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies.size}/${pool.length})`);
+      return enemy;
+    }
+
+    console.log(`⚠️ Could not spawn ${type} enemy - no available slots`);
+    return null;
   }
 
   _configureEnemy(enemy, type, x, y, config) {
@@ -160,16 +188,19 @@ export class EnemyPool {
   }
 
   despawn(enemy) {
+    if (!enemy) return;
+
+    // Reset enemy state
+    enemy.isDead = false;
     enemy.active = false;
     if (enemy.sprite) {
       enemy.sprite.setActive(false);
       enemy.sprite.setVisible(false);
       enemy.sprite.setPosition(-1000, -1000);
     }
-    enemy.x = -1000;
-    enemy.y = -1000;
+
+    // Remove from active enemies set
     this.activeEnemies.delete(enemy);
-    console.log(`♻️ Enemy despawned (Active: ${this.activeEnemies.size})`);
   }
 
   _getBaseConfig(type) {
@@ -178,7 +209,7 @@ export class EnemyPool {
     const configs = {
       basic: {
         maxHealth: 100 * waveScaling.healthMultiplier,
-        moveSpeed: 1.0 * waveScaling.speedMultiplier,
+        moveSpeed: 0.4 * waveScaling.speedMultiplier,
         attackDamage: 8 * waveScaling.damageMultiplier,
         scale: 0.4,
       },
@@ -205,6 +236,36 @@ export class EnemyPool {
     };
 
     return configs[type];
+  }
+
+  _cleanupInactiveEnemies() {
+    let totalCleaned = 0;
+    Object.entries(this.pools).forEach(([type, pool]) => {
+      // Find enemies that can be recycled
+      pool.forEach(enemy => {
+        if (!enemy.active || enemy.isDead || !enemy.sprite || !enemy.sprite.active || 
+            (enemy.sprite.x < -1000 || enemy.sprite.x > 4000 || enemy.sprite.y < -1000 || enemy.sprite.y > 4000)) {
+          // Reset enemy state
+          enemy.isDead = false;
+          enemy.active = false;
+          if (enemy.sprite) {
+            enemy.sprite.setActive(false);
+            enemy.sprite.setVisible(false);
+            enemy.sprite.setPosition(-1000, -1000);
+          }
+          totalCleaned++;
+          this.activeEnemies.delete(enemy);
+        }
+      });
+
+      // Log pool status
+      const activeCount = pool.filter(enemy => enemy.active && enemy.sprite && enemy.sprite.active).length;
+      console.log(`🧹 Pool ${type}: ${activeCount} active / ${pool.length} total`);
+    });
+
+    if (totalCleaned > 0) {
+      console.log(`♻️ Cleaned up ${totalCleaned} inactive enemies`);
+    }
   }
 
   cleanup() {

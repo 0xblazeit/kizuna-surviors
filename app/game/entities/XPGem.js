@@ -15,7 +15,7 @@ class XPGem {
     return Math.floor(basexp * cappedMultiplier);
   }
 
-  constructor(scene, x, y, baseXPValue = 50, scale = 0.3) {
+  constructor(scene, x, y, baseXPValue = 50, scale = 0.15) {
     // Check if we're at the gem limit
     if (XPGem.totalGems >= XPGem.MAX_GEMS) {
       return null;

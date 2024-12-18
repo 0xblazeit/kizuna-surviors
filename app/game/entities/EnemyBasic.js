@@ -208,39 +208,44 @@ class EnemyBasic extends BasePlayer {
     let neighborCount = 0;
 
     // Check distance to other enemies
-    this.scene.enemies.forEach(other => {
-      if (other !== this && !other.isDead) {
+    if (this.scene.enemies) {
+      this.scene.enemies.forEach(other => {
+        // Skip null, dead, or self enemies
+        if (!other || other === this || other.isDead || !other.sprite || !other.sprite.active) {
+          return;
+        }
+
         const dx = this.x - other.x;
         const dy = this.y - other.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.separationRadius) {
+        if (distance < this.separationRadius && distance > 0) {
           // Weight separation force by distance (closer = stronger)
           const force = (this.separationRadius - distance) / this.separationRadius;
           separation.x += (dx / distance) * force;
           separation.y += (dy / distance) * force;
           neighborCount++;
         }
-      }
-    });
+      });
 
-    // Average and scale the separation force
-    if (neighborCount > 0) {
-      separation.x = separation.x / neighborCount * this.baseSeparationForce;
-      separation.y = separation.y / neighborCount * this.baseSeparationForce;
+      // Average and scale the separation force
+      if (neighborCount > 0) {
+        separation.x = separation.x / neighborCount * this.baseSeparationForce;
+        separation.y = separation.y / neighborCount * this.baseSeparationForce;
 
-      // Scale up separation when close to player
-      if (this.targetPlayer) {
-        const playerDist = Phaser.Math.Distance.Between(
-          this.x, this.y,
-          this.targetPlayer.x, this.targetPlayer.y
-        );
-        const playerProximityScale = Math.max(
-          1,
-          (this.attackRange * 2 - playerDist) / (this.attackRange * 2) * this.maxSeparationForce
-        );
-        separation.x *= playerProximityScale;
-        separation.y *= playerProximityScale;
+        // Scale up separation when close to player
+        if (this.targetPlayer) {
+          const playerDist = Phaser.Math.Distance.Between(
+            this.x, this.y,
+            this.targetPlayer.x, this.targetPlayer.y
+          );
+          const playerProximityScale = Math.max(
+            1,
+            (this.attackRange * 2 - playerDist) / (this.attackRange * 2) * this.maxSeparationForce
+          );
+          separation.x *= playerProximityScale;
+          separation.y *= playerProximityScale;
+        }
       }
     }
 
@@ -311,6 +316,18 @@ class EnemyBasic extends BasePlayer {
       // Update kills text
       if (this.scene.killsText) {
         this.scene.killsText.setText(`Kills: ${this.scene.gameState?.kills || 0}`);
+      }
+
+      // Update enemies remaining and check for wave completion
+      if (this.scene.gameState.enemiesRemainingInWave > 0) {
+        this.scene.gameState.enemiesRemainingInWave--;
+        console.log(`Enemy killed, ${this.scene.gameState.enemiesRemainingInWave} remaining in wave`);
+
+        // Start next wave if all enemies are cleared and no more are spawning
+        if (this.scene.gameState.enemiesRemainingInWave <= 0 && this.scene.enemies.length <= 1) {
+          console.log('Wave cleared, starting next wave');
+          this.scene.startNextWave();
+        }
       }
     }
     

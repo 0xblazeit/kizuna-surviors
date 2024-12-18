@@ -264,9 +264,32 @@ const GameScene = Phaser.Class({
       spawnRateMultiplier: 1 + waveScaling * 0.2,
     };
 
-    // Update spawn parameters
-    this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
-    this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
+    // Update spawn parameters for endless waves
+    this.gameState.maxEnemies = Math.min(200, 20 + Math.floor(this.gameState.waveNumber * 3));
+    this.gameState.spawnRate = Math.max(
+      this.gameState.minSpawnRate,
+      800 - Math.min(600, this.gameState.waveNumber * 20)
+    );
+
+    // Force cleanup of inactive enemies
+    if (this.enemyPool) {
+      this.enemyPool._cleanupInactiveEnemies();
+    }
+
+    // Ensure enemy spawn timer is running
+    if (this.enemySpawnTimer) {
+      this.enemySpawnTimer.paused = false;
+      const currentWaveSpawnRate = Math.max(
+        this.gameState.minSpawnRate,
+        this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
+      );
+      this.enemySpawnTimer.reset({
+        delay: currentWaveSpawnRate,
+        callback: this.spawnEnemies,
+        callbackScope: this,
+        loop: true,
+      });
+    }
 
     // Update wave text
     if (this.waveText) {
@@ -275,6 +298,13 @@ const GameScene = Phaser.Class({
 
     // Create wave announcement
     this.createWaveAnnouncement();
+
+    // Debug log
+    console.log(`Starting Wave ${this.gameState.waveNumber}:`, {
+      maxEnemies: this.gameState.maxEnemies,
+      spawnRate: this.gameState.spawnRate,
+      scaling: this.gameState.waveScaling,
+    });
   },
 
   getSpawnPosition: function () {
@@ -304,51 +334,69 @@ const GameScene = Phaser.Class({
   },
 
   spawnEnemies: function () {
-    if (this.enemies.length >= this.gameState.maxEnemies) {
+    // Check if we have room for more enemies
+    const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
+    if (currentEnemyCount >= this.gameState.maxEnemies) {
       return;
     }
 
-    const spawnPos = this.getSpawnPosition();
-    const roll = Math.random();
-    let enemy;
-    console.log("ENEMIES SPAWNING..");
-    if (this.gameState.waveNumber <= 5) {
-      // Early waves: Basic enemies only for now
-      enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-    } else {
-      // Later waves: Mix of all enemy types
-      if (roll < 0.4) {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      } else if (roll < 0.7) {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      } else if (roll < 0.9) {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      } else {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+    // Calculate how many enemies to spawn this tick
+    const spawnCount = Math.min(
+      3, // Max enemies per spawn tick
+      this.gameState.maxEnemies - currentEnemyCount
+    );
+
+    for (let i = 0; i < spawnCount; i++) {
+      const spawnPos = this.getSpawnPosition();
+      let enemy = null;
+      const roll = Math.random();
+
+      // Try to spawn enemy with retries
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (this.gameState.waveNumber <= 5) {
+          // Early waves: Basic enemies only
+          enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+        } else {
+          // Later waves: Mix of enemy types
+          if (roll < 0.4) {
+            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else if (roll < 0.7) {
+            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+          } else if (roll < 0.9) {
+            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+          } else {
+            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          }
+        }
+
+        if (enemy) break; // Successfully spawned
+        
+        // Force cleanup and try again
+        this.enemyPool._cleanupInactiveEnemies();
+      }
+
+      // Add to physics system and enemies array if spawned successfully
+      if (enemy) {
+        if (!enemy.body) {
+          this.physics.add.existing(enemy);
+        }
+        this.enemies.push(enemy);
       }
     }
 
-    // Add to physics system and enemies array if spawned successfully
-    if (enemy) {
-      if (!enemy.body) {
-        this.physics.add.existing(enemy);
-      }
-      this.enemies.push(enemy);
+    // Update spawn timer with dynamic rate
+    if (!this.enemySpawnTimer.paused) {
+      const currentWaveSpawnRate = Math.max(
+        this.gameState.minSpawnRate,
+        this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
+      );
 
-      // Update spawn timer with dynamic rate
-      if (!this.enemySpawnTimer.paused) {
-        const currentWaveSpawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
-        );
-
-        this.enemySpawnTimer.reset({
-          delay: currentWaveSpawnRate,
-          callback: this.spawnEnemies,
-          callbackScope: this,
-          loop: true,
-        });
-      }
+      this.enemySpawnTimer.reset({
+        delay: currentWaveSpawnRate,
+        callback: this.spawnEnemies,
+        callbackScope: this,
+        loop: true,
+      });
     }
   },
 
@@ -357,6 +405,14 @@ const GameScene = Phaser.Class({
 
     // Initialize coin pool
     Coin.initializePool(this);
+
+    // Set up enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+      delay: this.gameState.spawnRate,
+      callback: this.spawnEnemies,
+      callbackScope: this,
+      loop: true,
+    });
 
     // Set world bounds (2x2 screens)
     const worldWidth = width * 2;
@@ -945,13 +1001,6 @@ const GameScene = Phaser.Class({
         .setDepth(10000);
     }
 
-    // Add to cleanup array
-    this.overlayElements = this.overlayElements || [];
-    this.overlayElements.push(this.welcomeText);
-    if (this.addressText) {
-      this.overlayElements.push(this.addressText);
-    }
-
     // Add pixel-style bullet points
     const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold", "► In Game Boost"];
 
@@ -1084,6 +1133,13 @@ const GameScene = Phaser.Class({
         });
       }
     };
+
+    // Add to cleanup array
+    this.overlayElements = this.overlayElements || [];
+    this.overlayElements.push(this.welcomeText);
+    if (this.addressText) {
+      this.overlayElements.push(this.addressText);
+    }
 
     // Listen for any movement key press
     const keys = ["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"];
@@ -1940,34 +1996,39 @@ const GameScene = Phaser.Class({
 
     // Update all enemies with screen check optimization
     if (this.enemies) {
-      this.enemies.forEach((enemy, index) => {
-        if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === "function") {
-          try {
-            // Only perform full update if enemy is on screen
-            const onScreen = isOnScreen(enemy.sprite);
-            if (onScreen) {
-              enemy.update(time, delta);
-            } else {
-              // Minimal update for off-screen enemies
-              enemy.updateOffScreen(time, delta);
-            }
-          } catch (error) {
-            console.error("Error updating enemy:", error);
-            enemy.isDead = true;
-          }
-        }
+      // Filter out null or dead enemies first
+      this.enemies = this.enemies.filter((enemy) => enemy && !enemy.isDead);
 
-        // Remove dead enemies or enemies without sprites
-        if (enemy && (enemy.isDead || !enemy.sprite)) {
-          if (enemy.sprite) {
-            enemy.sprite.destroy();
+      // Update remaining enemies
+      this.enemies.forEach((enemy) => {
+        try {
+          if (enemy.sprite && typeof enemy.update === "function") {
+            // Check if enemy is too far from player
+            const dx = enemy.x - this.player.x;
+            const dy = enemy.y - this.player.y;
+            const distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared > 2000 * 2000) { // If enemy is more than 2000 pixels away
+              // Despawn and recycle the enemy
+              enemy.isDead = true;
+              if (this.enemyPool) {
+                this.enemyPool.despawn(enemy);
+              }
+            } else {
+              // Only perform full update if enemy is on screen or close to it
+              const onScreen = Math.abs(dx) < 1000 && Math.abs(dy) < 1000;
+              if (onScreen) {
+                enemy.update(time, delta);
+              } else if (typeof enemy.updateOffScreen === "function") {
+                enemy.updateOffScreen(time, delta);
+              }
+            }
           }
-          this.enemies[index] = null;
+        } catch (error) {
+          console.error("Error updating enemy:", error);
+          enemy.isDead = true;
         }
       });
-
-      // Clean up null entries
-      this.enemies = this.enemies.filter((enemy) => enemy !== null && enemy.sprite);
     }
 
     // Update all weapons with screen check optimization
