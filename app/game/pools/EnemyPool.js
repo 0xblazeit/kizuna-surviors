@@ -41,7 +41,8 @@ export class EnemyPool {
       shooter: [],
     };
     this.activeEnemies = new Set();
-    this.poolSize = 30; // Initial pool size per enemy type
+    this.poolSize = 60; // Increased pool size
+    this.maxPoolSize = 100; // Maximum pool size
   }
 
   initialize() {
@@ -96,7 +97,7 @@ export class EnemyPool {
       enemy.sprite.setActive(false);
       enemy.sprite.setVisible(false);
     }
-    
+
     this.pools[type].push(enemy);
     return enemy;
   }
@@ -109,16 +110,19 @@ export class EnemyPool {
       enemy = this.pools[type].find((e) => !e.active);
     }
 
-    // If no inactive enemy found, create a new one
-    if (!enemy) {
-      console.log(`🔄 Creating new ${type} enemy - pool exhausted`);
+    // If no inactive enemy found and pool isn't at max size, create a new one
+    if (!enemy && this.pools[type].length < this.maxPoolSize) {
+      console.log(`🔄 Creating new ${type} enemy - pool size: ${this.pools[type].length}`);
       enemy = this._createEnemy(type);
+    } else if (!enemy) {
+      console.log(`⚠️ Pool exhausted for ${type} enemies and at max size (${this.maxPoolSize})`);
+      return null;
     }
 
     // Configure and activate the enemy
     this._configureEnemy(enemy, type, x, y, config);
 
-    console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies.size})`);
+    console.log(`👾 Spawned ${type} enemy from pool (Active: ${this.activeEnemies.size}/${this.pools[type].length})`);
     return enemy;
   }
 
@@ -174,25 +178,25 @@ export class EnemyPool {
     const configs = {
       basic: {
         maxHealth: 100 * waveScaling.healthMultiplier,
-        moveSpeed: 1.8 * waveScaling.speedMultiplier,
+        moveSpeed: 1.0 * waveScaling.speedMultiplier,
         attackDamage: 8 * waveScaling.damageMultiplier,
         scale: 0.4,
       },
       advanced: {
         maxHealth: 300 * waveScaling.healthMultiplier,
-        moveSpeed: 2.0 * waveScaling.speedMultiplier,
+        moveSpeed: 1.0 * waveScaling.speedMultiplier,
         attackDamage: 12 * waveScaling.damageMultiplier,
         scale: 0.5,
       },
       epic: {
         maxHealth: 600 * waveScaling.healthMultiplier,
-        moveSpeed: 2.2 * waveScaling.speedMultiplier,
+        moveSpeed: 1.0 * waveScaling.speedMultiplier,
         attackDamage: 16 * waveScaling.damageMultiplier,
         scale: 0.6,
       },
       shooter: {
         maxHealth: 80 * waveScaling.healthMultiplier,
-        moveSpeed: 1.4 * waveScaling.speedMultiplier,
+        moveSpeed: 1.0 * waveScaling.speedMultiplier,
         attackDamage: 10 * waveScaling.damageMultiplier,
         scale: 0.3,
         attackRange: 250,

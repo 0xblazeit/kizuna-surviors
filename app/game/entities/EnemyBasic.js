@@ -106,18 +106,11 @@ class EnemyBasic extends BasePlayer {
   }
 
   update(time, delta) {
-    if (!this.sprite || this.isDead) return;
+    if (this.isDead || !this.sprite || !this.movementEnabled) return;
 
-    super.update(time, delta);
-
-    const currentTime = Date.now();
-
-    // Only update movement at fixed intervals
-    if (currentTime - this.lastMoveTime < this.moveUpdateInterval) {
-      return;
-    }
-
-    this.lastMoveTime = currentTime;
+    // Update position to match sprite
+    this.x = this.sprite.x;
+    this.y = this.sprite.y;
 
     // Check if enemy is off screen
     const camera = this.scene.cameras.main;
@@ -134,61 +127,71 @@ class EnemyBasic extends BasePlayer {
       return;
     }
 
-    // Only check isDead for movement, not isDying
-    if (this.movementEnabled && !this.isStaggered && this.targetPlayer && this.targetPlayer.sprite && !this.isDead) {
-      // Calculate distance to player
-      const dx = this.targetPlayer.sprite.x - this.sprite.x;
-      const dy = this.targetPlayer.sprite.y - this.sprite.y;
+    // Find target if none exists
+    if (!this.targetPlayer) {
+      this.targetPlayer = this.scene.player;
+    }
+
+    if (this.targetPlayer && !this.isStaggered) {
+      // Calculate direction to player
+      const dx = this.targetPlayer.x - this.x;
+      const dy = this.targetPlayer.y - this.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Calculate separation force from other enemies
-      let separationX = 0;
-      let separationY = 0;
-
-      if (Array.isArray(this.scene.enemies)) {
-        // Scale separation force based on distance to player
-        const distanceScale = Math.max(0, 1 - distance / (this.attackRange * 2));
-        const currentSeparationForce =
-          this.baseSeparationForce + (this.maxSeparationForce - this.baseSeparationForce) * distanceScale;
-
-        for (const otherEnemy of this.scene.enemies) {
-          if (
-            otherEnemy &&
-            otherEnemy.sprite &&
-            otherEnemy !== this &&
-            !otherEnemy.isDead &&
-            otherEnemy.sprite.active
-          ) {
-            const enemyDx = this.sprite.x - otherEnemy.sprite.x;
-            const enemyDy = this.sprite.y - otherEnemy.sprite.y;
-            const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
-
-            if (enemyDistance > 0 && enemyDistance < this.separationRadius) {
-              // Calculate normalized repulsion vector with inverse square falloff
-              const repulsionStrength = Math.pow(1 - enemyDistance / this.separationRadius, 2);
-              separationX += (enemyDx / enemyDistance) * repulsionStrength;
-              separationY += (enemyDy / enemyDistance) * repulsionStrength;
-            }
-          }
-        }
-
-        // Normalize separation vector if it exists
-        const separationLength = Math.sqrt(separationX * separationX + separationY * separationY);
-        if (separationLength > 0) {
-          separationX = (separationX / separationLength) * currentSeparationForce;
-          separationY = (separationY / separationLength) * currentSeparationForce;
-        }
+      // Check if we should attack
+      if (distance <= this.attackRange && time > this.lastAttackTime + this.attackCooldown) {
+        this.attack();
+        this.lastAttackTime = time;
       }
 
-      // Always move towards player if not too close
+      // Move towards player if not too close
       if (distance > this.minDistance) {
+        // Apply separation from other enemies
+        const separation = this.calculateSeparation();
+        
         // Normalize direction
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
 
         // Apply movement with separation
-        this.sprite.x += normalizedDx * this.moveSpeed + separationX;
-        this.sprite.y += normalizedDy * this.moveSpeed + separationY;
+        this.sprite.x += (normalizedDx * this.moveSpeed + separation.x) * (delta / 16);
+        this.sprite.y += (normalizedDy * this.moveSpeed + separation.y) * (delta / 16);
+
+        // Update sprite facing direction
+        if (dx < 0) {
+          this.sprite.setFlipX(true);
+        } else {
+          this.sprite.setFlipX(false);
+        }
+      }
+
+      // Create trail effect
+      if (time > this.lastTrailTime + 100) { // Adjust timing for trail frequency
+        this.createTrailEffect();
+        this.lastTrailTime = time;
+      }
+    }
+  }
+
+  updateOffScreen(time, delta) {
+    // Only do basic position updates when off screen
+    if (this.targetPlayer && !this.isDead) {
+      const dx = this.targetPlayer.x - this.x;
+      const dy = this.targetPlayer.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > this.minDistance) {
+        // Normalize direction
+        const normalizedDx = dx / distance;
+        const normalizedDy = dy / distance;
+
+        // Simple movement without collision or separation
+        this.sprite.x += normalizedDx * this.moveSpeed * (delta / 16);
+        this.sprite.y += normalizedDy * this.moveSpeed * (delta / 16);
+
+        // Update position to match sprite
+        this.x = this.sprite.x;
+        this.y = this.sprite.y;
 
         // Update sprite direction
         if (dx < 0) {
@@ -196,83 +199,179 @@ class EnemyBasic extends BasePlayer {
         } else {
           this.sprite.setFlipX(false);
         }
-
-        // Add trail effect if moving
-        if (currentTime - this.lastTrailTime >= this.trailConfig.spawnInterval) {
-          super.createTrailEffect();
-          this.lastTrailTime = currentTime;
-        }
-      } else {
-        // Apply only separation force when close to player
-        this.sprite.x += separationX;
-        this.sprite.y += separationY;
-      }
-
-      // Check if within attack range and cooldown is ready
-      if (distance <= this.attackRange && currentTime - this.lastAttackTime >= this.attackCooldown) {
-        this.attackPlayer();
       }
     }
   }
 
-  updateOffScreen(time, delta) {
-    // Only do basic position updates when off screen
-    if (this.targetPlayer && this.targetPlayer.sprite && !this.isDead) {
-      const dx = this.targetPlayer.sprite.x - this.sprite.x;
-      const dy = this.targetPlayer.sprite.y - this.sprite.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+  calculateSeparation() {
+    const separation = { x: 0, y: 0 };
+    let neighborCount = 0;
 
-      if (distance > this.minDistance) {
-        const normalizedDx = dx / distance;
-        const normalizedDy = dy / distance;
-        this.sprite.x += normalizedDx * this.moveSpeed;
-        this.sprite.y += normalizedDy * this.moveSpeed;
+    // Check distance to other enemies
+    this.scene.enemies.forEach(other => {
+      if (other !== this && !other.isDead) {
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < this.separationRadius) {
+          // Weight separation force by distance (closer = stronger)
+          const force = (this.separationRadius - distance) / this.separationRadius;
+          separation.x += (dx / distance) * force;
+          separation.y += (dy / distance) * force;
+          neighborCount++;
+        }
+      }
+    });
+
+    // Average and scale the separation force
+    if (neighborCount > 0) {
+      separation.x = separation.x / neighborCount * this.baseSeparationForce;
+      separation.y = separation.y / neighborCount * this.baseSeparationForce;
+
+      // Scale up separation when close to player
+      if (this.targetPlayer) {
+        const playerDist = Phaser.Math.Distance.Between(
+          this.x, this.y,
+          this.targetPlayer.x, this.targetPlayer.y
+        );
+        const playerProximityScale = Math.max(
+          1,
+          (this.attackRange * 2 - playerDist) / (this.attackRange * 2) * this.maxSeparationForce
+        );
+        separation.x *= playerProximityScale;
+        separation.y *= playerProximityScale;
       }
     }
+
+    return separation;
+  }
+
+  createTrailEffect() {
+    if (!this.sprite || this.isDead) return;
+
+    const trail = this.scene.add.sprite(this.sprite.x, this.sprite.y, this.sprite.texture.key);
+    trail.setAlpha(0.3);
+    trail.setScale(this.sprite.scaleX, this.sprite.scaleY);
+    trail.setTint(this.trailTint);
+    trail.setDepth(this.sprite.depth - 1);
+    trail.setFlipX(this.sprite.flipX);
+
+    // Fade out and destroy
+    this.scene.tweens.add({
+      targets: trail,
+      alpha: 0,
+      duration: 200,
+      ease: 'Power2',
+      onComplete: () => {
+        trail.destroy();
+      }
+    });
+  }
+
+  attack() {
+    if (this.isDead || !this.targetPlayer) return;
+
+    // Calculate direction to player
+    const dx = this.targetPlayer.x - this.x;
+    const dy = this.targetPlayer.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= this.attackRange) {
+      // Deal damage to player
+      this.targetPlayer.takeDamage(this.stats.attackDamage);
+
+      // Visual feedback for attack
+      if (this.sprite) {
+        this.scene.tweens.add({
+          targets: this.sprite,
+          scaleX: this.sprite.scaleX * 1.2,
+          scaleY: this.sprite.scaleY * 1.2,
+          duration: 100,
+          yoyo: true,
+          ease: 'Quad.easeInOut'
+        });
+      }
+    }
+  }
+
+  die() {
+    if (this.isDead) return;
+    
+    this.isDead = true;
+    this.movementEnabled = false;
+
+    // Increment kill counter
+    if (this.scene) {
+      // Increment kills in gameState
+      if (this.scene.gameState) {
+        this.scene.gameState.kills++;
+      }
+
+      // Update kills text
+      if (this.scene.killsText) {
+        this.scene.killsText.setText(`Kills: ${this.scene.gameState?.kills || 0}`);
+      }
+    }
+    
+    if (this.sprite) {
+      // Death animation
+      this.scene.tweens.add({
+        targets: this.sprite,
+        alpha: 0,
+        scale: this.sprite.scale * 1.5,
+        duration: 300,
+        ease: 'Power2',
+        onComplete: () => {
+          // Instead of destroying, we'll despawn the enemy
+          if (this.scene && this.scene.enemyPool) {
+            this.scene.enemyPool.despawn(this);
+          }
+        }
+      });
+    }
+
+    // Spawn rewards
+    this.spawnRewards();
   }
 
   takeDamage(amount, sourceX, sourceY) {
-    if (this.isDead) {
-      return 0;
+    if (this.isDead) return;
+
+    // Calculate actual damage taken
+    const actualDamage = Math.max(1, amount - this.stats.defense);
+    this.health -= actualDamage;
+
+    // Show damage number
+    this.showDamageNumber(actualDamage);
+
+    // Handle death
+    if (this.health <= 0 && !this.isDead) {
+      this.isDead = true;
+      
+      // Remove from scene's enemy array
+      const index = this.scene.enemies.indexOf(this);
+      if (index > -1) {
+        this.scene.enemies.splice(index, 1);
+      }
+
+      // Spawn rewards
+      this.spawnRewards();
+
+      // Instead of destroying, we'll despawn the enemy
+      if (this.scene && this.scene.enemyPool) {
+        this.scene.enemyPool.despawn(this);
+      }
+
+      return;
     }
 
-    let damageDealt = amount;
-
-    // Apply defense reduction
-    if (this.stats.defense > 0) {
-      damageDealt = Math.max(1, amount - this.stats.defense);
-    }
-
-    this.stats.currentHealth -= damageDealt;
-
-    // Show damage number for every hit
-    const damageText = this.scene.add
-      .text(this.sprite.x, this.sprite.y - 20, damageDealt.toString(), {
-        fontSize: "16px",
-        fill: "#ffffff",
-      })
-      .setDepth(100);
-
-    // Animate the damage text
-    this.scene.tweens.add({
-      targets: damageText,
-      y: damageText.y - 30,
-      alpha: 0,
-      duration: 800,
-      ease: "Power2",
-      onComplete: () => {
-        damageText.destroy();
-      },
-    });
-
-    // Flash white when hit
+    // Flash effect on hit
     if (this.sprite) {
-      // Apply a more intense white flash
-      this.sprite.setAlpha(1); // Ensure full opacity
-      this.sprite.setBlendMode(Phaser.BlendModes.ADD); // Make the white more vibrant
+      this.sprite.setAlpha(1);
+      this.sprite.setBlendMode(Phaser.BlendModes.ADD);
       this.sprite.setTint(0xffffff);
 
-      // Clear the flash effect after duration
       this.scene.time.delayedCall(this.hitFlashDuration, () => {
         if (this.sprite && !this.isDead) {
           this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
@@ -285,13 +384,6 @@ class EnemyBasic extends BasePlayer {
     if (sourceX !== undefined && sourceY !== undefined) {
       this.applyKnockback(sourceX, sourceY);
     }
-
-    // Check for death
-    if (this.stats.currentHealth <= 0) {
-      this.die();
-    }
-
-    return damageDealt;
   }
 
   applyKnockback(sourceX, sourceY) {
@@ -318,8 +410,32 @@ class EnemyBasic extends BasePlayer {
 
     // Re-enable movement after stagger duration
     this.scene.time.delayedCall(this.staggerDuration, () => {
-      this.movementEnabled = true;
-      this.isStaggered = false;
+      if (!this.isDead) {  // Only re-enable if not dead
+        this.movementEnabled = true;
+        this.isStaggered = false;
+      }
+    });
+  }
+
+  showDamageNumber(damage) {
+    if (!this.sprite) return;
+
+    const damageText = this.scene.add
+      .text(this.sprite.x, this.sprite.y - 20, damage.toString(), {
+        fontSize: "16px",
+        fill: "#ffffff",
+      })
+      .setDepth(100);
+
+    this.scene.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30,
+      alpha: 0,
+      duration: 800,
+      ease: "Power2",
+      onComplete: () => {
+        damageText.destroy();
+      },
     });
   }
 
@@ -472,96 +588,66 @@ class EnemyBasic extends BasePlayer {
     });
   }
 
-  die() {
-    // Prevent multiple death calls
-    if (this.isDead) return;
-    this.isDead = true;
-
-    // Increment kill counter
-    this.scene.gameState.kills++;
-    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
-
-    // Initialize arrays if they don't exist
-    if (!this.scene.coins) {
-      this.scene.coins = [];
-    }
-    if (!this.scene.xpGems) {
-      this.scene.xpGems = [];
-    }
-
-    // Determine coin value based on enemy type
-    let coinValue = 10; // Base value for basic enemies
-    if (this.type === "advanced") {
-      coinValue = 25; // Advanced enemies drop more
-    } else if (this.type === "epic") {
-      coinValue = 50; // Epic enemies drop even more
-    }
-
-    // Determine drop type - 35% chance for any drop
-    const dropChance = Math.random();
-    if (dropChance < 0.35) {
-      // 30% chance for coins (10.5% total), 70% chance for XP gem (24.5% total)
-      if (dropChance < 0.105) {
-        // Determine number of coins based on enemy type
-        let numCoins = 1;
-        if (this.type === "advanced") {
-          numCoins = 2;
-        } else if (this.type === "epic") {
-          numCoins = 3;
-        }
-
-        // Create coins in a spread pattern using the coin pool
-        const radius = 20; // Base radius for coin spread
-        const coins = Coin.spawnConsolidated(
-          this.scene, 
-          this.sprite.x, 
-          this.sprite.y, 
-          coinValue * numCoins
-        );
-      } else {
-        const gem = new XPGem(this.scene, this.sprite.x, this.sprite.y, 50, 0.12);
-        if (gem) {
-          this.scene.xpGems.push(gem);
-        }
-      }
-    }
-
-    // Play death animation and cleanup
-    this.playDeathAnimation().then(() => {
-      // Remove from scene's enemy list
-      if (this.scene.enemies) {
-        const index = this.scene.enemies.indexOf(this);
-        if (index > -1) {
-          this.scene.enemies.splice(index, 1);
-        }
-      }
-
-      // Cleanup health bar
-      if (this.healthBar) {
-        this.healthBar.container.destroy();
-      }
-
-      // Destroy sprite
-      if (this.sprite) {
-        this.sprite.destroy();
-      }
-    });
-  }
-
-  attackPlayer() {
-    if (!this.targetPlayer || this.isDead || this.isStaggered) return;
-
-    // Deal damage to the player
-    const damageDealt = this.stats.attackDamage;
-    this.targetPlayer.takeDamage(damageDealt);
-  }
-
   destroy() {
-    // Instead of destroying, we'll despawn the enemy
+    // Override destroy to prevent actual destruction when using pool
     if (this.scene && this.scene.enemyPool) {
       this.scene.enemyPool.despawn(this);
     } else {
       super.destroy();
+    }
+  }
+
+  spawnRewards() {
+    if (!this.sprite) return;
+
+    // Determine coin value based on enemy type
+    let coinValue = 10; // Base value for basic enemies
+    if (this.type === "advanced") {
+      coinValue = 25;
+    } else if (this.type === "epic") {
+      coinValue = 50;
+    }
+
+    // Spawn coins (30% chance)
+    if (Math.random() < 0.3) {
+      const coins = Coin.spawnConsolidated(
+        this.scene,
+        this.sprite.x,
+        this.sprite.y,
+        coinValue
+      );
+
+      // Add spawned coins to scene's coin array
+      if (coins && this.scene.coins) {
+        this.scene.coins.push(...coins);
+      }
+    }
+
+    // Spawn XP gems
+    const xpAmount = Math.floor(Math.random() * 3) + 1; // 1-3 XP gems
+    for (let i = 0; i < xpAmount; i++) {
+      const offset = {
+        x: (Math.random() - 0.5) * 20,
+        y: (Math.random() - 0.5) * 20,
+      };
+      const xpGem = new XPGem(
+        this.scene,
+        this.sprite.x + offset.x,
+        this.sprite.y + offset.y
+      );
+      if (this.scene.xpGems) {
+        this.scene.xpGems.push(xpGem);
+      }
+    }
+
+    // Update wave state
+    if (this.scene.gameState.enemiesRemainingInWave > 0) {
+      this.scene.gameState.enemiesRemainingInWave--;
+
+      // Check if wave is complete AND no enemies are left
+      if (this.scene.gameState.enemiesRemainingInWave <= 0 && this.scene.enemies.length <= 1) {
+        this.scene.startNextWave();
+      }
     }
   }
 }

@@ -4,10 +4,6 @@ import { useEffect, useRef } from "react";
 import MenuScene from "./MenuScene";
 import UpgradeMenuScene from "./UpgradeMenuScene";
 import MainPlayer from "../game/entities/MainPlayer";
-import EnemyBasic from "../game/entities/EnemyBasic";
-import EnemyAdvanced from "../game/entities/EnemyAdvanced";
-import EnemyEpic from "../game/entities/EnemyEpic";
-import EnemyShooter from "../game/entities/EnemyShooter";
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
@@ -45,9 +41,9 @@ const GameScene = Phaser.Class({
       selectedWeaponIndex: 0,
       isGameOver: false,
       coins: 0,
-      maxEnemies: 20, // Increased initial max enemies
+      maxEnemies: 50, // Increased initial max enemies
       spawnRate: 800, // Faster initial spawn rate
-      minSpawnRate: 200, // Faster minimum spawn rate
+      minSpawnRate: 150, // Even faster minimum spawn rate
       enemyWaveTimer: 0,
       waveNumber: 1,
       difficultyMultiplier: 1,
@@ -315,24 +311,20 @@ const GameScene = Phaser.Class({
     const spawnPos = this.getSpawnPosition();
     const roll = Math.random();
     let enemy;
-
+    console.log("ENEMIES SPAWNING..");
     if (this.gameState.waveNumber <= 5) {
-      // Early waves: Basic and Shooter enemies
-      if (roll < 0.6) {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      } else {
-        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      }
+      // Early waves: Basic enemies only for now
+      enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
     } else {
       // Later waves: Mix of all enemy types
-      if (roll < 0.25) {
+      if (roll < 0.4) {
         enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-      } else if (roll < 0.5) {
-        enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-      } else if (roll < 0.8) {
-        enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+      } else if (roll < 0.7) {
+        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+      } else if (roll < 0.9) {
+        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
       } else {
-        enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+        enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
       }
     }
 
@@ -362,6 +354,9 @@ const GameScene = Phaser.Class({
 
   create: function () {
     const { width, height } = this.scale;
+
+    // Initialize coin pool
+    Coin.initializePool(this);
 
     // Set world bounds (2x2 screens)
     const worldWidth = width * 2;
