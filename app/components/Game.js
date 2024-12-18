@@ -356,7 +356,7 @@ const GameScene = Phaser.Class({
       for (let attempt = 0; attempt < 2; attempt++) {
         if (wave <= 2) {
           // Waves 1-2: Basic enemies only
-          enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+          enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
         } else if (wave <= 4) {
           // Waves 3-4: Basic + Shooters
           if (roll < 0.7) {
@@ -365,24 +365,23 @@ const GameScene = Phaser.Class({
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
           }
         } else if (wave <= 6) {
-          // Waves 5-6: Basic + Shooter + Advanced
+          // Waves 5-6: Basic + Shooters + Epic (rare)
           if (roll < 0.5) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.7) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else {
+          } else if (roll < 0.85) {
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          } else {
+            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
           }
         } else {
-          // Wave 7+: All enemy types with increased shooter presence
-          if (roll < 0.35) {
+          // Wave 7+: All enemy types with increasing epic chance
+          const epicChance = Math.min(0.3, 0.1 + (wave - 7) * 0.03);
+          if (roll < 0.4) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.6) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.75) {
-            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
-          } else {
+          } else if (roll < 0.7 + epicChance) {
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+          } else {
+            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
           }
         }
 
