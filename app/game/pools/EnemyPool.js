@@ -249,21 +249,21 @@ export class EnemyPool {
     const configs = {
       basic: {
         maxHealth: 100 * waveScaling.healthMultiplier,
-        moveSpeed: (0.4 + Math.random() * 0.5) * waveScaling.speedMultiplier,
+        moveSpeed: (0.5 + Math.random() * 0.6) * waveScaling.speedMultiplier,
         attackDamage: 8 * waveScaling.damageMultiplier,
-        scale: 0.3 + Math.random() * 0.2,
+        scale: 0.2 + Math.random() * 0.1,
       },
       advanced: {
         maxHealth: 300 * waveScaling.healthMultiplier,
         moveSpeed: (0.8 + Math.random() * 0.4) * waveScaling.speedMultiplier,
         attackDamage: 12 * waveScaling.damageMultiplier,
-        scale: 0.4 + Math.random() * 0.15,
+        scale: 0.6 + Math.random() * 0.35,
       },
       epic: {
         maxHealth: 600 * waveScaling.healthMultiplier,
         moveSpeed: (0.6 + Math.random() * 0.4) * waveScaling.speedMultiplier,
         attackDamage: 16 * waveScaling.damageMultiplier,
-        scale: 0.6 + Math.random() * 0.15,
+        scale: 0.6 + Math.random() * 0.35,
       },
       shooter: {
         maxHealth: 80 * waveScaling.healthMultipliear,
