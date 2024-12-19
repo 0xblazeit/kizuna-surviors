@@ -81,10 +81,10 @@ class XPGem {
     const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
 
     // Define attraction parameters
-    const ACTIVATION_DISTANCE = 120; // Reduced from 150
-    const COLLECTION_DISTANCE = 40;
-    const BASE_SPEED = 1.2; // Reduced from 2
-    const ORBITAL_SPEED = 0.08; // Reduced from 0.1
+    const ACTIVATION_DISTANCE = 100; // Reduced from 120
+    const COLLECTION_DISTANCE = 35;  // Reduced from 40
+    const BASE_SPEED = 0.8;         // Reduced from 1.2
+    const ORBITAL_SPEED = 0.06;     // Reduced from 0.08
 
     // Only process gems within activation distance
     if (distance <= ACTIVATION_DISTANCE) {
@@ -92,11 +92,11 @@ class XPGem {
       const angleToPlayer = Math.atan2(player.y - this.sprite.y, player.x - this.sprite.x);
 
       // Add a time-based orbital offset
-      const orbitalOffset = Math.sin(this.scene.time.now * ORBITAL_SPEED) * 0.3; // Reduced orbital movement
+      const orbitalOffset = Math.sin(this.scene.time.now * ORBITAL_SPEED) * 0.2; // Reduced orbital movement
 
       // Calculate speed based on distance (faster when closer)
-      const speedMultiplier = Math.pow(1 - distance / ACTIVATION_DISTANCE, 1.5); // Added curve for smoother acceleration
-      const currentSpeed = BASE_SPEED + speedMultiplier * 2; // Reduced max speed boost
+      const speedMultiplier = Math.pow(1 - distance / ACTIVATION_DISTANCE, 1.3); // Smoother acceleration curve
+      const currentSpeed = BASE_SPEED + speedMultiplier * 1.5; // Reduced max speed boost
 
       // Calculate the new position
       const adjustedAngle = angleToPlayer + orbitalOffset;
