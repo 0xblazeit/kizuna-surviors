@@ -386,7 +386,7 @@ class MainPlayer extends BasePlayer {
 
     // Create multiple lightning bolts with staggered timing
     const totalBolts = 8;
-    const delayBetweenBolts = 150;
+    const delayBetweenBolts = 50;
     let completedBolts = 0;
 
     const createLightningBolt = (i) => {
@@ -434,7 +434,7 @@ class MainPlayer extends BasePlayer {
       this.scene.tweens.add({
         targets: lightning,
         alpha: { from: 1, to: 0 },
-        duration: 600,
+        duration: 300,
         ease: "Power2",
         onComplete: () => {
           lightning.destroy();
@@ -446,7 +446,7 @@ class MainPlayer extends BasePlayer {
               targets: levelText,
               y: levelText.y - 20,
               alpha: 0,
-              duration: 800,
+              duration: 400,
               ease: "Power2",
               onComplete: () => {
                 levelText.destroy();
