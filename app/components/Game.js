@@ -13,10 +13,19 @@ import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import { AwakenWeapon } from "../game/entities/weapons/AwakenWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import XPGem from "../game/entities/XPGem";
 import Coin from "../game/entities/Coin";
 import EnemyPool from "../game/pools/EnemyPool";
+
+async function verifyAccess(walletAddress) {
+  if (!walletAddress) return null;
+  const response = await fetch(`/api/verify-access?wallet=${walletAddress}`);
+  if (!response.ok) {
+    throw new Error("Failed to verify access");
+  }
+  return response.json();
+}
 
 const GameScene = Phaser.Class({
   Extends: Phaser.Scene,
@@ -196,6 +205,9 @@ const GameScene = Phaser.Class({
     this.load.svg("weapon-shapecraft-key", "/assets/game/weapons/weapon-shapecraft-key.svg?v=1", {
       scale: 0.5,
     });
+    this.load.svg("weapon-ss-logo", "/assets/game/weapons/weapon-ss-logo.svg?v=1", {
+      scale: 0.5,
+    });
     this.load.svg("weapon-skull-projectile", "/assets/game/weapons/weapon-skull-projectile.svg?v=1", {
       scale: 1.2,
     });
@@ -342,10 +354,7 @@ const GameScene = Phaser.Class({
 
     // Calculate how many enemies to spawn this tick
     const maxSpawnPerTick = Math.min(3, Math.ceil(this.gameState.waveNumber / 2)); // Increased spawn count scaling
-    const spawnCount = Math.min(
-      maxSpawnPerTick,
-      this.gameState.maxEnemies - currentEnemyCount
-    );
+    const spawnCount = Math.min(maxSpawnPerTick, this.gameState.maxEnemies - currentEnemyCount);
 
     // Calculate delay between spawns based on wave number
     const baseDelay = 300;
@@ -865,17 +874,29 @@ const GameScene = Phaser.Class({
     fetch("/api/game-results")
       .then((response) => response.json())
       .then((data) => {
-        data.data.forEach((entry, index) => {
-          if (index < 5) {
-            // Format each entry with proper spacing for columns
-            const rank = `#${index + 1}`.padEnd(8);
-            const gold = `${entry.gold}`.padEnd(9);
-            const kills = `${entry.kills}`;
-            this.statsTexts.leaderboardEntries[index].setText(`${rank}${gold}${kills}`);
-          }
-        });
+        if (this.statsTexts && this.statsTexts.leaderboardEntries) {
+          data.data.forEach((entry, index) => {
+            if (index < 5 && this.statsTexts.leaderboardEntries[index]) {
+              // Format each entry with proper spacing for columns
+              const rank = `#${index + 1}`.padEnd(8);
+              const gold = `${entry.gold}`.padEnd(9);
+              const kills = `${entry.kills}`;
+              this.statsTexts.leaderboardEntries[index].setText(`${rank}${gold}${kills}`);
+            }
+          });
+        }
       })
-      .catch((error) => console.error("Error fetching leaderboard:", error));
+      .catch((error) => {
+        console.error("Error fetching leaderboard:", error);
+        // Set default values for leaderboard entries if there's an error
+        if (this.statsTexts && this.statsTexts.leaderboardEntries) {
+          this.statsTexts.leaderboardEntries.forEach((entry, index) => {
+            if (entry) {
+              entry.setText(`#${index + 1}`.padEnd(8) + "0".padEnd(9) + "0");
+            }
+          });
+        }
+      });
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -1075,16 +1096,70 @@ const GameScene = Phaser.Class({
       // Add shapecraft key sprite next to "In Game Boost" text
       if (text === "► In Game Boost") {
         const textWidth = textObj.width;
-        const key = this.add
-          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "weapon-shapecraft-key")
-          .setScale(0.15)
-          .setScrollFactor(0)
-          .setDepth(10000);
 
-        // Add to cleanup array
-        this.overlayElements = this.overlayElements || [];
-        this.overlayElements.push(key);
+        // Check if any boosts are active
+        const hasAnyBoost =
+          this.userInfo.isShapeCraftKeyHolder || this.userInfo.isAwakenEyeHolder || this.userInfo.isSSGHolder;
+
+        if (!hasAnyBoost) {
+          // Show [NONE] if no boosts are active
+          const noneText = this.add
+            .text(centerX - 150 + textWidth + 10, startY + 80 + index * 40, "[NONE]", {
+              fontFamily: "VT323",
+              fontSize: "24px",
+              color: "#666666",
+            })
+            .setScrollFactor(0)
+            .setDepth(10000);
+            
+          // Add to cleanup array
+          this.overlayElements = this.overlayElements || [];
+          this.overlayElements.push(noneText);
+        } else {
+          // Add icons for active boosts
+          let iconOffset = 0;
+
+          if (this.userInfo.isShapeCraftKeyHolder) {
+            const key = this.add
+              .image(
+                centerX - 150 + textWidth + 20 + iconOffset,
+                startY + 80 + index * 40 + 10,
+                "weapon-shapecraft-key"
+              )
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            iconOffset += 30;
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(key);
+          }
+
+          if (this.userInfo.isAwakenEyeHolder) {
+            const awaken = this.add
+              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-awaken")
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            iconOffset += 30;
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(awaken);
+          }
+
+          if (this.userInfo.isSSGHolder) {
+            const ssg = this.add
+              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-ss-logo")
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(ssg);
+          }
+        }
       }
+
+      // Add to cleanup array
+      this.overlayElements = this.overlayElements || [];
+      this.overlayElements.push(textObj);
 
       return textObj;
     });
@@ -2206,9 +2281,23 @@ export default function Game() {
   const initializingRef = useRef(false); // Add ref to track initialization state
   const queryClient = useQueryClient();
 
+  const {
+    data: accessData,
+    isLoading: isAccessLoading,
+    isError: isAccessError,
+  } = useQuery({
+    queryKey: ["accessVerification", user?.wallet?.address],
+    queryFn: () => verifyAccess(user?.wallet?.address),
+    enabled: !!user?.wallet?.address,
+  });
+
+  const isShapeCraftKeyHolder = accessData?.isShapeCraftKeyHolder;
+  const isAwakenEyeHolder = accessData?.isAwakenEyeHolder;
+  const isSSGHolder = accessData?.isSSGHolder;
+
   useEffect(() => {
     // Return early if not ready, game exists, or already initializing
-    if (!ready || gameInstanceRef.current || initializingRef.current) {
+    if (!ready || gameInstanceRef.current || initializingRef.current || isAccessLoading) {
       return;
     }
 
@@ -2229,7 +2318,10 @@ export default function Game() {
             userAddress: userAddress,
             username: username,
             profileImage: user?.twitter?.profilePictureUrl,
-            getAccessToken: getAccessToken, // Pass the function instead of the token
+            isShapeCraftKeyHolder: isShapeCraftKeyHolder,
+            isAwakenEyeHolder: isAwakenEyeHolder,
+            isSSGHolder: isSSGHolder,
+            getAccessToken: getAccessToken,
             invalidateQueries: () => {
               queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
               queryClient.invalidateQueries({ queryKey: ["memberCount"] });
@@ -2272,15 +2364,13 @@ export default function Game() {
           }
         }
       } catch (error) {
-        console.error("Error getting access token:", error);
-        // Reset initializing flag on error
+        console.error("Error initializing game:", error);
         initializingRef.current = false;
       }
     };
 
     initializeGame();
 
-    // Cleanup function
     return () => {
       if (gameInstanceRef.current) {
         gameInstanceRef.current.destroy(true);
@@ -2288,7 +2378,18 @@ export default function Game() {
       }
       initializingRef.current = false;
     };
-  }, [ready, user, userAddress, username, getAccessToken, queryClient]);
+  }, [
+    ready,
+    user,
+    userAddress,
+    username,
+    getAccessToken,
+    queryClient,
+    isAccessLoading,
+    isShapeCraftKeyHolder,
+    isAwakenEyeHolder,
+    isSSGHolder,
+  ]);
 
   // Show loading state if not ready or game is initializing
   if (!ready || initializingRef.current) {
