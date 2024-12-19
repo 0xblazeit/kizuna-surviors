@@ -60,4 +60,4 @@ NEXT_PUBLIC_DOMAIN=
 ```
 
 Note to Shapecraft Judges:
-Indie game development is my new favorite hobby ^\_^ so i'll be continously pushing updates. I've frozen branch `MASTER-HACKATON-SUBMISSON` with all commits prior to hackaton deadline. That branch is pretty similar to master, but ill be fine tuning performance, game logic and various updates. thanks again and hope you have fun playing!!
+Indie game development is my new favorite hobby ^\_^ so i'll be continously pushing updates. I've frozen branch `MASTER-HACKATON-SUBMISSON` with all commits prior to hackaton deadline. That branch is pretty similar to master, but ill be fine tuning performance, game logic and UI/UX updates. thanks again and hope you have fun playing!!
