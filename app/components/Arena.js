@@ -71,7 +71,7 @@ export function Arena() {
                 height={150}
                 className="opacity-80 transition-opacity hover:opacity-100"
               />
-              <p className="text-lg text-white/80">Please connect your wallet</p>
+              <p className="text-md text-white/80">Please connect your wallet</p>
             </div>
           ) : (
             <>
