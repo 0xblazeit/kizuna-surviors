@@ -21,6 +21,7 @@ URL: https://shapecraft-survivors.vercel.app
 Tech Stack:
 
 - Javascript
+- React
 - NextJs
 - Phaser game engine
 - Turso / SQLite
