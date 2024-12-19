@@ -15,11 +15,10 @@ class XPGem {
     return Math.floor(basexp * cappedMultiplier);
   }
 
-  constructor(scene, x, y, baseXPValue = 50, scale = 0.3) {
+  constructor(scene, x, y, baseXPValue = 50, scale = 0.15) {
     // Check if we're at the gem limit
     if (XPGem.totalGems >= XPGem.MAX_GEMS) {
       return null;
-      as;
     }
 
     XPGem.totalGems++;
@@ -82,10 +81,10 @@ class XPGem {
     const distance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, player.x, player.y);
 
     // Define attraction parameters
-    const ACTIVATION_DISTANCE = 150;
-    const COLLECTION_DISTANCE = 40;
-    const BASE_SPEED = 2;
-    const ORBITAL_SPEED = 0.1;
+    const ACTIVATION_DISTANCE = 80; // Reduced from 100
+    const COLLECTION_DISTANCE = 25;  // Reduced from 35
+    const BASE_SPEED = 0.5;         // Reduced from 0.8
+    const ORBITAL_SPEED = 0.04;     // Reduced from 0.06
 
     // Only process gems within activation distance
     if (distance <= ACTIVATION_DISTANCE) {
@@ -93,11 +92,11 @@ class XPGem {
       const angleToPlayer = Math.atan2(player.y - this.sprite.y, player.x - this.sprite.x);
 
       // Add a time-based orbital offset
-      const orbitalOffset = Math.sin(this.scene.time.now * ORBITAL_SPEED) * 0.5;
+      const orbitalOffset = Math.sin(this.scene.time.now * ORBITAL_SPEED) * 0.15; // Reduced orbital movement
 
       // Calculate speed based on distance (faster when closer)
-      const speedMultiplier = 1 - distance / ACTIVATION_DISTANCE;
-      const currentSpeed = BASE_SPEED + speedMultiplier * 3;
+      const speedMultiplier = Math.pow(1 - distance / ACTIVATION_DISTANCE, 1.2); // Gentler acceleration curve
+      const currentSpeed = BASE_SPEED + speedMultiplier * 1.2; // Reduced max speed boost
 
       // Calculate the new position
       const adjustedAngle = angleToPlayer + orbitalOffset;

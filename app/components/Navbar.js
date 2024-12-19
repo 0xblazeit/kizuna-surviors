@@ -40,8 +40,6 @@ export default function Navbar() {
 
   const { login } = useLogin({
     onComplete: async (user, isNewUser, wasAlreadyAuthenticated) => {
-      console.log("login..", isNewUser, wasAlreadyAuthenticated, user);
-
       if (isNewUser) {
         if (user.twitter && user.twitter.profilePictureUrl && user.twitter.username) {
           await insertNewLogin(user.twitter.username, user.twitter.profilePictureUrl, user.wallet.address);

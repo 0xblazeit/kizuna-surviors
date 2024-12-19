@@ -12,13 +12,12 @@ import { accountTable } from "../db/schema";
 export async function insertNewLogin(userName, profileImage, walletAddress) {
   try {
     // Keep original casing for userName to match update function
-    console.log("Inserting new login..", { userName, profileImage, walletAddress });
     const newLogin = await db.insert(accountTable).values({
       userName,
       profileImage,
       walletAddress,
     });
-    console.log("New login inserted!", newLogin);
+    console.log("New login inserted!", userName);
     return newLogin;
   } catch (error) {
     console.error("Error inserting new login:", error);

@@ -2,12 +2,12 @@ class Coin {
   // Static object pool
   static pool = [];
   static totalCoins = 0;
-  static MAX_COINS = 75;
-  static ACTIVATION_DISTANCE = 400; // Increased activation distance
-  static COLLECTION_DISTANCE = 75;  // Increased collection distance for better feel
-  static MAGNETIC_DISTANCE = 150;   // New shorter magnetic range
-  static MAGNETIC_SPEED_MIN = 0.5;  // Slower initial magnetic speed
-  static MAGNETIC_SPEED_MAX = 4;    // Faster speed when very close
+  static MAX_COINS = 50;            // Maximum number of coins allowed at once
+  static ACTIVATION_DISTANCE = 150;  // Reduced from higher value
+  static COLLECTION_DISTANCE = 25;   // Reduced from higher value
+  static MAGNETIC_DISTANCE = 80;     // Reduced from higher value
+  static MAGNETIC_SPEED_MIN = 2;     // Reduced from higher value
+  static MAGNETIC_SPEED_MAX = 6;     // Reduced from higher value
 
   // Coin value tiers for consolidation
   static VALUE_TIERS = {

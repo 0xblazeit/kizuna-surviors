@@ -334,23 +334,28 @@ class MainPlayer extends BasePlayer {
     const defenseIncrease = Math.min(1, 0.2 + Math.floor(Math.log(this.experience.level) * 0.15)); // Logarithmic defense scaling
     const speedIncrease = Math.min(0.1, 0.05 + Math.log(this.experience.level) * 0.01); // Subtle speed increase
 
+    // Apply stat increases
     this.stats.maxHealth += healthIncrease;
     this.stats.currentHealth = this.stats.maxHealth; // Full heal on level up
-    this.updateHealthBar(); // Add this line to update health bar visually
+    this.updateHealthBar(); // Update health bar visually
     this.stats.attackDamage += damageIncrease;
     this.stats.defense += defenseIncrease;
-    this.stats.moveSpeed += speedIncrease; // More controlled speed increment
+    this.stats.moveSpeed += speedIncrease;
 
-    // Emit level up event for the upgrade menu and stats update
-    this.scene.events.emit("showWeaponUpgradeMenu");
-    this.scene.updateStatsDisplay(); // Update stats display
+    // Update stats display
+    this.scene.updateStatsDisplay();
 
-    // Show level up effect
-    this.showLevelUpEffect();
+    // Show level up effect first, then smoothly transition to upgrade menu
+    this.showLevelUpEffect(() => {
+      // Add a brief pause before showing the menu
+      this.scene.time.delayedCall(10, () => {
+        this.scene.events.emit("showWeaponUpgradeMenu");
+      });
+    });
   }
 
-  showLevelUpEffect() {
-    // Create a flashy level up text
+  showLevelUpEffect(onComplete) {
+    // Create a flashy level up text with glow effect
     const levelText = this.scene.add
       .text(this.sprite.x, this.sprite.y - 40, `LEVEL UP! ${this.experience.level}`, {
         fontSize: "32px",
@@ -361,30 +366,93 @@ class MainPlayer extends BasePlayer {
       })
       .setOrigin(0.5);
 
-    // Add some particle effects
-    const particles = this.scene.add.particles(this.sprite.x, this.sprite.y, "powerup-xp-gem", {
-      scale: { start: 0.2, end: 0 },
-      speed: { min: 50, max: 100 },
-      angle: { min: 0, max: 360 },
-      rotate: { min: 0, max: 360 },
-      alpha: { start: 0.6, end: 0 },
-      lifespan: 1000,
-      quantity: 20,
-      tint: 0xffd700,
-    });
+    // Add glow effect to text
+    levelText.setBlendMode(Phaser.BlendModes.ADD);
 
-    // Animate the level up text
-    this.scene.tweens.add({
-      targets: levelText,
-      y: levelText.y - 30,
-      alpha: 0,
-      duration: 2000,
-      ease: "Cubic.Out",
-      onComplete: () => {
-        levelText.destroy();
-        particles.destroy();
-      },
-    });
+    // Create multiple lightning bolts with staggered timing
+    const totalBolts = 8;
+    const delayBetweenBolts = 50;
+    let completedBolts = 0;
+
+    const createLightningBolt = (i) => {
+      const angle = (i % 8) * 45 * (Math.PI / 180);
+      const distance = 70;
+      const endX = this.sprite.x + Math.cos(angle) * distance;
+      const endY = this.sprite.y + Math.sin(angle) * distance;
+
+      // Create lightning line with enhanced glow
+      const lightning = this.scene.add.graphics();
+      lightning.lineStyle(4, 0x00ffff, 0.8); // Thicker line with slight transparency
+      
+      // Create glow effect
+      const glow = this.scene.add.graphics();
+      glow.lineStyle(8, 0x00ffff, 0.3); // Wider, more transparent line for glow
+
+      // Generate zigzag points
+      const points = [];
+      const segments = 4;
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        const x = Phaser.Math.Linear(this.sprite.x, endX, t);
+        const y = Phaser.Math.Linear(this.sprite.y, endY, t);
+        // Add randomness to create zigzag
+        if (j !== 0 && j !== segments) {
+          points.push({
+            x: x + (Math.random() - 0.5) * 20,
+            y: y + (Math.random() - 0.5) * 20,
+          });
+        } else {
+          points.push({ x, y });
+        }
+      }
+
+      // Draw lightning and glow
+      lightning.beginPath();
+      glow.beginPath();
+      lightning.moveTo(points[0].x, points[0].y);
+      glow.moveTo(points[0].x, points[0].y);
+      
+      for (let p = 1; p < points.length; p++) {
+        lightning.lineTo(points[p].x, points[p].y);
+        glow.lineTo(points[p].x, points[p].y);
+      }
+      
+      lightning.strokePath();
+      glow.strokePath();
+
+      // Animate lightning with glow
+      this.scene.tweens.add({
+        targets: [lightning, glow],
+        alpha: { from: 1, to: 0 },
+        duration: 300,
+        ease: "Power2",
+        onComplete: () => {
+          lightning.destroy();
+          glow.destroy();
+          completedBolts++;
+
+          // If this was the last bolt, clean up and call onComplete
+          if (completedBolts === totalBolts) {
+            this.scene.tweens.add({
+              targets: levelText,
+              y: levelText.y - 20,
+              alpha: 0,
+              duration: 400,
+              ease: "Power2",
+              onComplete: () => {
+                levelText.destroy();
+                if (onComplete) onComplete();
+              },
+            });
+          }
+        },
+      });
+    };
+
+    // Create lightning bolts with staggered timing
+    for (let i = 0; i < totalBolts; i++) {
+      this.scene.time.delayedCall(i * delayBetweenBolts, () => createLightningBolt(i));
+    }
   }
 
   collectGold(amount) {

@@ -4,10 +4,6 @@ import { useEffect, useRef } from "react";
 import MenuScene from "./MenuScene";
 import UpgradeMenuScene from "./UpgradeMenuScene";
 import MainPlayer from "../game/entities/MainPlayer";
-import EnemyBasic from "../game/entities/EnemyBasic";
-import EnemyAdvanced from "../game/entities/EnemyAdvanced";
-import EnemyEpic from "../game/entities/EnemyEpic";
-import EnemyShooter from "../game/entities/EnemyShooter"; // Added back EnemyShooter
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
 import { GlizzyBlasterWeapon } from "../game/entities/weapons/GlizzyBlasterWeapon";
@@ -17,37 +13,19 @@ import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import { AwakenWeapon } from "../game/entities/weapons/AwakenWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
 import { usePrivy } from "@privy-io/react-auth";
-import { useQueryClient } from "@tanstack/react-query";
-import XPGem from "../game/entities/XPGem"; // Import XPGem
-import Coin from "../game/entities/Coin"; // Import Coin
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import XPGem from "../game/entities/XPGem";
+import Coin from "../game/entities/Coin";
+import EnemyPool from "../game/pools/EnemyPool";
 
-// Enemy sprite constants
-const ENEMY_SPRITES = [
-  "enemy-basic-one",
-  "enemy-basic-two",
-  "enemy-basic-three",
-  "enemy-basic-four",
-  "enemy-basic-five",
-  "enemy-basic-six",
-];
-
-const ENEMY_ADVANCED_SPRITES = [
-  "enemy-advanced-one",
-  "enemy-advanced-two",
-  "enemy-advanced-three",
-  "enemy-advanced-four",
-  "enemy-advanced-five",
-  "enemy-advanced-six",
-];
-
-const ENEMY_EPIC_SPRITES = [
-  "enemy-epic-one",
-  "enemy-epic-two",
-  "enemy-epic-three",
-  "enemy-epic-four",
-  "enemy-epic-five",
-  "enemy-epic-six",
-];
+async function verifyAccess(walletAddress) {
+  if (!walletAddress) return null;
+  const response = await fetch(`/api/verify-access?wallet=${walletAddress}`);
+  if (!response.ok) {
+    throw new Error("Failed to verify access");
+  }
+  return response.json();
+}
 
 const GameScene = Phaser.Class({
   Extends: Phaser.Scene,
@@ -72,9 +50,9 @@ const GameScene = Phaser.Class({
       selectedWeaponIndex: 0,
       isGameOver: false,
       coins: 0,
-      maxEnemies: 20, // Increased initial max enemies
-      spawnRate: 800, // Faster initial spawn rate
-      minSpawnRate: 200, // Faster minimum spawn rate
+      maxEnemies: 50, // Increased initial max enemies
+      spawnRate: 2000, // Slower initial spawn rate
+      minSpawnRate: 150, // Even faster minimum spawn rate
       enemyWaveTimer: 0,
       waveNumber: 1,
       difficultyMultiplier: 1,
@@ -130,6 +108,9 @@ const GameScene = Phaser.Class({
     this.xpGems = [];
     this.score = 0;
     this.gameOver = false;
+
+    // Initialize enemy pool
+    this.enemyPool = new EnemyPool(this);
   },
 
   preload: function () {
@@ -224,6 +205,9 @@ const GameScene = Phaser.Class({
     this.load.svg("weapon-shapecraft-key", "/assets/game/weapons/weapon-shapecraft-key.svg?v=1", {
       scale: 0.5,
     });
+    this.load.svg("weapon-ss-logo", "/assets/game/weapons/weapon-ss-logo.svg?v=1", {
+      scale: 0.5,
+    });
     this.load.svg("weapon-skull-projectile", "/assets/game/weapons/weapon-skull-projectile.svg?v=1", {
       scale: 1.2,
     });
@@ -234,34 +218,34 @@ const GameScene = Phaser.Class({
 
   startGame: function () {
     // Initial enemy spawn for first wave
-    const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
-    for (let i = 0; i < initialEnemies; i++) {
-      const spawnPos = this.getSpawnPosition();
-      const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
+    // const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
+    // for (let i = 0; i < initialEnemies; i++) {
+    //   const spawnPos = this.getSpawnPosition();
+    //   const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
 
-      const enemy = new EnemyBasic(this, spawnPos.x, spawnPos.y, randomSprite, {
-        type: "basic",
-        scale: 0.3,
-        maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-        attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-        moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-      });
+    //   const enemy = new EnemyBasic(this, spawnPos.x, spawnPos.y, randomSprite, {
+    //     type: "basic",
+    //     scale: 0.3,
+    //     maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
+    //     attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
+    //     moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
+    //   });
 
-      enemy.sprite.once("destroy", () => {
-        const index = this.enemies.indexOf(enemy);
-        if (index > -1) {
-          this.enemies.splice(index, 1);
-          this.gameState.enemiesRemainingInWave--;
+    //   enemy.sprite.once("destroy", () => {
+    //     const index = this.enemies.indexOf(enemy);
+    //     if (index > -1) {
+    //       this.enemies.splice(index, 1);
+    //       this.gameState.enemiesRemainingInWave--;
 
-          // Check if wave is complete AND no enemies are left
-          if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
-            this.startNextWave();
-          }
-        }
-      });
+    //       // Check if wave is complete AND no enemies are left
+    //       if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
+    //         this.startNextWave();
+    //       }
+    //     }
+    //   });
 
-      this.enemies.push(enemy);
-    }
+    //   this.enemies.push(enemy);
+    // }
 
     // Start enemy spawn timer
     this.enemySpawnTimer = this.time.addEvent({
@@ -292,9 +276,32 @@ const GameScene = Phaser.Class({
       spawnRateMultiplier: 1 + waveScaling * 0.2,
     };
 
-    // Update spawn parameters
-    this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
-    this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
+    // Update spawn parameters for endless waves
+    this.gameState.maxEnemies = Math.min(200, 20 + Math.floor(this.gameState.waveNumber * 3));
+    this.gameState.spawnRate = Math.max(
+      this.gameState.minSpawnRate,
+      800 - Math.min(600, this.gameState.waveNumber * 20)
+    );
+
+    // Force cleanup of inactive enemies
+    if (this.enemyPool) {
+      this.enemyPool._cleanupInactiveEnemies();
+    }
+
+    // Ensure enemy spawn timer is running
+    if (this.enemySpawnTimer) {
+      this.enemySpawnTimer.paused = false;
+      const currentWaveSpawnRate = Math.max(
+        this.gameState.minSpawnRate,
+        this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
+      );
+      this.enemySpawnTimer.reset({
+        delay: currentWaveSpawnRate,
+        callback: this.spawnEnemies,
+        callbackScope: this,
+        loop: true,
+      });
+    }
 
     // Update wave text
     if (this.waveText) {
@@ -303,6 +310,13 @@ const GameScene = Phaser.Class({
 
     // Create wave announcement
     this.createWaveAnnouncement();
+
+    // Debug log
+    console.log(`Starting Wave ${this.gameState.waveNumber}:`, {
+      maxEnemies: this.gameState.maxEnemies,
+      spawnRate: this.gameState.spawnRate,
+      scaling: this.gameState.waveScaling,
+    });
   },
 
   getSpawnPosition: function () {
@@ -332,111 +346,111 @@ const GameScene = Phaser.Class({
   },
 
   spawnEnemies: function () {
-    // Remove the check for enemiesRemainingInWave since we want endless waves
-    if (this.enemies.length >= this.gameState.maxEnemies) {
+    // Check if we have room for more enemies
+    const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
+    if (currentEnemyCount >= this.gameState.maxEnemies) {
       return;
     }
 
-    // Get spawn position
-    const spawnPos = this.getSpawnPosition();
-    const x = spawnPos.x;
-    const y = spawnPos.y;
+    // Calculate how many enemies to spawn this tick
+    const maxSpawnPerTick = Math.min(3, Math.ceil(this.gameState.waveNumber / 2)); // Increased spawn count scaling
+    const spawnCount = Math.min(maxSpawnPerTick, this.gameState.maxEnemies - currentEnemyCount);
 
-    let enemy;
-    const roll = Math.random();
+    // Calculate delay between spawns based on wave number
+    const baseDelay = 300;
+    const minDelay = 80; // Increased minimum delay
+    const delayReduction = Math.min(0.6, (this.gameState.waveNumber - 1) * 0.05); // 5% reduction per wave, max 60% reduction
+    const spawnDelay = Math.max(minDelay, baseDelay * (1 - delayReduction));
 
-    // Simplified wave-based spawning that scales indefinitely
-    if (this.gameState.waveNumber <= 5) {
-      // Early waves: Basic and Shooter enemies
-      if (roll < 0.6) {
-        enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
-          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.4,
-        });
-      } else {
-        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
-          type: "shooter",
-          scale: 0.3,
-          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
-          attackRange: 250,
-          projectileSpeed: 200,
-          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
-        });
-      }
-    } else {
-      // Later waves: Mix of all enemy types with adjusted probabilities
-      if (roll < 0.25) {
-        enemy = new EnemyBasic(this, x, y, ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)], {
-          maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.4,
-        });
-      } else if (roll < 0.5) {
-        enemy = new EnemyAdvanced(
-          this,
-          x,
-          y,
-          ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)],
-          {
-            maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
-            moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
-            attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
-            scale: 0.5,
+    // Stagger spawns within the tick
+    for (let i = 0; i < spawnCount; i++) {
+      this.time.delayedCall(i * spawnDelay, () => {
+        const spawnPos = this.getSpawnPosition();
+        let enemy = null;
+        const roll = Math.random();
+        const wave = this.gameState.waveNumber;
+
+        // Try to spawn enemy with retries
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (wave <= 1) {
+            // Wave 1: Basic enemies only
+            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else if (wave <= 2) {
+            // Wave 2: Mostly basic enemies with rare advanced (15% chance)
+            if (roll < 0.85) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            }
+          } else if (wave <= 6) {
+            // Waves 3-6: Basic + Advanced + Gradually introduce Shooters
+            const shooterChance = Math.min(0.15, (wave - 2) * 0.05); // 5% at wave 3, up to 15% by wave 5
+            if (roll < 0.5) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.85 + shooterChance) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            }
+          } else {
+            // Wave 7+: All enemy types with increasing epic chance
+            const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
+            if (roll < 0.3) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.55) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.75 + epicChance) {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            }
           }
-        );
-      } else if (roll < 0.8) {
-        enemy = new EnemyShooter(this, x, y, "enemy-shooter", {
-          type: "shooter",
-          scale: 0.3,
-          maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
-          attackRange: 250,
-          projectileSpeed: 200,
-          attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
-        });
-      } else {
-        enemy = new EnemyEpic(this, x, y, ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)], {
-          maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
-          moveSpeed: 2.2 * this.gameState.waveScaling.speedMultiplier,
-          attackDamage: 16 * this.gameState.waveScaling.damageMultiplier,
-          scale: 0.6,
-        });
-      }
+
+          if (enemy) break; // Successfully spawned
+
+          // Force cleanup and try again
+          this.enemyPool._cleanupInactiveEnemies();
+        }
+
+        // Add to physics system and enemies array if spawned successfully
+        if (enemy) {
+          if (!enemy.body) {
+            this.physics.add.existing(enemy);
+          }
+          this.enemies.push(enemy);
+        }
+      });
     }
 
-    // Add to physics system and enemies array
-    if (enemy) {
-      this.physics.add.existing(enemy);
-      this.enemies.push(enemy);
+    // Update spawn timer with dynamic rate
+    if (!this.enemySpawnTimer.paused) {
+      const currentWaveSpawnRate = Math.max(
+        this.gameState.minSpawnRate,
+        this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
+      );
 
-      // Update spawn timer with dynamic rate
-      if (!this.enemySpawnTimer.paused) {
-        const currentWaveSpawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
-        );
-
-        this.enemySpawnTimer.reset({
-          delay: currentWaveSpawnRate,
-          callback: this.spawnEnemies,
-          callbackScope: this,
-          loop: true,
-        });
-      }
+      this.enemySpawnTimer.reset({
+        delay: currentWaveSpawnRate,
+        callback: this.spawnEnemies,
+        callbackScope: this,
+        loop: true,
+      });
     }
   },
 
   create: function () {
     const { width, height } = this.scale;
 
-    // Initialize enemy sprite arrays
-    this.enemySprites = ENEMY_SPRITES;
-    this.enemyAdvancedSprites = ENEMY_ADVANCED_SPRITES;
-    this.enemyEpicSprites = ENEMY_EPIC_SPRITES;
+    // Initialize coin pool
+    Coin.initializePool(this);
+
+    // Set up enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+      delay: this.gameState.spawnRate,
+      callback: this.spawnEnemies,
+      callbackScope: this,
+      loop: true,
+    });
 
     // Set world bounds (2x2 screens)
     const worldWidth = width * 2;
@@ -579,6 +593,7 @@ const GameScene = Phaser.Class({
     let milkIcon = null; // Store milk icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
     let awakeIcon = null; // Store awake icon reference
+
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -587,133 +602,93 @@ const GameScene = Phaser.Class({
           uiRowY + row * gridCellSize,
           gridCellSize - 4,
           gridCellSize - 4,
-          0x000000
+          0x333333
         );
-
-        // Set initial stroke style with white highlight instead of green
-        const strokeColor = cellIndex === this.gameState.selectedWeaponIndex ? 0xffffff : 0x666666;
-        cell.setStrokeStyle(2, strokeColor);
-
-        // Make cell interactive and ensure it stays interactive
-        cell
-          .setInteractive({ useHandCursor: true })
-          .setDepth(1001) // Higher than UI container to ensure clickability
-          .setScrollFactor(0); // Ensure it doesn't move with camera
-
-        // Make cell interactive
-        cell.on("pointerdown", () => {
-          // Only process clicks for cells with weapons
-          if (
-            cellIndex === 0 ||
-            cellIndex === 1 ||
-            cellIndex === 2 ||
-            cellIndex === 3 ||
-            cellIndex === 4 ||
-            cellIndex === 5 ||
-            cellIndex === 6 ||
-            cellIndex === 7
-          ) {
-            // Update selected weapon index
-            this.gameState.selectedWeaponIndex = cellIndex;
-
-            // Update all cell borders with white highlight
-            gridCells.forEach((c, i) => {
-              c.setStrokeStyle(2, i === cellIndex ? 0xffffff : 0x666666);
-            });
-
-            // Update stats display for selected weapon
-            this.updateStatsDisplay();
-          }
-        });
-
-        gridCells.push(cell);
+        cell.setStrokeStyle(2, 0x666666);
+        cell.setInteractive({ useHandCursor: true });
         gridContainer.add(cell);
+        gridCells.push({ cell, icon: null });
 
-        // Add dog weapon icon to first cell
-        if (row === 0 && col === 0) {
-          weaponIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-dog-projectile",
-            0,
-            gridCells
-          );
-        }
-
-        // Add wand weapon icon to second cell
-        if (row === 0 && col === 1) {
-          wandIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-wand-icon",
-            1,
-            gridCells
-          );
-        }
-
-        // Add Glizzy Blaster icon to third cell
-        if (row === 0 && col === 2) {
-          glizzyIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-hotdog-projectile",
-            2,
-            gridCells
-          );
-        }
-
-        // Add axe icon to fourth cell
-        if (row === 0 && col === 3) {
-          axeIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-axe-projectile",
-            3,
-            gridCells
-          );
-        }
-
-        // Add hammer icon to fifth cell
-        if (row === 0 && col === 4) {
-          hammerIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-hammer-projectile",
-            4,
-            gridCells
-          );
-        }
-
-        // Add milk icon to sixth cell
-        if (row === 0 && col === 5) {
-          milkIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-magic-milk",
-            5,
-            gridCells
-          );
-        }
-        // Add shapecraft key weapon icon to seventh cell
-        if (row === 1 && col === 0) {
-          shapecraftIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-shapecraft-key",
-            6,
-            gridCells
-          );
-        }
-
-        // Add awaken icon to eighth cell
-        if (row === 1 && col === 1) {
-          awakeIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-awaken",
-            7,
-            gridCells
-          );
+        // Add weapon icons based on index
+        switch (cellIndex) {
+          case 0:
+            weaponIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-dog-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 1:
+            wandIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-wand-icon",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 2:
+            glizzyIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-hotdog-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 3:
+            axeIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-axe-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 4:
+            hammerIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-hammer-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 5:
+            milkIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-magic-milk",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 6:
+            // Only add Shapecraft weapon if user has access
+            if (this.userInfo.isShapeCraftKeyHolder) {
+              shapecraftIcon = createWeaponIcon(
+                gridX + col * gridCellSize,
+                uiRowY + row * gridCellSize,
+                "weapon-shapecraft-key",
+                cellIndex,
+                gridCells
+              );
+            }
+            break;
+          case 7:
+            // Only add Awaken weapon if user has access
+            if (this.userInfo.isAwakenEyeHolder) {
+              awakeIcon = createWeaponIcon(
+                gridX + col * gridCellSize,
+                uiRowY + row * gridCellSize,
+                "weapon-awaken",
+                cellIndex,
+                gridCells
+              );
+            }
+            break;
         }
       }
     }
@@ -860,17 +835,29 @@ const GameScene = Phaser.Class({
     fetch("/api/game-results")
       .then((response) => response.json())
       .then((data) => {
-        data.data.forEach((entry, index) => {
-          if (index < 5) {
-            // Format each entry with proper spacing for columns
-            const rank = `#${index + 1}`.padEnd(8);
-            const gold = `${entry.gold}`.padEnd(9);
-            const kills = `${entry.kills}`;
-            this.statsTexts.leaderboardEntries[index].setText(`${rank}${gold}${kills}`);
-          }
-        });
+        if (this.statsTexts && this.statsTexts.leaderboardEntries) {
+          data.data.forEach((entry, index) => {
+            if (index < 5 && this.statsTexts.leaderboardEntries[index]) {
+              // Format each entry with proper spacing for columns
+              const rank = `#${index + 1}`.padEnd(8);
+              const gold = `${entry.gold}`.padEnd(9);
+              const kills = `${entry.kills}`;
+              this.statsTexts.leaderboardEntries[index].setText(`${rank}${gold}${kills}`);
+            }
+          });
+        }
       })
-      .catch((error) => console.error("Error fetching leaderboard:", error));
+      .catch((error) => {
+        console.error("Error fetching leaderboard:", error);
+        // Set default values for leaderboard entries if there's an error
+        if (this.statsTexts && this.statsTexts.leaderboardEntries) {
+          this.statsTexts.leaderboardEntries.forEach((entry, index) => {
+            if (entry) {
+              entry.setText(`#${index + 1}`.padEnd(8) + "0".padEnd(9) + "0");
+            }
+          });
+        }
+      });
 
     // Create trail effect container
     this.trailContainer = this.add.container(0, 0);
@@ -929,15 +916,27 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
-      new AwakenWeapon(this, this.player),
-      new ShapecraftKeyWeapon(this, this.player),
     ];
+
+    // Add Awaken weapon only if user has access
+    if (this.userInfo.isAwakenEyeHolder) {
+      this.weapons.push(new AwakenWeapon(this, this.player));
+    }
+
+    // Add Shapecraft weapon only if user has access
+    if (this.userInfo.isShapeCraftKeyHolder) {
+      this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
+    }
 
     this.weaponInitialized = true;
     console.log(
       "Weapon system initialized with weapons:",
       this.weapons.map((w) => w.constructor.name)
     );
+
+    // Initialize enemy pool after scene is created
+    this.enemyPool.initialize();
+    console.log("🎯 Enemy pool initialized");
 
     // Create start game overlay with retro style
     const overlayConfig = {
@@ -1022,13 +1021,6 @@ const GameScene = Phaser.Class({
         .setDepth(10000);
     }
 
-    // Add to cleanup array
-    this.overlayElements = this.overlayElements || [];
-    this.overlayElements.push(this.welcomeText);
-    if (this.addressText) {
-      this.overlayElements.push(this.addressText);
-    }
-
     // Add pixel-style bullet points
     const bulletPoints = ["► Survive the Horde", "► Gain XP", "► Collect Gold", "► In Game Boost"];
 
@@ -1073,16 +1065,70 @@ const GameScene = Phaser.Class({
       // Add shapecraft key sprite next to "In Game Boost" text
       if (text === "► In Game Boost") {
         const textWidth = textObj.width;
-        const key = this.add
-          .image(centerX - 150 + textWidth + 20, startY + 80 + index * 40 + 10, "weapon-shapecraft-key")
-          .setScale(0.15)
-          .setScrollFactor(0)
-          .setDepth(10000);
 
-        // Add to cleanup array
-        this.overlayElements = this.overlayElements || [];
-        this.overlayElements.push(key);
+        // Check if any boosts are active
+        const hasAnyBoost =
+          this.userInfo.isShapeCraftKeyHolder || this.userInfo.isAwakenEyeHolder || this.userInfo.isSSGHolder;
+
+        if (!hasAnyBoost) {
+          // Show [NONE] if no boosts are active
+          const noneText = this.add
+            .text(centerX - 150 + textWidth + 10, startY + 80 + index * 40, "[NONE]", {
+              fontFamily: "VT323",
+              fontSize: "24px",
+              color: "#666666",
+            })
+            .setScrollFactor(0)
+            .setDepth(10000);
+            
+          // Add to cleanup array
+          this.overlayElements = this.overlayElements || [];
+          this.overlayElements.push(noneText);
+        } else {
+          // Add icons for active boosts
+          let iconOffset = 0;
+
+          if (this.userInfo.isShapeCraftKeyHolder) {
+            const key = this.add
+              .image(
+                centerX - 150 + textWidth + 20 + iconOffset,
+                startY + 80 + index * 40 + 10,
+                "weapon-shapecraft-key"
+              )
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            iconOffset += 30;
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(key);
+          }
+
+          if (this.userInfo.isAwakenEyeHolder) {
+            const awaken = this.add
+              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-awaken")
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            iconOffset += 30;
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(awaken);
+          }
+
+          if (this.userInfo.isSSGHolder) {
+            const ssg = this.add
+              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-ss-logo")
+              .setScale(0.15)
+              .setScrollFactor(0)
+              .setDepth(10000);
+            this.overlayElements = this.overlayElements || [];
+            this.overlayElements.push(ssg);
+          }
+        }
       }
+
+      // Add to cleanup array
+      this.overlayElements = this.overlayElements || [];
+      this.overlayElements.push(textObj);
 
       return textObj;
     });
@@ -1162,6 +1208,13 @@ const GameScene = Phaser.Class({
       }
     };
 
+    // Add to cleanup array
+    this.overlayElements = this.overlayElements || [];
+    this.overlayElements.push(this.welcomeText);
+    if (this.addressText) {
+      this.overlayElements.push(this.addressText);
+    }
+
     // Listen for any movement key press
     const keys = ["W", "A", "S", "D", "UP", "DOWN", "LEFT", "RIGHT"];
     keys.forEach((key) => {
@@ -1171,11 +1224,6 @@ const GameScene = Phaser.Class({
     // Create array to store enemies
     this.enemies = [];
 
-    // Enemy sprite keys
-    this.enemySprites = ENEMY_SPRITES;
-    this.enemyAdvancedSprites = ENEMY_ADVANCED_SPRITES;
-    this.enemyEpicSprites = ENEMY_EPIC_SPRITES;
-
     // Initialize weapons array but don't start them yet
     this.weapons = [
       new RotatingDogWeapon(this, this.player),
@@ -1184,82 +1232,52 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
-      new AwakenWeapon(this, this.player),
-      new ShapecraftKeyWeapon(this, this.player),
     ];
 
+    // Add Awaken weapon only if user has access
+    if (this.userInfo.isAwakenEyeHolder) {
+      this.weapons.push(new AwakenWeapon(this, this.player));
+    }
+
+    // Add Shapecraft weapon only if user has access
+    if (this.userInfo.isShapeCraftKeyHolder) {
+      this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
+    }
+
     // Create enemy spawn timer with simpler configuration
-    this.enemySpawnTimer = this.time.addEvent({
-      delay: this.gameState.spawnRate,
-      callback: () => {
-        // Simple spawn check
-        if (this.enemies.length < this.gameState.maxEnemies) {
-          const spawnPos = this.getSpawnPosition();
+    // this.enemySpawnTimer = this.time.addEvent({
+    //   delay: this.gameState.spawnRate,
+    //   callback: () => {
+    //     // Simple spawn check
+    //     if (this.enemies.length < this.gameState.maxEnemies) {
+    //       const spawnPos = this.getSpawnPosition();
 
-          // Always spawn at least one type of enemy
-          let enemy;
-          const roll = Math.random();
+    //       // Always spawn at least one type of enemy
+    //       let enemy;
+    //       const roll = Math.random();
 
-          if (roll < 0.4) {
-            enemy = new EnemyBasic(
-              this,
-              spawnPos.x,
-              spawnPos.y,
-              ENEMY_SPRITES[Math.floor(Math.random() * ENEMY_SPRITES.length)],
-              {
-                maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-                moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-                attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-                scale: 0.4,
-              }
-            );
-          } else if (roll < 0.7) {
-            enemy = new EnemyAdvanced(
-              this,
-              spawnPos.x,
-              spawnPos.y,
-              ENEMY_ADVANCED_SPRITES[Math.floor(Math.random() * ENEMY_ADVANCED_SPRITES.length)],
-              {
-                maxHealth: 300 * this.gameState.waveScaling.healthMultiplier,
-                moveSpeed: 2.0 * this.gameState.waveScaling.speedMultiplier,
-                attackDamage: 12 * this.gameState.waveScaling.damageMultiplier,
-                scale: 0.5,
-              }
-            );
-          } else if (roll < 0.9) {
-            enemy = new EnemyShooter(this, spawnPos.x, spawnPos.y, "enemy-shooter", {
-              type: "shooter",
-              scale: 0.3,
-              maxHealth: 80 * this.gameState.waveScaling.healthMultiplier,
-              moveSpeed: 1.4 * this.gameState.waveScaling.speedMultiplier,
-              attackRange: 250,
-              projectileSpeed: 200,
-              attackDamage: 10 * this.gameState.waveScaling.damageMultiplier,
-            });
-          } else {
-            enemy = new EnemyEpic(
-              this,
-              spawnPos.x,
-              spawnPos.y,
-              ENEMY_EPIC_SPRITES[Math.floor(Math.random() * ENEMY_EPIC_SPRITES.length)],
-              {
-                maxHealth: 600 * this.gameState.waveScaling.healthMultiplier,
-                moveSpeed: 2.2 * this.gameState.waveScaling.speedMultiplier,
-                attackDamage: 16 * this.gameState.waveScaling.damageMultiplier,
-                scale: 0.6,
-              }
-            );
-          }
+    //       if (roll < 0.4) {
+    //         enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+    //       } else if (roll < 0.7) {
+    //         enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+    //       } else if (roll < 0.9) {
+    //         enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+    //       } else {
+    //         enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+    //       }
 
-          if (enemy) {
-            this.physics.add.existing(enemy);
-            this.enemies.push(enemy);
-          }
-        }
-      },
-      callbackScope: this,
-      loop: true,
-    });
+    //       // Add to physics system and enemies array if spawned successfully
+    //       if (enemy) {
+    //         if (!enemy.body) {
+    //           this.physics.add.existing(enemy);
+    //         }
+    //         this.enemies.push(enemy);
+    //       }
+    //     }
+    //   },
+    //   callbackScope: this,
+    //   loop: true,
+    // });
 
     // Modify wave management
     this.time.addEvent({
@@ -2060,34 +2078,37 @@ const GameScene = Phaser.Class({
 
     // Update all enemies with screen check optimization
     if (this.enemies) {
-      this.enemies.forEach((enemy, index) => {
-        if (enemy && enemy.sprite && !enemy.isDead && typeof enemy.update === "function") {
-          try {
-            // Only perform full update if enemy is on screen
-            const onScreen = isOnScreen(enemy.sprite);
-            if (onScreen) {
-              enemy.update(time, delta);
-            } else {
-              // Minimal update for off-screen enemies
-              enemy.updateOffScreen(time, delta);
-            }
-          } catch (error) {
-            console.error("Error updating enemy:", error);
-            enemy.isDead = true;
-          }
-        }
+      // Filter out null or dead enemies first
+      this.enemies = this.enemies.filter((enemy) => enemy && !enemy.isDead);
 
-        // Remove dead enemies or enemies without sprites
-        if (enemy && (enemy.isDead || !enemy.sprite)) {
-          if (enemy.sprite) {
-            enemy.sprite.destroy();
+      // Update remaining enemies
+      this.enemies.forEach((enemy) => {
+        try {
+          if (enemy.sprite && typeof enemy.update === "function") {
+            // Check if enemy is too far from player
+            const dx = enemy.x - this.player.x;
+            const dy = enemy.y - this.player.y;
+            const distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared > 1500 * 1500) {
+              // If enemy is more than 1500 pixels away
+              // Mark for cleanup in next pool cleanup cycle
+              enemy.isDead = true;
+            } else {
+              // Only perform full update if enemy is on screen or close to it
+              const onScreen = Math.abs(dx) < 800 && Math.abs(dy) < 800;
+              if (onScreen) {
+                enemy.update(time, delta);
+              } else if (typeof enemy.updateOffScreen === "function") {
+                enemy.updateOffScreen(time, delta);
+              }
+            }
           }
-          this.enemies[index] = null;
+        } catch (error) {
+          console.error("Error updating enemy:", error);
+          enemy.isDead = true;
         }
       });
-
-      // Clean up null entries
-      this.enemies = this.enemies.filter((enemy) => enemy !== null && enemy.sprite);
     }
 
     // Update all weapons with screen check optimization
@@ -2140,6 +2161,11 @@ const GameScene = Phaser.Class({
         }
       });
       this.xpGems = [];
+    }
+
+    // Clean up enemy pool
+    if (this.enemyPool) {
+      this.enemyPool.cleanup();
     }
   },
 
@@ -2232,9 +2258,23 @@ export default function Game() {
   const initializingRef = useRef(false); // Add ref to track initialization state
   const queryClient = useQueryClient();
 
+  const {
+    data: accessData,
+    isLoading: isAccessLoading,
+    isError: isAccessError,
+  } = useQuery({
+    queryKey: ["accessVerification", user?.wallet?.address],
+    queryFn: () => verifyAccess(user?.wallet?.address),
+    enabled: !!user?.wallet?.address,
+  });
+
+  const isShapeCraftKeyHolder = accessData?.isShapeCraftKeyHolder;
+  const isAwakenEyeHolder = accessData?.isAwakenEyeHolder;
+  const isSSGHolder = accessData?.isSSGHolder;
+
   useEffect(() => {
     // Return early if not ready, game exists, or already initializing
-    if (!ready || gameInstanceRef.current || initializingRef.current) {
+    if (!ready || gameInstanceRef.current || initializingRef.current || isAccessLoading) {
       return;
     }
 
@@ -2255,7 +2295,10 @@ export default function Game() {
             userAddress: userAddress,
             username: username,
             profileImage: user?.twitter?.profilePictureUrl,
-            getAccessToken: getAccessToken, // Pass the function instead of the token
+            isShapeCraftKeyHolder: isShapeCraftKeyHolder,
+            isAwakenEyeHolder: isAwakenEyeHolder,
+            isSSGHolder: isSSGHolder,
+            getAccessToken: getAccessToken,
             invalidateQueries: () => {
               queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
               queryClient.invalidateQueries({ queryKey: ["memberCount"] });
@@ -2298,15 +2341,13 @@ export default function Game() {
           }
         }
       } catch (error) {
-        console.error("Error getting access token:", error);
-        // Reset initializing flag on error
+        console.error("Error initializing game:", error);
         initializingRef.current = false;
       }
     };
 
     initializeGame();
 
-    // Cleanup function
     return () => {
       if (gameInstanceRef.current) {
         gameInstanceRef.current.destroy(true);
@@ -2314,13 +2355,33 @@ export default function Game() {
       }
       initializingRef.current = false;
     };
-  }, [ready, user, userAddress, username, getAccessToken, queryClient]);
+  }, [
+    ready,
+    user,
+    userAddress,
+    username,
+    getAccessToken,
+    queryClient,
+    isAccessLoading,
+    isShapeCraftKeyHolder,
+    isAwakenEyeHolder,
+    isSSGHolder,
+  ]);
 
   // Show loading state if not ready or game is initializing
-  if (!ready || initializingRef.current) {
+  if (!ready || isAccessLoading || initializingRef.current) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
-        <div>Loading...</div>
+        <div className="text-lg font-medium animate-pulse">Loading game...</div>
+      </div>
+    );
+  }
+
+  // Show error state if access verification failed
+  if (isAccessError) {
+    return (
+      <div className="flex justify-center items-center w-screen h-screen bg-transparent">
+        <div className="text-red-500">Failed to verify access. Please try again.</div>
       </div>
     );
   }
