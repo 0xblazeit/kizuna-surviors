@@ -887,7 +887,7 @@ const GameScene = Phaser.Class({
 
     // Then spawn initial coins
     console.log("Starting to spawn initial coins...");
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       const x = Phaser.Math.Between(50, worldWidth - 50);
       const y = Phaser.Math.Between(50, worldHeight - 50);
 
