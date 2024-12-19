@@ -887,7 +887,7 @@ const GameScene = Phaser.Class({
 
     // Then spawn initial coins
     console.log("Starting to spawn initial coins...");
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       const x = Phaser.Math.Between(50, worldWidth - 50);
       const y = Phaser.Math.Between(50, worldHeight - 50);
 
@@ -2274,7 +2274,7 @@ export default function Game() {
 
   useEffect(() => {
     // Return early if not ready, game exists, or already initializing
-    if (!ready || gameInstanceRef.current || initializingRef.current || isAccessLoading) {
+    if (!ready || gameInstanceRef.current || initializingRef.current) {
       return;
     }
 
@@ -2369,7 +2369,7 @@ export default function Game() {
   ]);
 
   // Show loading state if not ready or game is initializing
-  if (!ready || initializingRef.current) {
+  if (!ready) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
         <div className="text-lg font-medium animate-pulse">Loading game...</div>

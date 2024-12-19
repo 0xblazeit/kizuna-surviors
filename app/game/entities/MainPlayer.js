@@ -5,7 +5,7 @@ class MainPlayer extends BasePlayer {
     // Set main player specific defaults
     const mainPlayerConfig = {
       maxHealth: 100,
-      moveSpeed: 3,
+      moveSpeed: 2,
       defense: 0,
       attackSpeed: 1,
       attackDamage: 10,
@@ -383,7 +383,7 @@ class MainPlayer extends BasePlayer {
       // Create lightning line with enhanced glow
       const lightning = this.scene.add.graphics();
       lightning.lineStyle(4, 0x00ffff, 0.8); // Thicker line with slight transparency
-      
+
       // Create glow effect
       const glow = this.scene.add.graphics();
       glow.lineStyle(8, 0x00ffff, 0.3); // Wider, more transparent line for glow
@@ -411,12 +411,12 @@ class MainPlayer extends BasePlayer {
       glow.beginPath();
       lightning.moveTo(points[0].x, points[0].y);
       glow.moveTo(points[0].x, points[0].y);
-      
+
       for (let p = 1; p < points.length; p++) {
         lightning.lineTo(points[p].x, points[p].y);
         glow.lineTo(points[p].x, points[p].y);
       }
-      
+
       lightning.strokePath();
       glow.strokePath();
 
