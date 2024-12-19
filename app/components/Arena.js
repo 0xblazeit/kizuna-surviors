@@ -163,7 +163,7 @@ export function Arena() {
         </div>
       </div>
       <div className="flex flex-col gap-4 items-center w-full">
-        <div className="flex justify-center w-full">{ready ? <Game /> : <AccessDenied />}</div>
+        <div className="flex justify-center w-full">{ready && authenticated ? <Game /> : <AccessDenied />}</div>
       </div>
     </div>
   );
