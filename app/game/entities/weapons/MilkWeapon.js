@@ -337,6 +337,59 @@ export class MilkWeapon extends BaseWeapon {
       });
     });
   }
+
+  levelUp() {
+    if (this.currentLevel >= this.maxLevel) {
+      console.log("GooBoo already at max level!");
+      return false;
+    }
+
+    this.currentLevel++;
+    const newStats = this.levelConfigs[this.currentLevel];
+
+    // Update stats
+    this.stats = {
+      ...this.stats,
+      ...newStats,
+    };
+
+    console.log(`GooBoo leveled up to ${this.currentLevel}! New stats:`, this.stats);
+
+    // Create level up effect around existing puddles
+    this.activePuddles.forEach((puddleData) => {
+      const burst = this.scene.add.sprite(puddleData.sprite.x, puddleData.sprite.y, "weapon-magic-milk");
+      burst.setScale(0.2);
+      burst.setAlpha(0.7);
+      burst.setTint(0x00ffff);
+
+      this.scene.tweens.add({
+        targets: burst,
+        scaleX: 2,
+        scaleY: 2,
+        alpha: 0,
+        duration: 500,
+        ease: "Quad.easeOut",
+        onComplete: () => burst.destroy(),
+      });
+
+      // Scale animation on puddle
+      this.scene.tweens.add({
+        targets: puddleData.sprite,
+        scaleX: this.stats.scale * 1.5,
+        scaleY: this.stats.scale * 1.5,
+        duration: 200,
+        yoyo: true,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          if (puddleData.sprite && puddleData.sprite.active) {
+            puddleData.sprite.setScale(this.stats.scale);
+          }
+        },
+      });
+    });
+
+    return true;
+  }
 }
 
 export default MilkWeapon;
