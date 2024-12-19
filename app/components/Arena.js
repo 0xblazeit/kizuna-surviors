@@ -21,15 +21,6 @@ async function fetchWalletBalance(walletAddress) {
   return data.balance;
 }
 
-async function verifyAccess(walletAddress) {
-  if (!walletAddress) return null;
-  const response = await fetch(`/api/verify-access?wallet=${walletAddress}`);
-  if (!response.ok) {
-    throw new Error("Failed to verify access");
-  }
-  return response.json();
-}
-
 // Dynamically import the game component to avoid SSR issues
 const Game = dynamic(() => import("./Game"), {
   ssr: false,
@@ -58,18 +49,6 @@ export function Arena() {
     refetchOnWindowFocus: true,
   });
 
-  const {
-    data: accessData,
-    isLoading: isAccessLoading,
-    isError: isAccessError,
-  } = useQuery({
-    queryKey: ["accessVerification", user?.wallet?.address],
-    queryFn: () => verifyAccess(user?.wallet?.address),
-    enabled: !!user?.wallet?.address,
-  });
-
-  const hasAccess = accessData?.isShapeCraftKeyHolder || accessData?.isAwakenEyeHolder || accessData?.isSSGHolder;
-
   const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     setHasCopied(true);
@@ -84,15 +63,15 @@ export function Arena() {
           {!ready ? (
             <p>Loading...</p>
           ) : !authenticated ? (
-            <div className="flex flex-col items-center justify-center w-full h-full gap-4">
-              <Image 
+            <div className="flex flex-col gap-4 justify-center items-center w-full h-full">
+              <Image
                 src="/ss-logo.svg"
                 alt="SS Logo"
                 width={150}
                 height={150}
-                className="opacity-80 hover:opacity-100 transition-opacity"
+                className="opacity-80 transition-opacity hover:opacity-100"
               />
-              <p className="text-white/80 text-lg">Please connect your wallet</p>
+              <p className="text-lg text-white/80">Please connect your wallet</p>
             </div>
           ) : (
             <>
@@ -184,27 +163,7 @@ export function Arena() {
         </div>
       </div>
       <div className="flex flex-col gap-4 items-center w-full">
-        <div className="flex justify-center w-full">
-          {ready && authenticated ? (
-            isAccessLoading ? (
-              <div className="flex justify-center items-center w-screen h-screen bg-gray-900">
-                <div className="w-[800px] h-[600px] bg-black border border-white flex items-center justify-center">
-                  <p className="text-2xl text-white">loading...</p>
-                </div>
-              </div>
-            ) : isAccessError ? (
-              <div className="text-red-500">Failed to verify access. Please try again.</div>
-            ) : hasAccess ? (
-              <>
-                <Game />
-              </>
-            ) : (
-              <AccessDenied />
-            )
-          ) : (
-            <AccessDenied />
-          )}
-        </div>
+        <div className="flex justify-center w-full">{ready ? <Game /> : <AccessDenied />}</div>
       </div>
     </div>
   );
