@@ -369,21 +369,6 @@ class MainPlayer extends BasePlayer {
     // Add glow effect to text
     levelText.setBlendMode(Phaser.BlendModes.ADD);
 
-    // Create lightning particles
-    const particles = this.scene.add.particles(0, 0, "flares", {
-      frame: ["blue"],
-      lifespan: 800,
-      angle: { min: 0, max: 360 },
-      speed: { min: 150, max: 250 },
-      scale: { start: 0.4, end: 0 },
-      gravityY: 0,
-      blendMode: "ADD",
-      emitting: false,
-    });
-
-    // Position the particle emitter at player position
-    particles.setPosition(this.sprite.x, this.sprite.y);
-
     // Create multiple lightning bolts with staggered timing
     const totalBolts = 8;
     const delayBetweenBolts = 50;
@@ -395,9 +380,13 @@ class MainPlayer extends BasePlayer {
       const endX = this.sprite.x + Math.cos(angle) * distance;
       const endY = this.sprite.y + Math.sin(angle) * distance;
 
-      // Create lightning line
+      // Create lightning line with enhanced glow
       const lightning = this.scene.add.graphics();
-      lightning.lineStyle(2, 0x00ffff);
+      lightning.lineStyle(4, 0x00ffff, 0.8); // Thicker line with slight transparency
+      
+      // Create glow effect
+      const glow = this.scene.add.graphics();
+      glow.lineStyle(8, 0x00ffff, 0.3); // Wider, more transparent line for glow
 
       // Generate zigzag points
       const points = [];
@@ -417,27 +406,29 @@ class MainPlayer extends BasePlayer {
         }
       }
 
-      // Draw lightning
+      // Draw lightning and glow
       lightning.beginPath();
+      glow.beginPath();
       lightning.moveTo(points[0].x, points[0].y);
+      glow.moveTo(points[0].x, points[0].y);
+      
       for (let p = 1; p < points.length; p++) {
         lightning.lineTo(points[p].x, points[p].y);
+        glow.lineTo(points[p].x, points[p].y);
       }
+      
       lightning.strokePath();
+      glow.strokePath();
 
-      // Emit a few particles at key points
-      particles.emitParticleAt(points[0].x, points[0].y, 1);
-      particles.emitParticleAt(points[Math.floor(points.length / 2)].x, points[Math.floor(points.length / 2)].y, 1);
-      particles.emitParticleAt(points[points.length - 1].x, points[points.length - 1].y, 1);
-
-      // Animate lightning
+      // Animate lightning with glow
       this.scene.tweens.add({
-        targets: lightning,
+        targets: [lightning, glow],
         alpha: { from: 1, to: 0 },
         duration: 300,
         ease: "Power2",
         onComplete: () => {
           lightning.destroy();
+          glow.destroy();
           completedBolts++;
 
           // If this was the last bolt, clean up and call onComplete
@@ -450,7 +441,6 @@ class MainPlayer extends BasePlayer {
               ease: "Power2",
               onComplete: () => {
                 levelText.destroy();
-                particles.destroy();
                 if (onComplete) onComplete();
               },
             });
@@ -459,7 +449,7 @@ class MainPlayer extends BasePlayer {
       });
     };
 
-    // Create lightning bolts with delays
+    // Create lightning bolts with staggered timing
     for (let i = 0; i < totalBolts; i++) {
       this.scene.time.delayedCall(i * delayBetweenBolts, () => createLightningBolt(i));
     }
