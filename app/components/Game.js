@@ -365,10 +365,11 @@ const GameScene = Phaser.Class({
             enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
           }
         } else if (wave <= 6) {
-          // Waves 3-6: Basic + Advanced + Shooter (rare)
+          // Waves 3-6: Basic + Advanced + Gradually introduce Shooters
+          const shooterChance = Math.min(0.15, (wave - 2) * 0.05); // 5% at wave 3, up to 15% by wave 5
           if (roll < 0.5) {
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.85) {
+          } else if (roll < 0.85 + shooterChance) {
             enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
           } else {
             enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
