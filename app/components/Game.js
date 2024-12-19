@@ -593,6 +593,7 @@ const GameScene = Phaser.Class({
     let milkIcon = null; // Store milk icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
     let awakeIcon = null; // Store awake icon reference
+
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const cellIndex = row * gridCols + col;
@@ -601,133 +602,93 @@ const GameScene = Phaser.Class({
           uiRowY + row * gridCellSize,
           gridCellSize - 4,
           gridCellSize - 4,
-          0x000000
+          0x333333
         );
-
-        // Set initial stroke style with white highlight instead of green
-        const strokeColor = cellIndex === this.gameState.selectedWeaponIndex ? 0xffffff : 0x666666;
-        cell.setStrokeStyle(2, strokeColor);
-
-        // Make cell interactive and ensure it stays interactive
-        cell
-          .setInteractive({ useHandCursor: true })
-          .setDepth(1001) // Higher than UI container to ensure clickability
-          .setScrollFactor(0); // Ensure it doesn't move with camera
-
-        // Make cell interactive
-        cell.on("pointerdown", () => {
-          // Only process clicks for cells with weapons
-          if (
-            cellIndex === 0 ||
-            cellIndex === 1 ||
-            cellIndex === 2 ||
-            cellIndex === 3 ||
-            cellIndex === 4 ||
-            cellIndex === 5 ||
-            cellIndex === 6 ||
-            cellIndex === 7
-          ) {
-            // Update selected weapon index
-            this.gameState.selectedWeaponIndex = cellIndex;
-
-            // Update all cell borders with white highlight
-            gridCells.forEach((c, i) => {
-              c.setStrokeStyle(2, i === cellIndex ? 0xffffff : 0x666666);
-            });
-
-            // Update stats display for selected weapon
-            this.updateStatsDisplay();
-          }
-        });
-
-        gridCells.push(cell);
+        cell.setStrokeStyle(2, 0x666666);
+        cell.setInteractive({ useHandCursor: true });
         gridContainer.add(cell);
+        gridCells.push({ cell, icon: null });
 
-        // Add dog weapon icon to first cell
-        if (row === 0 && col === 0) {
-          weaponIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-dog-projectile",
-            0,
-            gridCells
-          );
-        }
-
-        // Add wand weapon icon to second cell
-        if (row === 0 && col === 1) {
-          wandIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-wand-icon",
-            1,
-            gridCells
-          );
-        }
-
-        // Add Glizzy Blaster icon to third cell
-        if (row === 0 && col === 2) {
-          glizzyIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-hotdog-projectile",
-            2,
-            gridCells
-          );
-        }
-
-        // Add axe icon to fourth cell
-        if (row === 0 && col === 3) {
-          axeIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-axe-projectile",
-            3,
-            gridCells
-          );
-        }
-
-        // Add hammer icon to fifth cell
-        if (row === 0 && col === 4) {
-          hammerIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-hammer-projectile",
-            4,
-            gridCells
-          );
-        }
-
-        // Add milk icon to sixth cell
-        if (row === 0 && col === 5) {
-          milkIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-magic-milk",
-            5,
-            gridCells
-          );
-        }
-        // Add shapecraft key weapon icon to seventh cell
-        if (row === 1 && col === 0) {
-          shapecraftIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-shapecraft-key",
-            6,
-            gridCells
-          );
-        }
-
-        // Add awaken icon to eighth cell
-        if (row === 1 && col === 1) {
-          awakeIcon = createWeaponIcon(
-            gridX + col * gridCellSize,
-            uiRowY + row * gridCellSize,
-            "weapon-awaken",
-            7,
-            gridCells
-          );
+        // Add weapon icons based on index
+        switch (cellIndex) {
+          case 0:
+            weaponIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-dog-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 1:
+            wandIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-wand-icon",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 2:
+            glizzyIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-hotdog-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 3:
+            axeIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-axe-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 4:
+            hammerIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-hammer-projectile",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 5:
+            milkIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-magic-milk",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 6:
+            // Only add Shapecraft weapon if user has access
+            if (this.userInfo.isShapeCraftKeyHolder) {
+              shapecraftIcon = createWeaponIcon(
+                gridX + col * gridCellSize,
+                uiRowY + row * gridCellSize,
+                "weapon-shapecraft-key",
+                cellIndex,
+                gridCells
+              );
+            }
+            break;
+          case 7:
+            // Only add Awaken weapon if user has access
+            if (this.userInfo.isAwakenEyeHolder) {
+              awakeIcon = createWeaponIcon(
+                gridX + col * gridCellSize,
+                uiRowY + row * gridCellSize,
+                "weapon-awaken",
+                cellIndex,
+                gridCells
+              );
+            }
+            break;
         }
       }
     }
@@ -955,9 +916,17 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
-      new AwakenWeapon(this, this.player),
-      new ShapecraftKeyWeapon(this, this.player),
     ];
+
+    // Add Awaken weapon only if user has access
+    if (this.userInfo.isAwakenEyeHolder) {
+      this.weapons.push(new AwakenWeapon(this, this.player));
+    }
+
+    // Add Shapecraft weapon only if user has access
+    if (this.userInfo.isShapeCraftKeyHolder) {
+      this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
+    }
 
     this.weaponInitialized = true;
     console.log(
@@ -1263,9 +1232,17 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
-      new AwakenWeapon(this, this.player),
-      new ShapecraftKeyWeapon(this, this.player),
     ];
+
+    // Add Awaken weapon only if user has access
+    if (this.userInfo.isAwakenEyeHolder) {
+      this.weapons.push(new AwakenWeapon(this, this.player));
+    }
+
+    // Add Shapecraft weapon only if user has access
+    if (this.userInfo.isShapeCraftKeyHolder) {
+      this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
+    }
 
     // Create enemy spawn timer with simpler configuration
     // this.enemySpawnTimer = this.time.addEvent({
