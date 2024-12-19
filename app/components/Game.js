@@ -1080,7 +1080,7 @@ const GameScene = Phaser.Class({
             })
             .setScrollFactor(0)
             .setDepth(10000);
-            
+
           // Add to cleanup array
           this.overlayElements = this.overlayElements || [];
           this.overlayElements.push(noneText);
@@ -2369,7 +2369,7 @@ export default function Game() {
   ]);
 
   // Show loading state if not ready or game is initializing
-  if (!ready || isAccessLoading || initializingRef.current) {
+  if (!ready || initializingRef.current) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
         <div className="text-lg font-medium animate-pulse">Loading game...</div>
