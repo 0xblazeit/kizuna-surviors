@@ -267,13 +267,13 @@ const UpgradeMenuScene = Phaser.Class({
       });
 
       // Animate the card and its elements with staggered timing
-      this.time.delayedCall(index * 50, () => {
+      this.time.delayedCall(index * 25, () => {
         // Slide in the container from below with a bounce effect
         this.tweens.add({
           targets: container,
           y: { from: offScreenY, to: y },
           scale: { from: 0.9, to: 1 },
-          duration: 500,
+          duration: 300,
           ease: 'Back.out(1.7)',
           onComplete: () => {
             // Fade in and scale up the icon
@@ -281,7 +281,7 @@ const UpgradeMenuScene = Phaser.Class({
               targets: icon,
               alpha: { from: 0, to: 1 },
               scale: { from: 0.7, to: scale },
-              duration: 300,
+              duration: 200,
               ease: 'Back.out(2)',
             });
 
@@ -290,8 +290,8 @@ const UpgradeMenuScene = Phaser.Class({
               targets: nameText,
               alpha: { from: 0, to: 1 },
               y: { from: 10, to: 0 },
-              duration: 300,
-              delay: 50,
+              duration: 200,
+              delay: 25,
               ease: 'Power3'
             });
 
@@ -301,8 +301,8 @@ const UpgradeMenuScene = Phaser.Class({
                 targets: star,
                 alpha: { from: 0, to: 1 },
                 scale: { from: 0.5, to: 1 },
-                duration: 200,
-                delay: 100 + starIndex * 25,
+                duration: 150,
+                delay: 50 + starIndex * 15,
                 ease: 'Back.out(2)'
               });
             });
@@ -312,8 +312,8 @@ const UpgradeMenuScene = Phaser.Class({
               targets: levelText,
               alpha: { from: 0, to: 1 },
               x: { from: ((starsPerRow - 1) * starSpacing) / 2 + 40, to: ((starsPerRow - 1) * starSpacing) / 2 + 30 },
-              duration: 300,
-              delay: 300,
+              duration: 200,
+              delay: 150,
               ease: 'Power2'
             });
 
@@ -322,8 +322,8 @@ const UpgradeMenuScene = Phaser.Class({
               targets: statsTextObj,
               alpha: { from: 0, to: 1 },
               y: { from: startStarY + rowSpacing * 2 + 55, to: startStarY + rowSpacing * 2 + 45 },
-              duration: 300,
-              delay: 400,
+              duration: 200,
+              delay: 200,
               ease: 'Power2'
             });
 

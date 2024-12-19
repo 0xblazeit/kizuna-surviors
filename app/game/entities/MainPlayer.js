@@ -348,7 +348,7 @@ class MainPlayer extends BasePlayer {
     // Show level up effect first, then smoothly transition to upgrade menu
     this.showLevelUpEffect(() => {
       // Add a brief pause before showing the menu
-      this.scene.time.delayedCall(20, () => {
+      this.scene.time.delayedCall(10, () => {
         this.scene.events.emit("showWeaponUpgradeMenu");
       });
     });
