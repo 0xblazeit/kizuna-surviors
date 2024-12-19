@@ -2369,10 +2369,19 @@ export default function Game() {
   ]);
 
   // Show loading state if not ready or game is initializing
-  if (!ready || initializingRef.current) {
+  if (!ready || isAccessLoading || initializingRef.current) {
     return (
       <div className="flex justify-center items-center w-screen h-screen bg-transparent">
-        <div>Loading...</div>
+        <div className="text-lg font-medium animate-pulse">Loading game...</div>
+      </div>
+    );
+  }
+
+  // Show error state if access verification failed
+  if (isAccessError) {
+    return (
+      <div className="flex justify-center items-center w-screen h-screen bg-transparent">
+        <div className="text-red-500">Failed to verify access. Please try again.</div>
       </div>
     );
   }
