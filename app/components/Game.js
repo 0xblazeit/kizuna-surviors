@@ -341,66 +341,76 @@ const GameScene = Phaser.Class({
     }
 
     // Calculate how many enemies to spawn this tick
+    const maxSpawnPerTick = Math.min(3, Math.ceil(this.gameState.waveNumber / 2)); // Increased spawn count scaling
     const spawnCount = Math.min(
-      3, // Max enemies per spawn tick
+      maxSpawnPerTick,
       this.gameState.maxEnemies - currentEnemyCount
     );
 
+    // Calculate delay between spawns based on wave number
+    const baseDelay = 300;
+    const minDelay = 80; // Increased minimum delay
+    const delayReduction = Math.min(0.6, (this.gameState.waveNumber - 1) * 0.05); // 5% reduction per wave, max 60% reduction
+    const spawnDelay = Math.max(minDelay, baseDelay * (1 - delayReduction));
+
+    // Stagger spawns within the tick
     for (let i = 0; i < spawnCount; i++) {
-      const spawnPos = this.getSpawnPosition();
-      let enemy = null;
-      const roll = Math.random();
-      const wave = this.gameState.waveNumber;
+      this.time.delayedCall(i * spawnDelay, () => {
+        const spawnPos = this.getSpawnPosition();
+        let enemy = null;
+        const roll = Math.random();
+        const wave = this.gameState.waveNumber;
 
-      // Try to spawn enemy with retries
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (wave <= 1) {
-          // Wave 1: Basic enemies only
-          enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-        } else if (wave <= 2) {
-          // Wave 2: Mostly basic enemies with rare advanced (15% chance)
-          if (roll < 0.85) {
+        // Try to spawn enemy with retries
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (wave <= 1) {
+            // Wave 1: Basic enemies only
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else if (wave <= 2) {
+            // Wave 2: Mostly basic enemies with rare advanced (15% chance)
+            if (roll < 0.85) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            }
+          } else if (wave <= 6) {
+            // Waves 3-6: Basic + Advanced + Gradually introduce Shooters
+            const shooterChance = Math.min(0.15, (wave - 2) * 0.05); // 5% at wave 3, up to 15% by wave 5
+            if (roll < 0.5) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.85 + shooterChance) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            }
           } else {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            // Wave 7+: All enemy types with increasing epic chance
+            const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
+            if (roll < 0.3) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.55) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.75 + epicChance) {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            }
           }
-        } else if (wave <= 6) {
-          // Waves 3-6: Basic + Advanced + Gradually introduce Shooters
-          const shooterChance = Math.min(0.15, (wave - 2) * 0.05); // 5% at wave 3, up to 15% by wave 5
-          if (roll < 0.5) {
-            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.85 + shooterChance) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-          }
-        } else {
-          // Wave 7+: All enemy types with increasing epic chance
-          const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
-          if (roll < 0.3) {
-            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.55) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.75 + epicChance) {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-          } else {
-            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
-          }
+
+          if (enemy) break; // Successfully spawned
+
+          // Force cleanup and try again
+          this.enemyPool._cleanupInactiveEnemies();
         }
 
-        if (enemy) break; // Successfully spawned
-
-        // Force cleanup and try again
-        this.enemyPool._cleanupInactiveEnemies();
-      }
-
-      // Add to physics system and enemies array if spawned successfully
-      if (enemy) {
-        if (!enemy.body) {
-          this.physics.add.existing(enemy);
+        // Add to physics system and enemies array if spawned successfully
+        if (enemy) {
+          if (!enemy.body) {
+            this.physics.add.existing(enemy);
+          }
+          this.enemies.push(enemy);
         }
-        this.enemies.push(enemy);
-      }
+      });
     }
 
     // Update spawn timer with dynamic rate
