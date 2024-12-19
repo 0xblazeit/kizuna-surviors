@@ -248,20 +248,20 @@ export class EnemyPool {
 
     const configs = {
       basic: {
-        maxHealth: Math.floor(150 + Math.random() * 150) * waveScaling.healthMultiplier,
-        moveSpeed: (0.55 + Math.random() * 0.8) * waveScaling.speedMultiplier,
+        maxHealth: Math.floor(75 + Math.random() * 150) * waveScaling.healthMultiplier,
+        moveSpeed: (0.6 + Math.random() * 0.8) * waveScaling.speedMultiplier,
         attackDamage: 10 * waveScaling.damageMultiplier,
         scale: 0.3 + Math.random() * 0.2,
       },
       advanced: {
         maxHealth: 300 * waveScaling.healthMultiplier,
-        moveSpeed: (0.7 + Math.random() * 0.4) * waveScaling.speedMultiplier,
+        moveSpeed: (0.75 + Math.random() * 0.4) * waveScaling.speedMultiplier,
         attackDamage: 15 * waveScaling.damageMultiplier,
         scale: 0.55 + Math.random() * 0.2,
       },
       epic: {
         maxHealth: 600 * waveScaling.healthMultiplier,
-        moveSpeed: (0.6 + Math.random() * 0.4) * waveScaling.speedMultiplier,
+        moveSpeed: (0.69 + Math.random() * 0.4) * waveScaling.speedMultiplier,
         attackDamage: 20 * waveScaling.damageMultiplier,
         scale: 0.55 + Math.random() * 0.2,
       },
@@ -271,7 +271,7 @@ export class EnemyPool {
         attackDamage: 5 * waveScaling.damageMultiplier,
         scale: 0.27 + Math.random() * 0.2,
         attackRange: 250 + Math.random() * 200,
-        projectileSpeed: 80 + Math.random() * 100,
+        projectileSpeed: 100 + Math.random() * 175,
       },
     };
 
