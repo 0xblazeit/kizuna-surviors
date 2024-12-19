@@ -630,16 +630,18 @@ class EnemyBasic extends BasePlayer {
       }
     }
 
-    // Spawn XP gems
-    const xpAmount = Math.floor(Math.random() * 3) + 1; // 1-3 XP gems
-    for (let i = 0; i < xpAmount; i++) {
-      const offset = {
-        x: (Math.random() - 0.5) * 20,
-        y: (Math.random() - 0.5) * 20,
-      };
-      const xpGem = new XPGem(this.scene, this.sprite.x + offset.x, this.sprite.y + offset.y);
-      if (this.scene.xpGems) {
-        this.scene.xpGems.push(xpGem);
+    // Spawn XP gems (50% base chance)
+    if (Math.random() < (this.type === "epic" ? 0.8 : this.type === "advanced" ? 0.6 : 0.5)) {
+      const xpAmount = this.type === "epic" ? 2 : this.type === "advanced" ? 1 : Math.random() < 0.5 ? 1 : 0;
+      for (let i = 0; i < xpAmount; i++) {
+        const offset = {
+          x: (Math.random() - 0.5) * 20,
+          y: (Math.random() - 0.5) * 20,
+        };
+        const xpGem = new XPGem(this.scene, this.sprite.x + offset.x, this.sprite.y + offset.y);
+        if (this.scene.xpGems) {
+          this.scene.xpGems.push(xpGem);
+        }
       }
     }
 
