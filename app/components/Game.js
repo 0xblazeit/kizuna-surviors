@@ -320,24 +320,22 @@ const GameScene = Phaser.Class({
   },
 
   getSpawnPosition: function () {
-    const minSpawnDistance = 500;
-    const maxSpawnDistance = 800;
+    const minSpawnDistance = 500; // Increased from 300
+    const maxSpawnDistance = 800; // Increased from 500
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
-    // Use a dynamic angle calculation that's not tied directly to wave number
-    const angle = Math.random() * Math.PI * 2;
+    // Use wave number to rotate spawn points for variety
+    const baseAngle = this.gameState.waveNumber * goldenAngle;
 
-    // Vary distance more to prevent clustering
-    const distance = minSpawnDistance + (maxSpawnDistance - minSpawnDistance) * Math.pow(Math.random(), 0.7);
+    // Get random distance between min and max
+    const distance = Phaser.Math.Between(minSpawnDistance, maxSpawnDistance);
 
-    // Add slight randomization to prevent enemies from spawning in exact same spots
-    const randomOffset = {
-      x: (Math.random() - 0.5) * 100,
-      y: (Math.random() - 0.5) * 100,
-    };
+    // Calculate angle using golden ratio for better distribution
+    const angle = baseAngle + Math.random() * Math.PI * 2;
 
-    // Calculate position relative to player with offset
-    const spawnX = this.player.x + Math.cos(angle) * distance + randomOffset.x;
-    const spawnY = this.player.y + Math.sin(angle) * distance + randomOffset.y;
+    // Calculate position relative to player
+    const spawnX = this.player.x + Math.cos(angle) * distance;
+    const spawnY = this.player.y + Math.sin(angle) * distance;
 
     // Clamp to world bounds with padding
     const padding = 50;
@@ -350,28 +348,21 @@ const GameScene = Phaser.Class({
   spawnEnemies: function () {
     // Check if we have room for more enemies
     const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
-
-    // Ensure we maintain a minimum number of enemies based on wave number
-    const minEnemies = Math.min(20, 5 + Math.floor(this.gameState.waveNumber * 0.5));
-    const shouldForceSpawn = currentEnemyCount < minEnemies;
-
-    if (currentEnemyCount >= this.gameState.maxEnemies && !shouldForceSpawn) {
+    if (currentEnemyCount >= this.gameState.maxEnemies) {
       return;
     }
 
-    // Increase spawn count for later waves
-    const maxSpawnPerTick = Math.min(5, Math.ceil(this.gameState.waveNumber * 0.4));
-    const spawnCount = Math.min(
-      maxSpawnPerTick,
-      shouldForceSpawn ? minEnemies - currentEnemyCount : this.gameState.maxEnemies - currentEnemyCount
-    );
+    // Calculate how many enemies to spawn this tick
+    const maxSpawnPerTick = Math.min(3, Math.ceil(this.gameState.waveNumber / 2)); // Increased spawn count scaling
+    const spawnCount = Math.min(maxSpawnPerTick, this.gameState.maxEnemies - currentEnemyCount);
 
-    // Faster spawn delay in later waves
-    const baseDelay = 250;
-    const minDelay = 60;
-    const delayReduction = Math.min(0.7, (this.gameState.waveNumber - 1) * 0.06);
+    // Calculate delay between spawns based on wave number
+    const baseDelay = 300;
+    const minDelay = 80; // Increased minimum delay
+    const delayReduction = Math.min(0.6, (this.gameState.waveNumber - 1) * 0.05); // 5% reduction per wave, max 60% reduction
     const spawnDelay = Math.max(minDelay, baseDelay * (1 - delayReduction));
 
+    // Stagger spawns within the tick
     for (let i = 0; i < spawnCount; i++) {
       this.time.delayedCall(i * spawnDelay, () => {
         const spawnPos = this.getSpawnPosition();
@@ -379,35 +370,46 @@ const GameScene = Phaser.Class({
         const roll = Math.random();
         const wave = this.gameState.waveNumber;
 
-        // Enhanced enemy type distribution for later waves
-        if (wave <= 1) {
-          enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-        } else if (wave <= 2) {
-          if (roll < 0.8) {
+        // Try to spawn enemy with retries
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (wave <= 1) {
+            // Wave 1: Basic enemies only
             enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+          } else if (wave <= 2) {
+            // Wave 2: Mostly basic enemies with rare advanced (15% chance)
+            if (roll < 0.85) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            }
+          } else if (wave <= 6) {
+            // Waves 3-6: Basic + Advanced + Gradually introduce Shooters
+            const shooterChance = Math.min(0.15, (wave - 2) * 0.05); // 5% at wave 3, up to 15% by wave 5
+            if (roll < 0.5) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.85 + shooterChance) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            }
           } else {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            // Wave 7+: All enemy types with increasing epic chance
+            const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
+            if (roll < 0.3) {
+              enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.55) {
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.75 + epicChance) {
+              enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
+            } else {
+              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            }
           }
-        } else if (wave <= 6) {
-          const shooterChance = Math.min(0.2, (wave - 2) * 0.06);
-          if (roll < 0.45) {
-            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.8 + shooterChance) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-          }
-        } else {
-          const epicChance = Math.min(0.3, 0.15 + (wave - 7) * 0.025);
-          if (roll < 0.25) {
-            enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.5) {
-            enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-          } else if (roll < 0.7 + epicChance) {
-            enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-          } else {
-            enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
-          }
+
+          if (enemy) break; // Successfully spawned
+
+          // Force cleanup and try again
+          this.enemyPool._cleanupInactiveEnemies();
         }
 
         // Add to physics system and enemies array if spawned successfully
@@ -1283,43 +1285,24 @@ const GameScene = Phaser.Class({
       callback: () => {
         this.gameState.waveNumber++;
 
-        // Improved wave scaling for better progression
-        const waveScaling = Math.log2(this.gameState.waveNumber + 1);
+        // Update wave scaling
+        const waveScaling = Math.min(5, Math.log2(this.gameState.waveNumber + 1));
         this.gameState.waveScaling = {
-          healthMultiplier: 1 + waveScaling * 0.4,
-          damageMultiplier: 1 + waveScaling * 0.25,
-          speedMultiplier: 1 + Math.min(0.8, waveScaling * 0.08),
-          spawnRateMultiplier: 1 + Math.min(1.5, waveScaling * 0.15),
+          healthMultiplier: 1 + waveScaling * 0.5,
+          damageMultiplier: 1 + waveScaling * 0.3,
+          speedMultiplier: 1 + Math.min(1, waveScaling * 0.1),
+          spawnRateMultiplier: 1 + waveScaling * 0.2,
         };
 
-        // Increase max enemies more aggressively for later waves
-        this.gameState.maxEnemies = Math.min(250, 25 + Math.floor(this.gameState.waveNumber * 4));
+        // Update spawn parameters
+        this.gameState.maxEnemies = Math.min(100, 20 + Math.floor(this.gameState.waveNumber * 2));
+        this.gameState.spawnRate = Math.max(this.gameState.minSpawnRate, 800 - this.gameState.waveNumber * 20);
 
-        // Adjust spawn rate to be faster in later waves
-        this.gameState.spawnRate = Math.max(
-          this.gameState.minSpawnRate,
-          700 - Math.min(500, this.gameState.waveNumber * 25)
-        );
-
-        // Force cleanup of inactive enemies
-        if (this.enemyPool) {
-          this.enemyPool._cleanupInactiveEnemies();
-        }
-
-        // Ensure enemy spawn timer is running
-        if (this.enemySpawnTimer) {
-          this.enemySpawnTimer.paused = false;
-          const currentWaveSpawnRate = Math.max(
-            this.gameState.minSpawnRate,
-            this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
-          );
-          this.enemySpawnTimer.reset({
-            delay: currentWaveSpawnRate,
-            callback: this.spawnEnemies,
-            callbackScope: this,
-            loop: true,
-          });
-        }
+        // Update spawn timer
+        this.enemySpawnTimer.reset({
+          delay: this.gameState.spawnRate,
+          loop: true,
+        });
 
         // Update wave text
         if (this.waveText) {
@@ -1328,13 +1311,6 @@ const GameScene = Phaser.Class({
 
         // Create wave announcement
         this.createWaveAnnouncement();
-
-        // Debug log
-        console.log(`Starting Wave ${this.gameState.waveNumber}:`, {
-          maxEnemies: this.gameState.maxEnemies,
-          spawnRate: this.gameState.spawnRate,
-          scaling: this.gameState.waveScaling,
-        });
       },
       callbackScope: this,
       loop: true,
