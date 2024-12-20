@@ -5,7 +5,7 @@ class MainPlayer extends BasePlayer {
     // Set main player specific defaults
     const mainPlayerConfig = {
       maxHealth: 100,
-      moveSpeed: 2.69,
+      moveSpeed: 2.5,
       defense: 0,
       attackSpeed: 1,
       attackDamage: 10,
