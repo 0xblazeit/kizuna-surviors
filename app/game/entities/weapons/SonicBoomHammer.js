@@ -7,396 +7,231 @@ export class SonicBoomHammer extends BaseWeapon {
     // Set weapon name
     this.name = "WattWhacker";
 
-    // Set weapon stats
+    // Set weapon stats - slow but powerful
     this.stats = {
-      damage: 30,
-      pierce: 1,
-      cooldown: 2500,
-      range: 400,
-      speed: 200,
-      knockback: 100,
-      accuracy: 0.25,
-      scale: 0.7,
-      criticalChance: 0.1,
-      shockRange: 150,
-      shockDamage: 15,
-      stunDuration: 1000,
+      damage: 30, // Reduced from 50
+      pierce: 1, // Reduced from 2
+      cooldown: 2500, // Increased from 2000
+      range: 400, // Reduced from 500
+      speed: 200, // Reduced from 250
+      knockback: 100, // Reduced from 150
+      accuracy: 0.25, // Reduced from 0.3
+      scale: 0.7, // Reduced from 0.8
+      criticalChance: 0.1, // Reduced from 0.15
+      shockRange: 150, // Range for electric shock effect
+      shockDamage: 15, // Additional damage from shock
+      stunDuration: 1000, // Stun duration in milliseconds
+      lightningSegments: 6, // Number of segments in the lightning bolt
     };
 
-    // Effect colors
+    // Effect colors for sonic boom
     this.effectColors = {
-      primary: 0xd4d4d4, // Bright silver
-      secondary: 0xffd700, // Gold
-      energy: 0x87ceeb, // Sky blue
-      trail: 0x4169e1, // Royal blue
+      primary: 0xd4d4d4, // Bright silver for regular hits
+      secondary: 0xffd700, // Bright gold for critical hits
+      energy: 0x87ceeb, // Sky blue for energy effects
+      maxLevel: 0xff4d4d, // Bright red for max level
+      electric: 0x00ffff, // Cyan for electric effects
+      lightning: 0x40e0ff, // Bright blue for lightning
     };
+
+    // Initialize projectile pool
+    this.maxProjectiles = 5; // Don't need many due to slow fire rate
+    this.activeProjectiles = [];
 
     // Initialize level configuration
-    this.currentLevel = 8;
+    this.currentLevel = 1; // Start at level 1 to match levelConfigs
     this.maxLevel = 8;
     this.levelConfigs = {
-      1: {
-        damage: 65,
-        pierce: 2,
-        cooldown: 1900,
-        knockback: 160,
-        accuracy: 0.32,
-        scale: 0.82,
-        criticalChance: 0.12,
-        shockRange: 160,
-        shockDamage: 20,
-      },
-      2: {
-        damage: 80,
-        pierce: 2,
-        cooldown: 1800,
-        knockback: 170,
-        accuracy: 0.34,
-        scale: 0.84,
-        criticalChance: 0.14,
-        shockRange: 170,
-        shockDamage: 25,
-      },
-      3: {
-        damage: 95,
-        pierce: 3,
-        cooldown: 1700,
-        knockback: 180,
-        accuracy: 0.36,
-        scale: 0.86,
-        criticalChance: 0.16,
-        shockRange: 180,
-        shockDamage: 30,
-      },
-      4: {
-        damage: 110,
-        pierce: 3,
-        cooldown: 1600,
-        knockback: 190,
-        accuracy: 0.38,
-        scale: 0.88,
-        criticalChance: 0.18,
-        shockRange: 190,
-        shockDamage: 35,
-      },
-      5: {
-        damage: 130,
-        pierce: 3,
-        cooldown: 1500,
-        knockback: 200,
-        accuracy: 0.4,
-        scale: 0.9,
-        criticalChance: 0.2,
-        shockRange: 200,
-        shockDamage: 40,
-      },
-      6: {
-        damage: 150,
-        pierce: 4,
-        cooldown: 1400,
-        knockback: 220,
-        accuracy: 0.42,
-        scale: 0.92,
-        criticalChance: 0.22,
-        shockRange: 220,
-        shockDamage: 45,
-      },
-      7: {
-        damage: 175,
-        pierce: 4,
-        cooldown: 1300,
-        knockback: 240,
-        accuracy: 0.44,
-        scale: 0.94,
-        criticalChance: 0.24,
-        shockRange: 240,
-        shockDamage: 50,
-      },
-      8: {
-        damage: 200,
-        pierce: 5,
-        cooldown: 1200,
-        knockback: 260,
-        accuracy: 0.46,
-        scale: 1.1,
-        criticalChance: 0.3,
-        shockRange: 260,
-        shockDamage: 60,
-        // Max level bonuses
-        speed: 250, // Faster projectiles
-        stunDuration: 1500, // Longer stun
-        range: 500, // Extended range
-      },
+      1: { damage: 65, pierce: 2, cooldown: 1900, knockback: 160, accuracy: 0.32, scale: 0.82 },
+      2: { damage: 80, pierce: 2, cooldown: 1800, knockback: 170, accuracy: 0.34, scale: 0.84 },
+      3: { damage: 95, pierce: 3, cooldown: 1700, knockback: 180, accuracy: 0.36, scale: 0.86 },
+      4: { damage: 110, pierce: 3, cooldown: 1600, knockback: 190, accuracy: 0.38, scale: 0.88 },
+      5: { damage: 130, pierce: 3, cooldown: 1500, knockback: 200, accuracy: 0.4, scale: 0.9 },
+      6: { damage: 150, pierce: 4, cooldown: 1400, knockback: 220, accuracy: 0.42, scale: 0.92 },
+      7: { damage: 175, pierce: 4, cooldown: 1300, knockback: 240, accuracy: 0.44, scale: 0.94 },
+      8: { damage: 200, pierce: 5, cooldown: 1200, knockback: 260, accuracy: 0.46, scale: 1.1 },
     };
 
-    // Calculate pool size based on pierce and safety margin
-    const maxPierce = Math.max(...Object.values(this.levelConfigs).map((config) => config.pierce));
-    this.projectilePool = {
-      objects: [],
-      maxSize: maxPierce * 3,
+    console.log("Sonic Boom Hammer initialized with stats:", this.stats);
 
-      get() {
-        return this.objects.find((obj) => !obj.active);
-      },
-
-      return(proj) {
-        if (!proj) return;
-
-        proj.active = false;
-        if (proj.sprite) {
-          proj.sprite.setActive(false).setVisible(false);
-          if (proj.shockwave) {
-            proj.shockwave.setActive(false).setVisible(false);
-          }
-          if (proj.trail) {
-            proj.trail.stop();
-          }
-          if (proj.shockwaveTrail) {
-            proj.shockwaveTrail.stop();
-          }
-          if (proj.sprite.electricField) {
-            proj.sprite.electricField.stop();
-          }
-          if (proj.sprite.lightningBolts) {
-            proj.sprite.lightningBolts.stop();
-          }
-          if (proj.sprite.electricArcs) {
-            proj.sprite.electricArcs.stop();
-          }
-        }
-      },
-    };
-
-    this.createProjectilePool();
+    this.createProjectiles();
   }
 
-  createProjectilePool() {
-    // Clear existing pool
-    this.projectilePool.objects.forEach((proj) => {
+  createProjectiles() {
+    // Clear existing projectiles
+    this.activeProjectiles.forEach((proj) => {
       if (proj.sprite) {
-        if (proj.shockwave) proj.shockwave.destroy();
-        if (proj.trail) proj.trail.destroy();
-        if (proj.shockwaveTrail) proj.shockwaveTrail.destroy();
+        if (proj.sprite.shockwave) {
+          proj.sprite.shockwave.destroy();
+        }
+        if (proj.sprite.groundEffect) {
+          proj.sprite.groundEffect.emitters.destroy();
+          proj.sprite.groundEffect.destroy();
+        }
+        if (proj.sprite.electricEffect) {
+          proj.sprite.electricEffect.destroy();
+        }
+        if (proj.sprite.lightningEffect) {
+          proj.sprite.lightningEffect.destroy();
+        }
         proj.sprite.destroy();
       }
     });
-    this.projectilePool.objects = [];
+    this.activeProjectiles = [];
 
     // Create new projectiles
-    for (let i = 0; i < this.projectilePool.maxSize; i++) {
-      // Create main projectile sprite
+    for (let i = 0; i < this.maxProjectiles; i++) {
       const sprite = this.scene.add.sprite(0, 0, "weapon-hammer-projectile");
       sprite.setScale(this.stats.scale);
-      sprite.setActive(false).setVisible(false);
+      sprite.setActive(true);
+      sprite.setVisible(false);
       sprite.setTint(this.effectColors.primary);
 
-      // Create shockwave effect
+      // Add shockwave effect
       const shockwave = this.scene.add.sprite(0, 0, "weapon-hammer-projectile");
       shockwave.setScale(this.stats.scale * 1.5);
-      shockwave.setAlpha(0.4);
+      shockwave.setAlpha(0.3);
       shockwave.setVisible(false);
       shockwave.setTint(this.effectColors.secondary);
       shockwave.setBlendMode(Phaser.BlendModes.ADD);
 
-      // Create main trail effect
-      const trail = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
-        follow: sprite,
-        followOffset: { x: 0, y: 0 },
-        lifespan: 300,
-        scale: { start: 0.4, end: 0 },
-        alpha: { start: 0.6, end: 0 },
-        tint: this.effectColors.trail,
-        blendMode: Phaser.BlendModes.ADD,
-        frequency: 50,
-        quantity: 1,
-      });
-      trail.stop();
+      sprite.shockwave = shockwave;
 
-      // Create shockwave trail effect
-      const shockwaveTrail = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
-        follow: sprite,
-        followOffset: { x: 0, y: 0 },
-        lifespan: 400,
-        scale: { start: 0.8, end: 0.1 },
-        alpha: { start: 0.4, end: 0 },
-        tint: this.effectColors.energy,
-        blendMode: Phaser.BlendModes.ADD,
-        frequency: 100,
-        quantity: 2,
-        angle: { min: 0, max: 360 },
-        rotate: { min: -180, max: 180 },
-        speed: { min: 20, max: 40 },
-        emitZone: {
-          type: "random",
-          source: new Phaser.Geom.Circle(0, 0, 10),
-        },
-      });
-      shockwaveTrail.stop();
-
-      // Add electric effects for max level
+      // Add electric effect for max level
       if (this.currentLevel === 8) {
-        // Main electric field
-        const electricField = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
-          follow: sprite,
-          followOffset: { x: 0, y: 0 },
-          lifespan: 300,
-          scale: { start: 0.3, end: 0.1 },
-          alpha: { start: 0.6, end: 0 },
-          tint: 0x00ffff, // Cyan color for electricity
-          blendMode: Phaser.BlendModes.ADD,
-          frequency: 30,
-          quantity: 2,
-          speed: { min: 100, max: 200 },
-          angle: { min: 0, max: 360 },
-          emitZone: {
-            type: "random",
-            source: new Phaser.Geom.Circle(0, 0, 20),
-          },
-        });
-        electricField.stop();
-        sprite.electricField = electricField;
+        try {
+          // Main electric field effect
+          const electricEffect = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
+            speed: { min: 100, max: 200 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.5, end: 0.2 },
+            alpha: { start: 1, end: 0 },
+            lifespan: 600,
+            quantity: 4,
+            frequency: 30,
+            tint: this.effectColors.electric,
+            blendMode: Phaser.BlendModes.ADD,
+            on: false,
+          });
 
-        // Lightning bolts
-        const lightningBolts = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
-          follow: sprite,
-          followOffset: { x: 0, y: 0 },
-          lifespan: 200,
-          scale: { start: 0.5, end: 0.1 },
-          alpha: { start: 0.8, end: 0 },
-          tint: 0x4169e1, // Royal blue for lightning
-          blendMode: Phaser.BlendModes.ADD,
-          frequency: 50,
-          quantity: 1,
-          moveToX: {
-            onEmit: (particle) => {
-              return particle.x + (Math.random() - 0.5) * 100;
-            },
-          },
-          moveToY: {
-            onEmit: (particle) => {
-              return particle.y + (Math.random() - 0.5) * 100;
-            },
-          },
-          emitZone: {
-            type: "random",
-            source: new Phaser.Geom.Circle(0, 0, 10),
-          },
-        });
-        lightningBolts.stop();
-        sprite.lightningBolts = lightningBolts;
+          // Lightning bolt effect
+          const lightningEffect = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
+            speed: { min: 250, max: 350 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.6, end: 0.1 },
+            alpha: { start: 1, end: 0 },
+            lifespan: 300,
+            quantity: 2,
+            frequency: 100,
+            tint: this.effectColors.lightning,
+            blendMode: Phaser.BlendModes.ADD,
+            on: false,
+          });
 
-        // Electric arcs
-        const electricArcs = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
-          follow: sprite,
-          followOffset: { x: 0, y: 0 },
-          lifespan: 150,
-          scale: { start: 0.4, end: 0.1 },
-          alpha: { start: 1, end: 0 },
-          tint: 0x87ceeb, // Sky blue for arcs
-          blendMode: Phaser.BlendModes.ADD,
-          frequency: 20,
-          quantity: 3,
-          speed: { min: 150, max: 250 },
-          angle: { min: 0, max: 360 },
-          zigzag: true,
-          zigzagTime: 100,
-          zigzagDistance: 10,
-        });
-        electricArcs.stop();
-        sprite.electricArcs = electricArcs;
+          electricEffect.setVisible(false);
+          lightningEffect.setVisible(false);
+          sprite.electricEffect = electricEffect;
+          sprite.lightningEffect = lightningEffect;
+        } catch (error) {
+          console.error("Failed to create electric effect:", error);
+        }
       }
 
-      // Add to pool with new electric effects
-      this.projectilePool.objects.push({
-        sprite,
-        shockwave,
-        trail,
-        shockwaveTrail,
+      // Add ground breaking effect for max level
+      if (this.currentLevel === 8) {
+        try {
+          const groundEffect = this.scene.add.particles(0, 0, "weapon-hammer-projectile", {
+            speed: { min: 50, max: 150 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.4, end: 0.1 },
+            alpha: { start: 0.6, end: 0 },
+            lifespan: 800,
+            quantity: 1,
+            tint: this.effectColors.maxLevel,
+            blendMode: Phaser.BlendModes.ADD,
+            on: false,
+          });
+          groundEffect.setVisible(false);
+          sprite.groundEffect = groundEffect;
+        } catch (error) {
+          console.error("Failed to create ground effect:", error);
+        }
+      }
+
+      this.activeProjectiles.push({
+        sprite: sprite,
         active: false,
         angle: 0,
         pierceCount: this.stats.pierce,
-        hitEnemies: new Set(),
-        lastArcTime: 0,
+        lastShockTime: 0,
       });
     }
   }
 
-  fireProjectile(proj, time) {
-    if (!proj.sprite) return;
+  createZigzagLightning(startX, startY, endX, endY) {
+    const points = [];
+    const segments = this.stats.lightningSegments;
 
-    // Reset state
-    proj.pierceCount = this.stats.pierce;
-    proj.hitEnemies.clear();
+    // Start point
+    points.push({ x: startX, y: startY });
 
-    // Get target position
-    const target = this.getTargetPosition();
+    // Generate zigzag points
+    for (let i = 1; i < segments; i++) {
+      const t = i / segments;
+      const baseX = startX + (endX - startX) * t;
+      const baseY = startY + (endY - startY) * t;
 
-    // Calculate angle
-    const dx = target.x - this.player.x;
-    const dy = target.y - this.player.y;
-    proj.angle = Math.atan2(dy, dx);
+      // Random offset perpendicular to the line
+      const angle = Math.atan2(endY - startY, endX - startX) + Math.PI / 2;
+      const offset = (Math.random() - 0.5) * 50; // Random offset up to 25 pixels in either direction
 
-    // Position at player
-    proj.sprite.setPosition(this.player.x, this.player.y);
-    proj.sprite.setRotation(0); // Start at 0 rotation for spin effect
-    proj.sprite.setActive(true).setVisible(true);
-
-    // Setup shockwave
-    proj.shockwave.setPosition(this.player.x, this.player.y);
-    proj.shockwave.setRotation(proj.angle);
-    proj.shockwave.setActive(true).setVisible(true);
-
-    // Animate shockwave
-    this.scene.tweens.add({
-      targets: proj.shockwave,
-      scale: this.stats.scale * 2.5,
-      alpha: 0,
-      duration: 400,
-      ease: "Power2",
-    });
-
-    // Start trails
-    proj.trail.start();
-    proj.shockwaveTrail.start();
-
-    // Start electric effects for level 8
-    if (this.currentLevel === 8) {
-      if (proj.sprite.electricField) {
-        proj.sprite.electricField.start();
-      }
-      if (proj.sprite.lightningBolts) {
-        proj.sprite.lightningBolts.start();
-      }
-      if (proj.sprite.electricArcs) {
-        proj.sprite.electricArcs.start();
-      }
+      points.push({
+        x: baseX + Math.cos(angle) * offset,
+        y: baseY + Math.sin(angle) * offset,
+      });
     }
 
-    // Activate projectile
-    proj.active = true;
-    this.lastFiredTime = time;
+    // End point
+    points.push({ x: endX, y: endY });
 
-    // Add spinning animation
-    this.scene.tweens.add({
-      targets: proj.sprite,
-      rotation: proj.angle + Math.PI * 4,
-      duration: 400,
-      ease: "Cubic.out",
-    });
+    // Create lightning segments
+    const lightningSegments = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const line = this.scene.add
+        .line(0, 0, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, this.effectColors.lightning)
+        .setLineWidth(2);
+      line.setAlpha(0.8);
+      lightningSegments.push(line);
+    }
 
-    // Add scale pulse animation
-    this.scene.tweens.add({
-      targets: proj.sprite,
-      scaleX: this.stats.scale * 1.2,
-      scaleY: this.stats.scale * 1.2,
-      duration: 100,
-      yoyo: true,
-      ease: "Quad.easeOut",
-    });
+    return lightningSegments;
+  }
 
-    // Screen shake
-    if (this.scene.cameras?.main) {
-      this.scene.cameras.main.shake(100, 0.002);
+  updateZigzagLightning(segments, startX, startY, endX, endY) {
+    const points = [];
+    const numSegments = this.stats.lightningSegments;
+
+    points.push({ x: startX, y: startY });
+
+    for (let i = 1; i < numSegments; i++) {
+      const t = i / numSegments;
+      const baseX = startX + (endX - startX) * t;
+      const baseY = startY + (endY - startY) * t;
+
+      const angle = Math.atan2(endY - startY, endX - startX) + Math.PI / 2;
+      const offset = (Math.random() - 0.5) * 50;
+
+      points.push({
+        x: baseX + Math.cos(angle) * offset,
+        y: baseY + Math.sin(angle) * offset,
+      });
+    }
+
+    points.push({ x: endX, y: endY });
+
+    // Update existing segments
+    for (let i = 0; i < segments.length; i++) {
+      segments[i].setTo(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
     }
   }
 
@@ -439,6 +274,111 @@ export class SonicBoomHammer extends BaseWeapon {
     };
   }
 
+  fireProjectile(proj, time) {
+    if (!proj.sprite || !proj.sprite.active) return;
+
+    // Reset pierce count
+    proj.pierceCount = this.stats.pierce;
+
+    // Make visible
+    proj.sprite.setVisible(true);
+    if (proj.sprite.shockwave) {
+      proj.sprite.shockwave.setVisible(true);
+    }
+
+    // Get target with spread
+    const target = this.getTargetPosition();
+
+    // Calculate angle to target
+    const dx = target.x - this.player.x;
+    const dy = target.y - this.player.y;
+    proj.angle = Math.atan2(dy, dx);
+
+    // Set initial position slightly behind the player for wind-up
+    const windupDistance = 40;
+    proj.sprite.setPosition(
+      this.player.x - Math.cos(proj.angle) * windupDistance,
+      this.player.y - Math.sin(proj.angle) * windupDistance
+    );
+
+    // Set initial rotation for wind-up
+    proj.sprite.rotation = proj.angle - Math.PI / 2;
+
+    // Create the swing animation timeline
+    const swingDuration = 400; // Duration of the swing in ms
+
+    // Wind-up tween (pull back and rotate)
+    this.scene.tweens.add({
+      targets: proj.sprite,
+      rotation: proj.angle - Math.PI, // Wind up rotation
+      duration: swingDuration * 0.3,
+      ease: "Cubic.easeIn",
+      onComplete: () => {
+        // Forward swing with acceleration
+        this.scene.tweens.add({
+          targets: proj.sprite,
+          rotation: proj.angle + Math.PI / 4, // Swing past the target slightly
+          duration: swingDuration * 0.7,
+          ease: "Cubic.easeOut",
+        });
+      },
+    });
+
+    // Movement tween (follows the swing)
+    this.scene.tweens.add({
+      targets: proj.sprite,
+      x: target.x,
+      y: target.y,
+      duration: swingDuration,
+      ease: "Cubic.easeOut",
+      onComplete: () => {
+        // Create shockwave effect at the end of swing
+        const shockwave = this.scene.add.sprite(target.x, target.y, "weapon-hammer-projectile");
+        shockwave.setScale(0.5);
+        shockwave.setAlpha(0.6);
+        shockwave.setTint(this.effectColors.energy);
+
+        // Expand and fade shockwave
+        this.scene.tweens.add({
+          targets: shockwave,
+          scale: 2,
+          alpha: 0,
+          duration: 300,
+          ease: "Cubic.easeOut",
+          onComplete: () => {
+            shockwave.destroy();
+          },
+        });
+      },
+    });
+
+    // Add trailing effect
+    if (proj.sprite.shockwave) {
+      proj.sprite.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
+      proj.sprite.shockwave.setScale(0.8);
+      proj.sprite.shockwave.setAlpha(0.4);
+
+      // Make shockwave follow the hammer with slight delay
+      this.scene.tweens.add({
+        targets: proj.sprite.shockwave,
+        x: target.x,
+        y: target.y,
+        scale: 1.5,
+        alpha: 0,
+        duration: swingDuration * 1.2,
+        ease: "Cubic.easeOut",
+      });
+    }
+
+    proj.active = true;
+    this.lastFiredTime = time;
+
+    // Add very subtle screen shake effect
+    if (this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(100, 0.002);
+    }
+  }
+
   handleHit(enemy, proj) {
     if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
 
@@ -453,31 +393,16 @@ export class SonicBoomHammer extends BaseWeapon {
     // Apply damage and show damage number
     enemy.takeDamage(Math.round(finalDamage), proj.sprite.x, proj.sprite.y);
 
-    // Apply MASSIVE knockback
+    // Apply knockback
     const angle = Math.atan2(enemy.sprite.y - proj.sprite.y, enemy.sprite.x - proj.sprite.x);
 
     if (enemy.sprite.body) {
-      // Dramatically increased knockback force
-      const baseKnockback = this.stats.knockback * 5; // 5x base knockback
-      const knockbackForce = isCritical ? baseKnockback * 1.5 : baseKnockback;
-      const upwardBoost = -300; // Stronger upward force
-
-      // Apply the massive knockback
+      const knockbackForce = isCritical ? this.stats.knockback * 1.5 : this.stats.knockback;
       enemy.sprite.body.velocity.x += Math.cos(angle) * knockbackForce;
-      enemy.sprite.body.velocity.y += Math.sin(angle) * knockbackForce + upwardBoost;
-
-      // Longer stun duration to match the dramatic knockback
-      enemy.stunned = true;
-      this.scene.time.delayedCall(500, () => {
-        enemy.stunned = false;
-      });
-
-      // Add a slight rotation to the enemy for more dramatic effect
-      const rotationForce = (Math.random() - 0.5) * 0.5;
-      enemy.sprite.rotation += rotationForce;
+      enemy.sprite.body.velocity.y += Math.sin(angle) * knockbackForce;
     }
 
-    // Create intense hit effect
+    // Create hit effect
     this.createHitEffect(enemy, proj, isCritical);
 
     // Reduce pierce count
@@ -485,47 +410,63 @@ export class SonicBoomHammer extends BaseWeapon {
     if (proj.pierceCount <= 0) {
       this.deactivateProjectile(proj);
     }
-
-    // Add electric effect on hit for level 8
-    if (this.currentLevel === 8) {
-      const electricBurst = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile", {
-        lifespan: 300,
-        scale: { start: 0.5, end: 0.1 },
-        alpha: { start: 0.8, end: 0 },
-        tint: 0x4169e1,
-        blendMode: Phaser.BlendModes.ADD,
-        quantity: 8,
-        speed: { min: 100, max: 200 },
-        angle: { min: 0, max: 360 },
-      });
-
-      // Clean up after burst
-      this.scene.time.delayedCall(300, () => {
-        electricBurst.destroy();
-      });
-    }
   }
 
   createHitEffect(enemy, proj, isCritical) {
+    const isMaxLevel = this.currentLevel === this.maxLevel;
+
     // Create impact effect
     const impact = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile");
     impact.setScale(0.3);
-    impact.setTint(isCritical ? this.effectColors.secondary : this.effectColors.primary);
+    impact.setTint(
+      isMaxLevel ? this.effectColors.maxLevel : isCritical ? this.effectColors.secondary : this.effectColors.primary
+    );
     impact.setAlpha(0.8);
 
     // Create ground crack effect
     const crack = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile");
     crack.setScale(0.2);
-    crack.setTint(this.effectColors.energy);
+    crack.setTint(isMaxLevel ? this.effectColors.maxLevel : this.effectColors.energy);
     crack.setAlpha(0.5);
     crack.setAngle(Math.random() * 360);
+
+    // Special max level effects
+    if (isMaxLevel) {
+      // Add additional energy rings for max level
+      const energyRing = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile");
+      energyRing.setScale(0.1);
+      energyRing.setTint(this.effectColors.maxLevel);
+      energyRing.setAlpha(0.7);
+
+      this.scene.tweens.add({
+        targets: energyRing,
+        scale: 2.0,
+        alpha: 0,
+        duration: 300,
+        ease: "Power1",
+        onComplete: () => energyRing.destroy(),
+      });
+
+      // Add particle burst for max level
+      if (this.scene.add.particles) {
+        const particles = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile", {
+          scale: { start: 0.1, end: 0 },
+          speed: { min: 50, max: 150 },
+          quantity: 8,
+          lifespan: 300,
+          tint: this.effectColors.maxLevel,
+        });
+
+        setTimeout(() => particles.destroy(), 300);
+      }
+    }
 
     // Animate impact
     this.scene.tweens.add({
       targets: impact,
-      scale: isCritical ? 1.3 : 1.0,
+      scale: isMaxLevel ? (isCritical ? 1.8 : 1.5) : isCritical ? 1.3 : 1.0,
       alpha: 0,
-      duration: 200,
+      duration: isMaxLevel ? 250 : 200,
       ease: "Power2",
       onComplete: () => impact.destroy(),
     });
@@ -533,66 +474,12 @@ export class SonicBoomHammer extends BaseWeapon {
     // Animate ground crack
     this.scene.tweens.add({
       targets: crack,
-      scale: isCritical ? 0.8 : 0.6,
+      scale: isMaxLevel ? (isCritical ? 1.2 : 0.9) : isCritical ? 0.8 : 0.6,
       alpha: 0,
-      duration: 400,
+      duration: isMaxLevel ? 500 : 400,
       ease: "Power1",
       onComplete: () => crack.destroy(),
     });
-
-    // Add screen shake on hit
-    if (this.scene.cameras?.main) {
-      const shakeIntensity = isCritical ? 0.004 : 0.002;
-      const shakeDuration = isCritical ? 150 : 100;
-      this.scene.cameras.main.shake(shakeDuration, shakeIntensity);
-    }
-
-    // Add particle burst on impact
-    const particles = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile", {
-      speed: { min: 50, max: 200 },
-      scale: { start: 0.4, end: 0 },
-      alpha: { start: 0.6, end: 0 },
-      lifespan: 300,
-      quantity: isCritical ? 8 : 5,
-      tint: isCritical ? this.effectColors.secondary : this.effectColors.primary,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-
-    // Clean up particles after animation
-    this.scene.time.delayedCall(300, () => {
-      particles.destroy();
-    });
-
-    // Add shockwave ring on critical hits
-    if (isCritical) {
-      // Create shockwave ring effect
-      const shockwaveRing = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile");
-      shockwaveRing.setScale(0.1);
-      shockwaveRing.setTint(this.effectColors.secondary);
-      shockwaveRing.setAlpha(0.7);
-
-      this.scene.tweens.add({
-        targets: shockwaveRing,
-        scale: 2.0,
-        alpha: 0,
-        duration: 300,
-        ease: "Power1",
-        onComplete: () => shockwaveRing.destroy(),
-      });
-
-      // Add particle burst for shockwave ring
-      if (this.scene.add.particles) {
-        const particles = this.scene.add.particles(enemy.sprite.x, enemy.sprite.y, "weapon-hammer-projectile", {
-          scale: { start: 0.1, end: 0 },
-          speed: { min: 50, max: 150 },
-          quantity: 8,
-          lifespan: 300,
-          tint: this.effectColors.secondary,
-        });
-
-        setTimeout(() => particles.destroy(), 300);
-      }
-    }
   }
 
   levelUp() {
@@ -613,7 +500,7 @@ export class SonicBoomHammer extends BaseWeapon {
     console.log(`Sonic Boom Hammer leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
     // Recreate projectiles with new scale
-    this.createProjectilePool();
+    this.createProjectiles();
 
     return true;
   }
@@ -630,38 +517,148 @@ export class SonicBoomHammer extends BaseWeapon {
     }
 
     // Update active projectiles
-    this.projectilePool.objects.forEach((proj) => {
+    this.activeProjectiles.forEach((proj) => {
       if (proj.active) {
-        if (proj.sprite) {
-          // Move projectile
-          proj.sprite.x += Math.cos(proj.angle) * this.stats.speed * (delta / 1000);
-          proj.sprite.y += Math.sin(proj.angle) * this.stats.speed * (delta / 1000);
+        // Move projectile
+        proj.sprite.x += Math.cos(proj.angle) * this.stats.speed * (delta / 1000);
+        proj.sprite.y += Math.sin(proj.angle) * this.stats.speed * (delta / 1000);
 
-          // Update effects positions
-          if (proj.shockwave) {
-            proj.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
+        // Update shockwave position
+        if (proj.sprite.shockwave) {
+          proj.sprite.shockwave.setPosition(proj.sprite.x, proj.sprite.y);
+        }
+
+        // Update ground effect for max level
+        if (this.currentLevel === 8 && proj.sprite.groundEffect) {
+          try {
+            proj.sprite.groundEffect.x = proj.sprite.x;
+            proj.sprite.groundEffect.y = proj.sprite.y;
+            proj.sprite.groundEffect.setVisible(true);
+            proj.sprite.groundEffect.start();
+          } catch (error) {
+            console.error("Failed to update ground effect:", error);
           }
+        }
 
-          // Check for enemy collisions
-          if (this.scene.enemies) {
-            this.scene.enemies.forEach((enemy) => {
-              if (enemy && enemy.sprite && !enemy.isDead && !proj.hitEnemies.has(enemy)) {
-                const dist = this.getDistance(proj.sprite.x, proj.sprite.y, enemy.sprite.x, enemy.sprite.y);
-                const collisionRadius = 40;
+        // Update electric effect and check for nearby enemies
+        if (this.currentLevel === 8) {
+          if (proj.sprite.electricEffect && proj.sprite.lightningEffect) {
+            try {
+              // Update main electric effect
+              proj.sprite.electricEffect.setPosition(proj.sprite.x, proj.sprite.y);
+              proj.sprite.electricEffect.setVisible(true);
+              proj.sprite.electricEffect.start();
 
-                if (dist < collisionRadius) {
-                  this.handleHit(enemy, proj);
-                  proj.hitEnemies.add(enemy);
-                }
+              // Update lightning effect
+              proj.sprite.lightningEffect.setPosition(proj.sprite.x, proj.sprite.y);
+              proj.sprite.lightningEffect.setVisible(true);
+              proj.sprite.lightningEffect.start();
+
+              // Apply electric shock to nearby enemies
+              if (this.scene.enemies && this.scene.time.now - proj.lastShockTime > 200) {
+                this.scene.enemies.forEach((enemy) => {
+                  if (enemy && enemy.sprite && !enemy.isDead) {
+                    const dist = Phaser.Math.Distance.Between(
+                      proj.sprite.x,
+                      proj.sprite.y,
+                      enemy.sprite.x,
+                      enemy.sprite.y
+                    );
+
+                    if (dist <= this.stats.shockRange) {
+                      // Apply shock damage
+                      enemy.takeDamage(this.stats.shockDamage);
+
+                      // Apply stun effect
+                      if (!enemy.isStunned) {
+                        enemy.isStunned = true;
+                        enemy.sprite.setTint(this.effectColors.electric);
+
+                        // Enhanced stun visual effect
+                        const stunEffect = this.scene.add.particles(
+                          enemy.sprite.x,
+                          enemy.sprite.y,
+                          "weapon-hammer-projectile",
+                          {
+                            speed: { min: 50, max: 100 },
+                            scale: { start: 0.4, end: 0.1 },
+                            alpha: { start: 1, end: 0 },
+                            lifespan: 500,
+                            quantity: 3,
+                            frequency: 50,
+                            tint: [this.effectColors.electric, this.effectColors.lightning],
+                            blendMode: Phaser.BlendModes.ADD,
+                          }
+                        );
+
+                        // Create zigzag lightning effect between projectile and enemy
+                        const lightningSegments = this.createZigzagLightning(
+                          proj.sprite.x,
+                          proj.sprite.y,
+                          enemy.sprite.x,
+                          enemy.sprite.y
+                        );
+
+                        // Animate the lightning
+                        const updateLightning = () => {
+                          if (!enemy.isStunned) return;
+                          this.updateZigzagLightning(
+                            lightningSegments,
+                            proj.sprite.x,
+                            proj.sprite.y,
+                            enemy.sprite.x,
+                            enemy.sprite.y
+                          );
+                        };
+
+                        // Update lightning position every frame
+                        const lightningUpdate = this.scene.time.addEvent({
+                          delay: 50, // Update every 50ms for smooth animation
+                          callback: updateLightning,
+                          callbackScope: this,
+                          loop: true,
+                        });
+
+                        // Remove stun and effects after duration
+                        this.scene.time.delayedCall(this.stats.stunDuration, () => {
+                          enemy.isStunned = false;
+                          enemy.sprite.clearTint();
+                          stunEffect.destroy();
+                          lightningUpdate.destroy();
+                          lightningSegments.forEach((segment) => segment.destroy());
+                        });
+                      }
+                    }
+                  }
+                });
+                proj.lastShockTime = this.scene.time.now;
               }
-            });
+            } catch (error) {
+              console.error("Failed to update electric effect:", error);
+            }
           }
+        }
 
-          // Check if out of range
-          const distFromStart = this.getDistance(proj.sprite.x, proj.sprite.y, this.player.x, this.player.y);
-          if (distFromStart > this.stats.range) {
-            this.deactivateProjectile(proj);
-          }
+        // Check for enemy collisions
+        if (this.scene.enemies) {
+          this.scene.enemies.forEach((enemy) => {
+            if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) return;
+
+            const dist = this.getDistance(proj.sprite.x, proj.sprite.y, enemy.sprite.x, enemy.sprite.y);
+
+            // Increased collision radius for better hit detection
+            const collisionRadius = 40; // Increased from 30
+            if (dist < collisionRadius) {
+              this.handleHit(enemy, proj);
+            }
+          });
+        }
+
+        // Check if projectile is out of range
+        const distFromStart = this.getDistance(proj.sprite.x, proj.sprite.y, this.player.x, this.player.y);
+
+        if (distFromStart > this.stats.range) {
+          this.deactivateProjectile(proj);
         }
       }
     });
@@ -669,35 +666,32 @@ export class SonicBoomHammer extends BaseWeapon {
 
   attack(time) {
     // Find an inactive projectile
-    const proj = this.projectilePool.get();
+    const proj = this.activeProjectiles.find((p) => !p.active);
     if (proj) {
-      // Reset the projectile state
-      proj.pierceCount = this.stats.pierce;
-      proj.hitEnemies.clear();
       this.fireProjectile(proj, time);
     }
   }
 
   deactivateProjectile(proj) {
-    if (!proj) return;
-    proj.hitEnemies.clear();
+    if (!proj.sprite) return;
 
-    // Stop all effects
-    if (proj.sprite) {
-      if (proj.trail) {
-        proj.trail.stop();
-      }
-      if (proj.shockwaveTrail) {
-        proj.shockwaveTrail.stop();
-      }
-      if (this.currentLevel === 8) {
-        if (proj.sprite.electricField) proj.sprite.electricField.stop();
-        if (proj.sprite.lightningBolts) proj.sprite.lightningBolts.stop();
-        if (proj.sprite.electricArcs) proj.sprite.electricArcs.stop();
-      }
+    proj.active = false;
+    proj.sprite.setVisible(false);
+    if (proj.sprite.shockwave) {
+      proj.sprite.shockwave.setVisible(false);
     }
-
-    this.projectilePool.return(proj);
+    if (proj.sprite.groundEffect) {
+      proj.sprite.groundEffect.setVisible(false);
+      proj.sprite.groundEffect.stop();
+    }
+    if (proj.sprite.electricEffect) {
+      proj.sprite.electricEffect.setVisible(false);
+      proj.sprite.electricEffect.stop();
+    }
+    if (proj.sprite.lightningEffect) {
+      proj.sprite.lightningEffect.setVisible(false);
+      proj.sprite.lightningEffect.stop();
+    }
   }
 
   getDistance(x1, y1, x2, y2) {
