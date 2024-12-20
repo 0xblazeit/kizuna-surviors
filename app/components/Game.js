@@ -221,36 +221,6 @@ const GameScene = Phaser.Class({
   },
 
   startGame: function () {
-    // Initial enemy spawn for first wave
-    // const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
-    // for (let i = 0; i < initialEnemies; i++) {
-    //   const spawnPos = this.getSpawnPosition();
-    //   const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
-
-    //   const enemy = new EnemyBasic(this, spawnPos.x, spawnPos.y, randomSprite, {
-    //     type: "basic",
-    //     scale: 0.3,
-    //     maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-    //     attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-    //     moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-    //   });
-
-    //   enemy.sprite.once("destroy", () => {
-    //     const index = this.enemies.indexOf(enemy);
-    //     if (index > -1) {
-    //       this.enemies.splice(index, 1);
-    //       this.gameState.enemiesRemainingInWave--;
-
-    //       // Check if wave is complete AND no enemies are left
-    //       if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
-    //         this.startNextWave();
-    //       }
-    //     }
-    //   });
-
-    //   this.enemies.push(enemy);
-    // }
-
     // Start enemy spawn timer
     this.enemySpawnTimer = this.time.addEvent({
       delay: this.gameState.spawnRate,
@@ -1259,41 +1229,6 @@ const GameScene = Phaser.Class({
       this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
     }
 
-    // Create enemy spawn timer with simpler configuration
-    // this.enemySpawnTimer = this.time.addEvent({
-    //   delay: this.gameState.spawnRate,
-    //   callback: () => {
-    //     // Simple spawn check
-    //     if (this.enemies.length < this.gameState.maxEnemies) {
-    //       const spawnPos = this.getSpawnPosition();
-
-    //       // Always spawn at least one type of enemy
-    //       let enemy;
-    //       const roll = Math.random();
-
-    //       if (roll < 0.4) {
-    //         enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-    //       } else if (roll < 0.7) {
-    //         enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-    //       } else if (roll < 0.9) {
-    //         enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-    //       } else {
-    //         enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
-    //       }
-
-    //       // Add to physics system and enemies array if spawned successfully
-    //       if (enemy) {
-    //         if (!enemy.body) {
-    //           this.physics.add.existing(enemy);
-    //         }
-    //         this.enemies.push(enemy);
-    //       }
-    //     }
-    //   },
-    //   callbackScope: this,
-    //   loop: true,
-    // });
-
     // Modify wave management
     this.time.addEvent({
       delay: 60000, // Check every minute
@@ -2177,7 +2112,11 @@ const GameScene = Phaser.Class({
 
     // Check for minimum enemy count and force spawn if needed
     const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
-    if (currentEnemyCount <= this.gameState.forceSpawnThreshold && !this.gameState.isPaused && !this.gameState.isGameOver) {
+    if (
+      currentEnemyCount <= this.gameState.forceSpawnThreshold &&
+      !this.gameState.isPaused &&
+      !this.gameState.isGameOver
+    ) {
       const needToSpawn = Math.max(this.gameState.minEnemies - currentEnemyCount, 0);
       if (needToSpawn > 0) {
         // Force immediate spawn of multiple enemies
