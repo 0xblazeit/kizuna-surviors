@@ -32,7 +32,7 @@ export class MagicWandWeapon extends BaseWeapon {
       1: {
         damage: 8,
         pierce: 2,
-        cooldown: 1000,
+        cooldown: 800,
         magicPower: 15,
         criticalChance: 0.08,
         range: 300,
@@ -41,7 +41,7 @@ export class MagicWandWeapon extends BaseWeapon {
       2: {
         damage: 12,
         pierce: 3,
-        cooldown: 900,
+        cooldown: 700,
         magicPower: 20,
         criticalChance: 0.1,
         range: 350,
@@ -50,7 +50,7 @@ export class MagicWandWeapon extends BaseWeapon {
       3: {
         damage: 16,
         pierce: 3,
-        cooldown: 800,
+        cooldown: 600,
         magicPower: 25,
         criticalChance: 0.12,
         range: 400,
@@ -59,7 +59,7 @@ export class MagicWandWeapon extends BaseWeapon {
       4: {
         damage: 20,
         pierce: 4,
-        cooldown: 700,
+        cooldown: 500,
         magicPower: 30,
         criticalChance: 0.15,
         range: 450,
@@ -68,7 +68,7 @@ export class MagicWandWeapon extends BaseWeapon {
       5: {
         damage: 25,
         pierce: 4,
-        cooldown: 600,
+        cooldown: 400,
         magicPower: 35,
         criticalChance: 0.17,
         range: 500,
@@ -77,29 +77,33 @@ export class MagicWandWeapon extends BaseWeapon {
       6: {
         damage: 30,
         pierce: 5,
-        cooldown: 500,
+        cooldown: 300,
         magicPower: 40,
         criticalChance: 0.2,
         range: 550,
         scale: 0.61,
       },
       7: {
-        damage: 30,
+        damage: 35,
         pierce: 5,
-        cooldown: 500,
+        cooldown: 200,
         magicPower: 45,
         criticalChance: 0.22,
         range: 600,
         scale: 0.62,
       },
       8: {
-        damage: 30,
-        pierce: 3,
-        cooldown: 600,
-        magicPower: 50,
-        criticalChance: 0.25,
-        range: 650,
-        scale: 0.63,
+        damage: 45,
+        pierce: 6,
+        cooldown: 150,
+        magicPower: 60,
+        criticalChance: 0.3,
+        range: 700,
+        scale: 0.65,
+        speed: 400,
+        elementalDamage: 15,
+        explosionRadius: 120,
+        explosionDamage: 30,
       },
     };
 
@@ -321,11 +325,15 @@ export class MagicWandWeapon extends BaseWeapon {
     finalDamage *= 1 + this.stats.magicPower / 100;
 
     const roundedDamage = Math.round(finalDamage);
-    // Apply damage with source position for proper hit effects
     enemy.takeDamage(roundedDamage, proj.sprite.x, proj.sprite.y);
 
     // Create hit effect
     this.createHitEffect(enemy, proj, isCritical);
+
+    // Create arcane explosion at max level
+    if (this.currentLevel === this.maxLevel) {
+      this.createArcaneExplosion(proj.sprite.x, proj.sprite.y);
+    }
 
     // Reduce pierce count and handle projectile state
     proj.pierceCount--;
@@ -333,6 +341,99 @@ export class MagicWandWeapon extends BaseWeapon {
     if (proj.pierceCount <= 0) {
       this.deactivateProjectile(proj);
     }
+  }
+
+  createArcaneExplosion(x, y) {
+    // Create main burst with smaller, more refined scale
+    const burst = this.scene.add.sprite(x, y, "weapon-wand-projectile");
+    burst.setScale(0.4); // Reduced from 0.8
+    burst.setTint(this.effectColors.primary);
+    burst.setBlendMode(Phaser.BlendModes.ADD);
+
+    // More subtle expanding ring effect
+    this.scene.tweens.add({
+      targets: burst,
+      scaleX: 1.5, // Reduced from 3
+      scaleY: 1.5, // Reduced from 3
+      alpha: { from: 0.7, to: 0 }, // Slightly more transparent
+      duration: 400, // Faster fade
+      ease: "Quad.out",
+      onComplete: () => burst.destroy(),
+    });
+
+    // Fewer, more subtle magical runes
+    const runeCount = 5; // Reduced from 8
+    for (let i = 0; i < runeCount; i++) {
+      const angle = (i / runeCount) * Math.PI * 2;
+      const distance = 25; // Reduced from 40
+      const rune = this.scene.add.sprite(
+        x + Math.cos(angle) * distance,
+        y + Math.sin(angle) * distance,
+        "weapon-wand-projectile"
+      );
+
+      rune.setScale(0.25); // Reduced from 0.4
+      rune.setTint(this.effectColors.secondary);
+      rune.setBlendMode(Phaser.BlendModes.ADD);
+      rune.setAlpha(0.6); // More transparent
+      rune.rotation = angle;
+
+      this.scene.tweens.add({
+        targets: rune,
+        scaleX: 0.4, // Reduced scale increase
+        scaleY: 0.4,
+        alpha: 0,
+        rotation: angle + Math.PI, // Half rotation for subtlety
+        duration: 400, // Faster animation
+        ease: "Sine.out",
+        onComplete: () => rune.destroy(),
+      });
+    }
+
+    // More refined energy particles
+    const particles = this.scene.add.particles(x, y, "weapon-wand-projectile", {
+      scale: { start: 0.2, end: 0.05 }, // Smaller particles
+      speed: { min: 50, max: 100 }, // Slower, more controlled speed
+      angle: { min: 0, max: 360 },
+      alpha: { start: 0.6, end: 0 },
+      tint: this.effectColors.energy,
+      blendMode: Phaser.BlendModes.ADD,
+      lifespan: 500, // Shorter lifespan
+      quantity: 8, // Fewer particles
+    });
+
+    this.scene.time.delayedCall(500, () => particles.destroy());
+
+    // Smaller damage zone
+    const radius = this.stats.explosionRadius * 0.8; // 20% smaller radius
+    const nearbyEnemies = this.scene.enemies.filter(
+      (enemy) =>
+        enemy &&
+        enemy.sprite &&
+        enemy.sprite.active &&
+        !enemy.isDead &&
+        Phaser.Math.Distance.Between(x, y, enemy.sprite.x, enemy.sprite.y) <= radius
+    );
+
+    // More subtle energy connections
+    nearbyEnemies.forEach((enemy) => {
+      const arcaneDamage = this.stats.explosionDamage;
+      enemy.takeDamage(arcaneDamage, x, y);
+
+      // Thinner, more elegant energy lines
+      const line = this.scene.add.line(0, 0, x, y, enemy.sprite.x, enemy.sprite.y, this.effectColors.primary);
+      line.setLineWidth(1.5); // Thinner lines
+      line.setAlpha(0.5); // More transparent
+      line.setBlendMode(Phaser.BlendModes.ADD);
+
+      this.scene.tweens.add({
+        targets: line,
+        alpha: 0,
+        duration: 200, // Faster fade
+        ease: "Linear",
+        onComplete: () => line.destroy(),
+      });
+    });
   }
 
   fireProjectile(proj, time) {
