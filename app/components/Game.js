@@ -54,7 +54,9 @@ const GameScene = Phaser.Class({
       coins: 0,
       maxEnemies: 50, // Increased initial max enemies
       spawnRate: 2000, // Slower initial spawn rate
-      minSpawnRate: 150, // Even faster minimum spawn rate
+      minEnemies: 15, // Minimum enemies that should be on screen
+      forceSpawnThreshold: 10, // Force spawn if enemies below this number
+      minSpawnRate: 500, // Minimum time between spawn attempts
       enemyWaveTimer: 0,
       waveNumber: 1,
       difficultyMultiplier: 1,
@@ -355,13 +357,15 @@ const GameScene = Phaser.Class({
     }
 
     // Calculate how many enemies to spawn this tick
-    const maxSpawnPerTick = Math.min(3, Math.ceil(this.gameState.waveNumber / 2)); // Increased spawn count scaling
+    const baseMaxSpawn = Math.min(5, Math.ceil(this.gameState.waveNumber / 2));
+    const bonusSpawn = currentEnemyCount < this.gameState.minEnemies ? 2 : 0;
+    const maxSpawnPerTick = baseMaxSpawn + bonusSpawn;
     const spawnCount = Math.min(maxSpawnPerTick, this.gameState.maxEnemies - currentEnemyCount);
 
     // Calculate delay between spawns based on wave number
     const baseDelay = 300;
-    const minDelay = 80; // Increased minimum delay
-    const delayReduction = Math.min(0.6, (this.gameState.waveNumber - 1) * 0.05); // 5% reduction per wave, max 60% reduction
+    const minDelay = 60;
+    const delayReduction = Math.min(0.7, (this.gameState.waveNumber - 1) * 0.06);
     const spawnDelay = Math.max(minDelay, baseDelay * (1 - delayReduction));
 
     // Stagger spawns within the tick
@@ -2170,9 +2174,40 @@ const GameScene = Phaser.Class({
     if (this.player && this.player.isDead) {
       this.showWastedScreen();
     }
+
+    // Check for minimum enemy count and force spawn if needed
+    const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
+    if (currentEnemyCount <= this.gameState.forceSpawnThreshold && !this.gameState.isPaused && !this.gameState.isGameOver) {
+      const needToSpawn = Math.max(this.gameState.minEnemies - currentEnemyCount, 0);
+      if (needToSpawn > 0) {
+        // Force immediate spawn of multiple enemies
+        for (let i = 0; i < Math.min(needToSpawn, 5); i++) {
+          const spawnPos = this.getSpawnPosition();
+          const wave = this.gameState.waveNumber;
+          const roll = Math.random();
+
+          let enemyType = "basic";
+          if (wave > 6) {
+            if (roll < 0.4) enemyType = "advanced";
+            else if (roll < 0.7) enemyType = "shooter";
+            else if (roll < 0.85) enemyType = "epic";
+          } else if (wave > 2) {
+            if (roll < 0.6) enemyType = "advanced";
+            else if (roll < 0.8) enemyType = "shooter";
+          }
+
+          const enemy = this.enemyPool.spawn(enemyType, spawnPos.x, spawnPos.y);
+          if (enemy) {
+            if (!enemy.body) {
+              this.physics.add.existing(enemy);
+            }
+            this.enemies.push(enemy);
+          }
+        }
+      }
+    }
   },
 
-  // Add this method to the GameScene class
   cleanup: function () {
     // Clean up XP gems
     if (this.xpGems) {
