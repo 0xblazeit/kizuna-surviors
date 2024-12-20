@@ -1941,6 +1941,9 @@ const GameScene = Phaser.Class({
       },
       callbackScope: this,
     });
+
+    // Initialize gem counter
+    this.gemCount = 0;
   },
 
   setupNextSpawnTimer: function () {
@@ -2251,11 +2254,18 @@ const GameScene = Phaser.Class({
         }
       });
       this.xpGems = [];
+      this.gemCount = 0; // Reset the scene's counter
     }
 
     // Clean up enemy pool
     if (this.enemyPool) {
       this.enemyPool.cleanup();
+    }
+
+    // Clean up coin pool
+    if (Coin.pool) {
+      Coin.pool = [];
+      Coin.totalCoins = 0; // Reset coin counter too
     }
 
     // Clean up collectible spawn timer
