@@ -7,6 +7,12 @@ const PauseMenuScene = Phaser.Class({
     Phaser.Scene.call(this, { key: "PauseMenuScene" });
   },
 
+  preload: function () {
+    this.load.svg("ss-logo", "/ss-logo.svg", {
+      scale: 1.5,
+    });
+  },
+
   create: function () {
     // Semi-transparent black background
     this.overlay = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7);
@@ -45,6 +51,21 @@ const PauseMenuScene = Phaser.Class({
       textConfig
     );
     instructionText.setOrigin(0.5);
+
+    // Add SS logo
+    const logo = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY + 120, "ss-logo");
+    logo.setScale(0.15); // Adjust scale as needed
+    logo.setOrigin(0.5);
+
+    // Add a subtle floating animation to the logo
+    this.tweens.add({
+      targets: logo,
+      y: "+=5",
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
 
     // Add scanline effect
     this.scanlines = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.1);
