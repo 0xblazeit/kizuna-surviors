@@ -65,24 +65,19 @@ const UpgradeMenuScene = Phaser.Class({
       targets: overlay,
       alpha: 0.7,
       duration: 400,
-      ease: 'Power2'
+      ease: "Power2",
     });
 
     // Add "LEVEL UP!" text centered above weapon panels with fade and scale effect
     const levelUpText = this.add
-      .text(
-        this.cameras.main.centerX,
-        100,
-        "LEVEL UP!",
-        {
-          fontFamily: "VT323",
-          fontSize: "48px",
-          color: "#ffff00",
-          stroke: "#000000",
-          strokeThickness: 4,
-          align: "center",
-        }
-      )
+      .text(this.cameras.main.centerX, 100, "LEVEL UP!", {
+        fontFamily: "VT323",
+        fontSize: "48px",
+        color: "#ffff00",
+        stroke: "#000000",
+        strokeThickness: 4,
+        align: "center",
+      })
       .setOrigin(0.5)
       .setAlpha(0)
       .setScale(0.5);
@@ -93,8 +88,8 @@ const UpgradeMenuScene = Phaser.Class({
       alpha: 1,
       scale: 1,
       duration: 500,
-      ease: 'Back.out',
-      delay: 200
+      ease: "Back.out",
+      delay: 200,
     });
 
     // Add subtle pulsing animation to the text after it appears
@@ -156,14 +151,24 @@ const UpgradeMenuScene = Phaser.Class({
       // Add weapon icon (initially invisible)
       const iconKey = (() => {
         switch (weapon.name) {
-          case "Taco Doggie": return "weapon-dog-projectile";
-          case "Shamir's Shard": return "weapon-wand-icon";
-          case "Glizzy Blaster": return "weapon-hotdog-projectile";
-          case "Reverb Reaper": return "weapon-axe-projectile";
-          case "WattWhacker": return "weapon-hammer-projectile";
-          case "GooBoo": return "weapon-magic-milk";
-          case "Shapebinder": return "weapon-shapecraft-key";
-          case "Awakened": return "weapon-awaken";
+          case "Taco Doggie":
+            return "weapon-dog-projectile";
+          case "Shamir's Shard":
+            return "weapon-wand-icon";
+          case "Glizzy Blaster":
+            return "weapon-hotdog-projectile";
+          case "Reverb Reaper":
+            return "weapon-axe-projectile";
+          case "WattWhacker":
+            return "weapon-hammer-projectile";
+          case "GooBoo":
+            return "weapon-magic-milk";
+          case "Shapebinder":
+            return "weapon-shapecraft-key";
+          case "Awakened":
+            return "weapon-awaken";
+          case "Shuriken Storm":
+            return "weapon-ss-icon";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);
             return "weapon-dog-projectile";
@@ -274,7 +279,7 @@ const UpgradeMenuScene = Phaser.Class({
           y: { from: offScreenY, to: y },
           scale: { from: 0.9, to: 1 },
           duration: 300,
-          ease: 'Back.out(1.7)',
+          ease: "Back.out(1.7)",
           onComplete: () => {
             // Fade in and scale up the icon
             this.tweens.add({
@@ -282,7 +287,7 @@ const UpgradeMenuScene = Phaser.Class({
               alpha: { from: 0, to: 1 },
               scale: { from: 0.7, to: scale },
               duration: 200,
-              ease: 'Back.out(2)',
+              ease: "Back.out(2)",
             });
 
             // Fade in and slide up the name
@@ -292,7 +297,7 @@ const UpgradeMenuScene = Phaser.Class({
               y: { from: 10, to: 0 },
               duration: 200,
               delay: 25,
-              ease: 'Power3'
+              ease: "Power3",
             });
 
             // Fade in stars one by one with scale effect
@@ -303,7 +308,7 @@ const UpgradeMenuScene = Phaser.Class({
                 scale: { from: 0.5, to: 1 },
                 duration: 150,
                 delay: 50 + starIndex * 15,
-                ease: 'Back.out(2)'
+                ease: "Back.out(2)",
               });
             });
 
@@ -314,7 +319,7 @@ const UpgradeMenuScene = Phaser.Class({
               x: { from: ((starsPerRow - 1) * starSpacing) / 2 + 40, to: ((starsPerRow - 1) * starSpacing) / 2 + 30 },
               duration: 200,
               delay: 150,
-              ease: 'Power2'
+              ease: "Power2",
             });
 
             // Fade in stats with slight slide up
@@ -324,7 +329,7 @@ const UpgradeMenuScene = Phaser.Class({
               y: { from: startStarY + rowSpacing * 2 + 55, to: startStarY + rowSpacing * 2 + 45 },
               duration: 200,
               delay: 200,
-              ease: 'Power2'
+              ease: "Power2",
             });
 
             // Add subtle hover effect to the card
@@ -335,31 +340,31 @@ const UpgradeMenuScene = Phaser.Class({
               duration: 1500,
               yoyo: true,
               repeat: -1,
-              ease: 'Sine.easeInOut'
+              ease: "Sine.easeInOut",
             });
-          }
+          },
         });
       });
 
       // Add hover effect to the card
-      card.on('pointerover', () => {
+      card.on("pointerover", () => {
         if (!this.isSelecting) {
           this.tweens.add({
             targets: container,
             scale: 1.05,
             duration: 200,
-            ease: 'Power2'
+            ease: "Power2",
           });
         }
       });
 
-      card.on('pointerout', () => {
+      card.on("pointerout", () => {
         if (!this.isSelecting) {
           this.tweens.add({
             targets: container,
             scale: 1,
             duration: 200,
-            ease: 'Power2'
+            ease: "Power2",
           });
         }
       });
