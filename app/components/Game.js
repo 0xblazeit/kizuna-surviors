@@ -1932,7 +1932,7 @@ const GameScene = Phaser.Class({
 
     // Set up first spawn after 10 seconds
     this.collectibleSpawnTimer = this.time.addEvent({
-      delay: 30000, // First spawn after 30 seconds
+      delay: 15000, // First spawn after ~2 minutes
       callback: () => {
         // Create a visual or audio cue for the spawn
         this.createSpawnAnnouncement();
@@ -1947,8 +1947,7 @@ const GameScene = Phaser.Class({
   },
 
   setupNextSpawnTimer: function () {
-    // Calculate next spawn delay - between 3 to 4 minutes
-    const baseDelay = 180000; // 3 minutes
+    const baseDelay = Phaser.Math.Between(180000, 300000); // Random between 3-5 minutes
     const randomAdditional = Phaser.Math.Between(0, 60000); // 0-60 seconds additional
     const nextDelay = baseDelay + randomAdditional;
 
