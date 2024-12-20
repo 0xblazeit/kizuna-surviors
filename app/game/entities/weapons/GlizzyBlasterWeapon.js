@@ -108,28 +108,144 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     // Initialize at level 1
     this.currentLevel = 1;
     this.maxLevel = 8;
-    // Create a deep copy of the current level config
     this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
 
-    // Initialize projectile pool
-    this.maxProjectiles = 50;
-    this.activeProjectiles = [];
-    this.lastFiredTime = 0;
+    // Calculate max pool sizes based on level configs
+    const maxProjectilesPerLevel = Object.values(this.levelConfigs).map(
+      (config) => config.projectileCount * 2 // Double for safety
+    );
+    const maxProjectilesNeeded = Math.max(...maxProjectilesPerLevel);
 
-    this.createProjectiles();
+    // Initialize object pools
+    this.projectilePool = {
+      objects: [],
+      maxSize: maxProjectilesNeeded * 3, // Triple for overlapping cooldowns and pierce
+
+      get() {
+        return this.objects.find((obj) => !obj.active);
+      },
+
+      return(obj) {
+        if (!obj) return;
+        obj.active = false;
+        if (obj.sprite) {
+          obj.sprite.setActive(false).setVisible(false);
+          obj.sprite.body.setVelocity(0, 0);
+        }
+      },
+    };
+
+    // Effect pools for max level
+    this.effectPools = {
+      particles: {
+        objects: [],
+        maxSize: 100, // For explosion particles
+        get() {
+          return this.objects.find((obj) => !obj.active);
+        },
+        return(obj) {
+          if (!obj) return;
+          obj.active = false;
+          if (obj.sprite) {
+            obj.sprite.setActive(false).setVisible(false);
+            obj.sprite.setAlpha(0);
+          }
+        },
+      },
+      trails: {
+        objects: [],
+        maxSize: 50,
+        get() {
+          return this.objects.find((obj) => !obj.active);
+        },
+        return(obj) {
+          if (!obj) return;
+          obj.active = false;
+          if (obj.sprite) {
+            obj.sprite.setActive(false).setVisible(false);
+            obj.sprite.setAlpha(0);
+          }
+        },
+      },
+    };
+
+    this.lastFiredTime = 0;
+    this.createPools();
+  }
+
+  createPools() {
+    // Create projectile pool
+    for (let i = 0; i < this.projectilePool.maxSize; i++) {
+      const sprite = this.scene.add.sprite(0, 0, "weapon-hotdog-projectile");
+      sprite.setScale(this.stats.scale);
+      sprite.setActive(false).setVisible(false);
+
+      // Enable physics
+      this.scene.physics.world.enable(sprite);
+      sprite.body.setSize(sprite.width * 0.8, sprite.height * 0.8);
+
+      this.projectilePool.objects.push({
+        sprite,
+        active: false,
+        pierceCount: this.stats.pierce,
+      });
+    }
+
+    // Create effect pools for max level effects
+    for (let i = 0; i < this.effectPools.particles.maxSize; i++) {
+      const sprite = this.scene.add.sprite(0, 0, "weapon-hotdog-projectile");
+      sprite.setActive(false).setVisible(false);
+
+      this.effectPools.particles.objects.push({
+        sprite,
+        active: false,
+      });
+    }
+
+    for (let i = 0; i < this.effectPools.trails.maxSize; i++) {
+      const sprite = this.scene.add.sprite(0, 0, "weapon-hotdog-projectile");
+      sprite.setActive(false).setVisible(false);
+
+      this.effectPools.trails.objects.push({
+        sprite,
+        active: false,
+      });
+    }
+  }
+
+  getInactiveProjectile() {
+    return this.projectilePool.get();
+  }
+
+  getInactiveParticle() {
+    return this.effectPools.particles.get();
+  }
+
+  getInactiveTrail() {
+    return this.effectPools.trails.get();
+  }
+
+  deactivateProjectile(proj) {
+    this.projectilePool.return(proj);
+  }
+
+  deactivateParticle(particle) {
+    this.effectPools.particles.return(particle);
+  }
+
+  deactivateTrail(trail) {
+    this.effectPools.trails.return(trail);
   }
 
   update(time, delta) {
-    // Call base class update which includes death check
-    if (!super.update(time, delta)) {
-      return;
+    if (this.canFire()) {
+      this.attack(time);
     }
 
-    // Update player direction immediately
     this.getPlayerDirection(); // Ensure direction is updated
 
     // Update active projectiles
-    this.activeProjectiles.forEach((proj) => {
+    this.projectilePool.objects.forEach((proj) => {
       if (proj.active && proj.sprite) {
         // Check if projectile is out of range
         const distance = Phaser.Math.Distance.Between(proj.startX, proj.startY, proj.sprite.x, proj.sprite.y);
@@ -140,43 +256,19 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
         }
 
         // Check for collisions with enemies
-        const enemies = this.scene.enemies
-          ? this.scene.enemies.filter((e) => {
-              return e && e.sprite && e.sprite.active && !e.isDead;
-            })
-          : [];
-
-        // Check collision with each enemy
-        enemies.forEach((enemy) => {
-          if (proj.active && proj.pierceCount > 0) {
-            const projX = proj.sprite.x;
-            const projY = proj.sprite.y;
-            const enemyX = enemy.sprite.x;
-            const enemyY = enemy.sprite.y;
-
-            // Calculate distance for collision
-            const dx = projX - enemyX;
-            const dy = projY - enemyY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            // Collision thresholds
-            const projRadius = 15; // Smaller collision radius for hotdog
-            const enemyRadius = 25;
-            const collisionThreshold = projRadius + enemyRadius;
-
-            // Check if collision occurred
-            if (distance < collisionThreshold) {
-              this.handleHit(enemy, proj);
-            }
+        this.scene.enemies.forEach((enemy) => {
+          if (
+            enemy &&
+            enemy.sprite &&
+            enemy.sprite.active &&
+            !enemy.isDead &&
+            Phaser.Geom.Intersects.RectangleToRectangle(proj.sprite.getBounds(), enemy.sprite.getBounds())
+          ) {
+            this.handleHit(enemy, proj);
           }
         });
       }
     });
-
-    // Auto-fire the weapon
-    if (this.canFire()) {
-      this.attack(time);
-    }
   }
 
   attack(time) {
@@ -185,24 +277,25 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
   }
 
   fireProjectiles() {
+    // Get player position directly from sprite
+    const startX = this.player.sprite.x;
+    const startY = this.player.sprite.y;
     const direction = this.getPlayerDirection();
-    const startX = this.player.x;
-    const startY = this.player.y;
 
-    // Calculate the base angle from the direction
+    // Calculate base angle from direction
     const baseAngle = Math.atan2(direction.y, direction.x);
 
-    // Calculate spread angles based on projectile count
-    const angleStep = this.stats.projectileCount > 1 ? this.stats.spreadAngle / (this.stats.projectileCount - 1) : 0;
-    const startAngle = baseAngle - (this.stats.spreadAngle / 2) * (Math.PI / 180);
+    // Calculate spread angles for multiple projectiles
+    const totalSpread = this.stats.spreadAngle;
+    const angleStep = totalSpread / Math.max(1, this.stats.projectileCount - 1);
+    const startAngle = baseAngle - (totalSpread / 2) * (Math.PI / 180);
 
-    // Fire multiple projectiles in a spread pattern
     for (let i = 0; i < this.stats.projectileCount; i++) {
       const proj = this.getInactiveProjectile();
       if (!proj) continue;
 
       // Calculate angle for this projectile
-      const angle = startAngle + (angleStep * i * Math.PI) / 180;
+      const projectileAngle = startAngle + (angleStep * i * Math.PI) / 180;
 
       // Set projectile properties
       proj.active = true;
@@ -211,65 +304,21 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       proj.startY = startY;
 
       if (proj.sprite) {
+        // Position and activate sprite
         proj.sprite.setPosition(startX, startY);
         proj.sprite.setVisible(true);
         proj.sprite.setActive(true);
-        proj.sprite.setRotation(angle);
+        proj.sprite.setRotation(projectileAngle);
 
-        // Calculate velocity based on angle
+        // Calculate velocity components
         const velocity = {
-          x: Math.cos(angle) * this.stats.speed,
-          y: Math.sin(angle) * this.stats.speed,
+          x: Math.cos(projectileAngle) * this.stats.speed,
+          y: Math.sin(projectileAngle) * this.stats.speed,
         };
 
         // Set the velocity
         proj.sprite.body.setVelocity(velocity.x, velocity.y);
       }
-    }
-  }
-
-  createProjectiles() {
-    // Clear existing projectiles
-    this.activeProjectiles.forEach((proj) => {
-      if (proj.sprite) {
-        proj.sprite.destroy();
-      }
-    });
-    this.activeProjectiles = [];
-
-    // Create new projectiles
-    for (let i = 0; i < this.maxProjectiles; i++) {
-      const sprite = this.scene.add.sprite(0, 0, "weapon-hotdog-projectile");
-      sprite.setScale(this.stats.scale);
-      sprite.setActive(false);
-      sprite.setVisible(false);
-
-      // Enable physics for the sprite
-      this.scene.physics.world.enable(sprite);
-      sprite.body.setSize(sprite.width * 0.8, sprite.height * 0.8); // Slightly smaller hitbox
-      sprite.body.debugShowBody = false; // Disable debug visualization
-      sprite.body.debugShowVelocity = false; // Disable velocity visualization
-
-      this.activeProjectiles.push({
-        sprite: sprite,
-        active: false,
-        pierceCount: this.stats.pierce,
-      });
-    }
-  }
-
-  getInactiveProjectile() {
-    return this.activeProjectiles.find((proj) => !proj.active);
-  }
-
-  deactivateProjectile(proj) {
-    if (!proj) return;
-
-    proj.active = false;
-    if (proj.sprite) {
-      proj.sprite.setVisible(false);
-      proj.sprite.setActive(false);
-      proj.sprite.body.setVelocity(0, 0);
     }
   }
 
@@ -313,8 +362,8 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
 
     // Set the rotation of the projectile sprite to match the direction
     const angle = Math.atan2(dirY, dirX);
-    if (this.activeProjectiles) {
-      this.activeProjectiles.forEach((proj) => {
+    if (this.projectilePool.objects) {
+      this.projectilePool.objects.forEach((proj) => {
         if (proj.sprite) {
           proj.sprite.setRotation(angle);
         }
@@ -329,7 +378,6 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
       this.currentLevel++;
       // Create a deep copy of the new level config
       this.stats = JSON.parse(JSON.stringify(this.levelConfigs[this.currentLevel]));
-      this.createProjectiles(); // Recreate projectiles with new stats
       return true;
     }
     return false;
@@ -348,10 +396,10 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
     const damage = Math.round(this.stats.damage);
     enemy.takeDamage(damage, proj.sprite.x, proj.sprite.y);
 
-    // Create hit effect
+    // Create hit effect at the projectile's current position
     this.createHitEffect(enemy, proj);
 
-    // Create mustard explosion at max level
+    // Create mustard explosion at max level at the projectile's position
     if (this.currentLevel === this.maxLevel && this.stats.mustardExplosion) {
       this.createMustardExplosion(proj.sprite.x, proj.sprite.y);
     }
@@ -366,210 +414,246 @@ export class GlizzyBlasterWeapon extends BaseWeapon {
   }
 
   createHitEffect(enemy, proj) {
-    // Create a small sprite burst effect
-    const hitSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
-    hitSprite.setScale(0.3);
-    hitSprite.setAlpha(0.8);
-    hitSprite.setTint(0xffd700); // Golden tint
+    // Create a small sprite burst effect at the collision point
+    const hitSprite = this.getInactiveParticle();
+    if (hitSprite) {
+      hitSprite.active = true;
+      hitSprite.sprite.setPosition(proj.sprite.x, proj.sprite.y);
+      hitSprite.sprite.setScale(0.3);
+      hitSprite.sprite.setAlpha(0.8);
+      hitSprite.sprite.setTint(0xffd700); // Golden tint
+      hitSprite.sprite.setActive(true).setVisible(true);
 
-    // Create a simple burst animation
-    this.scene.tweens.add({
-      targets: hitSprite,
-      scaleX: { from: 0.3, to: 0.6 },
-      scaleY: { from: 0.3, to: 0.6 },
-      alpha: { from: 0.8, to: 0 },
-      duration: 200,
-      ease: "Power2",
-      onComplete: () => {
-        hitSprite.destroy();
-      },
-    });
-
-    // Add a small rotation effect
-    const rotationSprite = this.scene.add.sprite(proj.sprite.x, proj.sprite.y, "weapon-hotdog-projectile");
-    rotationSprite.setScale(0.4);
-    rotationSprite.setAlpha(0.5);
-    rotationSprite.setTint(0xff6b6b); // Reddish tint
-
-    this.scene.tweens.add({
-      targets: rotationSprite,
-      rotation: Math.PI * 2,
-      scaleX: { from: 0.4, to: 0.1 },
-      scaleY: { from: 0.4, to: 0.1 },
-      alpha: { from: 0.5, to: 0 },
-      duration: 300,
-      ease: "Power2",
-      onComplete: () => {
-        rotationSprite.destroy();
-      },
-    });
-  }
-
-  createMustardExplosion(x, y) {
-    const particleCount = 16; // Increased particle count
-    const explosionRadius = this.stats.explosionRadius;
-
-    // Create shockwave ring
-    const shockwave = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-    shockwave.setScale(0.1);
-    shockwave.setAlpha(0.7);
-    shockwave.setTint(0xfff000); // Bright yellow
-
-    this.scene.tweens.add({
-      targets: shockwave,
-      scaleX: 3,
-      scaleY: 3,
-      alpha: 0,
-      duration: 500,
-      ease: "Cubic.Out",
-      onComplete: () => shockwave.destroy(),
-    });
-
-    // Create central explosion burst
-    const burstSprite = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-    burstSprite.setScale(0.5);
-    burstSprite.setAlpha(1);
-    burstSprite.setTint(0xffdb58); // Mustard yellow
-
-    // Burst animation with bounce effect
-    this.scene.tweens.add({
-      targets: burstSprite,
-      scaleX: { from: 0.5, to: 2.5 },
-      scaleY: { from: 0.5, to: 2.5 },
-      alpha: { from: 1, to: 0 },
-      duration: 400,
-      ease: "Back.Out",
-      onComplete: () => burstSprite.destroy(),
-    });
-
-    // Create inner ring of particles
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (i / particleCount) * Math.PI * 2;
-      const innerRadius = explosionRadius * 0.5;
-
-      const mustardDrop = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-      mustardDrop.setScale(0.4);
-      mustardDrop.setAlpha(0.9);
-      mustardDrop.setTint(0xffdb58);
-      mustardDrop.setRotation(angle);
-
-      const endX = x + Math.cos(angle) * innerRadius;
-      const endY = y + Math.sin(angle) * innerRadius;
-
-      // Drip effect
+      // Create a simple burst animation
       this.scene.tweens.add({
-        targets: mustardDrop,
-        x: endX,
-        y: endY,
-        scaleX: { from: 0.4, to: 0.2 },
-        scaleY: { from: 0.4, to: 0.2 },
-        alpha: { from: 0.9, to: 0 },
-        duration: 300,
+        targets: hitSprite.sprite,
+        scaleX: { from: 0.3, to: 0.6 },
+        scaleY: { from: 0.3, to: 0.6 },
+        alpha: { from: 0.8, to: 0 },
+        duration: 200,
         ease: "Power2",
-        onComplete: () => mustardDrop.destroy(),
+        onComplete: () => this.deactivateParticle(hitSprite),
       });
     }
 
-    // Create outer ring of particles with trails
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (i / particleCount) * Math.PI * 2;
-      const outerRadius = explosionRadius;
+    // Add a small rotation effect
+    const rotationSprite = this.getInactiveParticle();
+    if (rotationSprite) {
+      rotationSprite.active = true;
+      rotationSprite.sprite.setPosition(proj.sprite.x, proj.sprite.y);
+      rotationSprite.sprite.setScale(0.4);
+      rotationSprite.sprite.setAlpha(0.5);
+      rotationSprite.sprite.setTint(0xff6b6b); // Reddish tint
+      rotationSprite.sprite.setRotation(Math.random() * Math.PI * 2);
+      rotationSprite.sprite.setActive(true).setVisible(true);
 
-      // Create trail effect
-      const trail = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-      trail.setScale(0.3);
-      trail.setAlpha(0.6);
-      trail.setTint(0xffa500); // Orange tint for trail
-
-      const mustardParticle = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-      mustardParticle.setScale(0.3);
-      mustardParticle.setAlpha(1);
-      mustardParticle.setTint(0xffdb58);
-      mustardParticle.setRotation(angle);
-
-      const endX = x + Math.cos(angle) * outerRadius;
-      const endY = y + Math.sin(angle) * outerRadius;
-
-      // Trail animation
       this.scene.tweens.add({
-        targets: trail,
-        x: endX,
-        y: endY,
-        scaleX: { from: 0.3, to: 0.1 },
-        scaleY: { from: 0.3, to: 0.1 },
-        alpha: { from: 0.6, to: 0 },
-        duration: 500,
-        ease: "Power1",
-        onComplete: () => trail.destroy(),
+        targets: rotationSprite.sprite,
+        rotation: Math.PI * 2,
+        scaleX: { from: 0.4, to: 0.1 },
+        scaleY: { from: 0.4, to: 0.1 },
+        alpha: { from: 0.5, to: 0 },
+        duration: 300,
+        ease: "Power2",
+        onComplete: () => this.deactivateParticle(rotationSprite),
       });
+    }
+  }
 
-      // Particle animation with spin
+  createMustardExplosion(centerX, centerY) {
+    const particleCount = 16;
+    const explosionRadius = this.stats.explosionRadius;
+
+    // Create shockwave ring
+    const shockwave = this.getInactiveParticle();
+    if (shockwave) {
+      shockwave.active = true;
+      shockwave.sprite.setPosition(centerX, centerY);
+      shockwave.sprite.setScale(0.1);
+      shockwave.sprite.setAlpha(0.7);
+      shockwave.sprite.setTint(0xfff000);
+      shockwave.sprite.setActive(true).setVisible(true);
+
       this.scene.tweens.add({
-        targets: mustardParticle,
-        x: endX,
-        y: endY,
-        scaleX: { from: 0.3, to: 0.15 },
-        scaleY: { from: 0.3, to: 0.15 },
-        rotation: angle + Math.PI * 4, // Two full rotations
+        targets: shockwave.sprite,
+        scaleX: 3,
+        scaleY: 3,
+        alpha: 0,
+        duration: 500,
+        ease: "Cubic.Out",
+        onComplete: () => this.deactivateParticle(shockwave),
+      });
+    }
+
+    // Create central explosion burst
+    const burst = this.getInactiveParticle();
+    if (burst) {
+      burst.active = true;
+      burst.sprite.setPosition(centerX, centerY);
+      burst.sprite.setScale(0.5);
+      burst.sprite.setAlpha(1);
+      burst.sprite.setTint(0xffdb58);
+      burst.sprite.setActive(true).setVisible(true);
+
+      this.scene.tweens.add({
+        targets: burst.sprite,
+        scaleX: { from: 0.5, to: 2.5 },
+        scaleY: { from: 0.5, to: 2.5 },
         alpha: { from: 1, to: 0 },
         duration: 400,
-        ease: "Power2",
-        onComplete: () => mustardParticle.destroy(),
+        ease: "Back.Out",
+        onComplete: () => this.deactivateParticle(burst),
       });
+    }
 
-      // Add random small splatter particles
-      if (Math.random() < 0.5) {
-        const splatter = this.scene.add.sprite(
-          x + Math.cos(angle) * (outerRadius * 0.3),
-          y + Math.sin(angle) * (outerRadius * 0.3),
-          "weapon-hotdog-projectile"
-        );
-        splatter.setScale(0.15);
-        splatter.setAlpha(0.8);
-        splatter.setTint(0xffdb58);
-        splatter.setRotation(Math.random() * Math.PI * 2);
+    // Create inner ring particles
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+      const innerRadius = explosionRadius * 0.5;
+      const dropEndX = centerX + Math.cos(angle) * innerRadius;
+      const dropEndY = centerY + Math.sin(angle) * innerRadius;
+
+      const drop = this.getInactiveParticle();
+      if (drop) {
+        drop.active = true;
+        drop.sprite.setPosition(centerX, centerY);
+        drop.sprite.setScale(0.4);
+        drop.sprite.setAlpha(0.9);
+        drop.sprite.setTint(0xffdb58);
+        drop.sprite.setRotation(angle);
+        drop.sprite.setActive(true).setVisible(true);
 
         this.scene.tweens.add({
-          targets: splatter,
-          scaleX: { from: 0.15, to: 0.3 },
-          scaleY: { from: 0.15, to: 0.3 },
-          alpha: { from: 0.8, to: 0 },
-          rotation: splatter.rotation + Math.PI,
-          duration: 300 + Math.random() * 200,
+          targets: drop.sprite,
+          x: dropEndX,
+          y: dropEndY,
+          scaleX: { from: 0.4, to: 0.2 },
+          scaleY: { from: 0.4, to: 0.2 },
+          alpha: { from: 0.9, to: 0 },
+          duration: 300,
           ease: "Power2",
-          onComplete: () => splatter.destroy(),
+          onComplete: () => this.deactivateParticle(drop),
         });
       }
     }
 
-    // Create pulsing glow effect
-    const glow = this.scene.add.sprite(x, y, "weapon-hotdog-projectile");
-    glow.setScale(1);
-    glow.setAlpha(0.3);
-    glow.setTint(0xffff00);
+    // Create outer ring particles with trails
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+      const outerRadius = explosionRadius;
+      const particleEndX = centerX + Math.cos(angle) * outerRadius;
+      const particleEndY = centerY + Math.sin(angle) * outerRadius;
 
-    this.scene.tweens.add({
-      targets: glow,
-      scaleX: 2,
-      scaleY: 2,
-      alpha: 0,
-      duration: 600,
-      ease: "Sine.Out",
-      onComplete: () => glow.destroy(),
-    });
+      // Create trail
+      const trail = this.getInactiveTrail();
+      if (trail) {
+        trail.active = true;
+        trail.sprite.setPosition(centerX, centerY);
+        trail.sprite.setScale(0.3);
+        trail.sprite.setAlpha(0.6);
+        trail.sprite.setTint(0xffa500);
+        trail.sprite.setActive(true).setVisible(true);
 
-    // Deal explosion damage to nearby enemies
+        this.scene.tweens.add({
+          targets: trail.sprite,
+          x: particleEndX,
+          y: particleEndY,
+          scaleX: { from: 0.3, to: 0.1 },
+          scaleY: { from: 0.3, to: 0.1 },
+          alpha: { from: 0.6, to: 0 },
+          duration: 500,
+          ease: "Power1",
+          onComplete: () => this.deactivateTrail(trail),
+        });
+      }
+
+      // Create particle
+      const particle = this.getInactiveParticle();
+      if (particle) {
+        particle.active = true;
+        particle.sprite.setPosition(centerX, centerY);
+        particle.sprite.setScale(0.3);
+        particle.sprite.setAlpha(1);
+        particle.sprite.setTint(0xffdb58);
+        particle.sprite.setRotation(angle);
+        particle.sprite.setActive(true).setVisible(true);
+
+        this.scene.tweens.add({
+          targets: particle.sprite,
+          x: particleEndX,
+          y: particleEndY,
+          scaleX: { from: 0.3, to: 0.15 },
+          scaleY: { from: 0.3, to: 0.15 },
+          rotation: angle + Math.PI * 4,
+          alpha: { from: 1, to: 0 },
+          duration: 400,
+          ease: "Power2",
+          onComplete: () => this.deactivateParticle(particle),
+        });
+      }
+
+      // Create random splatter particles
+      if (Math.random() < 0.5) {
+        const splatter = this.getInactiveParticle();
+        if (splatter) {
+          const splatterX = centerX + Math.cos(angle) * (outerRadius * 0.3);
+          const splatterY = centerY + Math.sin(angle) * (outerRadius * 0.3);
+
+          splatter.active = true;
+          splatter.sprite.setPosition(splatterX, splatterY);
+          splatter.sprite.setScale(0.15);
+          splatter.sprite.setAlpha(0.8);
+          splatter.sprite.setTint(0xffdb58);
+          splatter.sprite.setRotation(Math.random() * Math.PI * 2);
+          splatter.sprite.setActive(true).setVisible(true);
+
+          this.scene.tweens.add({
+            targets: splatter.sprite,
+            scaleX: { from: 0.15, to: 0.3 },
+            scaleY: { from: 0.15, to: 0.3 },
+            alpha: { from: 0.8, to: 0 },
+            rotation: splatter.sprite.rotation + Math.PI,
+            duration: 300 + Math.random() * 200,
+            ease: "Power2",
+            onComplete: () => this.deactivateParticle(splatter),
+          });
+        }
+      }
+    }
+
+    // Create pulsing glow
+    const glow = this.getInactiveParticle();
+    if (glow) {
+      glow.active = true;
+      glow.sprite.setPosition(centerX, centerY);
+      glow.sprite.setScale(1);
+      glow.sprite.setAlpha(0.3);
+      glow.sprite.setTint(0xffff00);
+      glow.sprite.setActive(true).setVisible(true);
+
+      this.scene.tweens.add({
+        targets: glow.sprite,
+        scaleX: 2,
+        scaleY: 2,
+        alpha: 0,
+        duration: 600,
+        ease: "Sine.Out",
+        onComplete: () => this.deactivateParticle(glow),
+      });
+    }
+
+    // Deal explosion damage
     const enemies = this.scene.enemies.filter(
       (e) =>
         e &&
         e.sprite &&
         e.sprite.active &&
         !e.isDead &&
-        Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y) <= explosionRadius
+        Phaser.Math.Distance.Between(centerX, centerY, e.sprite.x, e.sprite.y) <= explosionRadius
     );
 
     enemies.forEach((enemy) => {
-      enemy.takeDamage(this.stats.explosionDamage, x, y);
+      enemy.takeDamage(this.stats.explosionDamage, centerX, centerY);
     });
   }
 }
