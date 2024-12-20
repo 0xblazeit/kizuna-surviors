@@ -30,7 +30,7 @@ export class SonicBoomHammer extends BaseWeapon {
       secondary: 0xffd700, // Bright gold for critical hits
       energy: 0x87ceeb, // Sky blue for energy effects
       maxLevel: 0xff4d4d, // Bright red for max level
-      electric: 0x00ffff, // Cyan for electric effects
+      electric: 0x00ffff, // Cyan for  electric effects
       lightning: 0x40e0ff, // Bright blue for lightning
     };
 
