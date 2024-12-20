@@ -66,4 +66,4 @@ Indie game development is my new favorite hobby ^\_^ so i'll be continously push
 
 I've also removed the token gated access to the game. I figured best to open the game to everyone to get the most feedback, and reward users for holding certain NFTs by making them available as in game assets.
 
-thanks again and hope you have fun playing!!
+Thanks again and hope you have fun playing!!
