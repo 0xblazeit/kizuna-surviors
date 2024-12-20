@@ -369,16 +369,20 @@ const GameScene = Phaser.Class({
               enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
             }
           } else {
-            // Wave 7+: All enemy types with increasing epic chance
+            // Wave 7+: All enemy types with increasing epic and shooter chances
             const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
-            if (roll < 0.3) {
+            const shooterChance = Math.min(0.2, 0.08 + (wave - 7) * 0.015); // Starts at 8%, increases to max 20%
+
+            if (roll < 0.35) {
               enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-            } else if (roll < 0.55) {
+            } else if (roll < 0.7) {
               enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-            } else if (roll < 0.75 + epicChance) {
+            } else if (roll < 0.7 + epicChance) {
+              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.7 + epicChance + shooterChance) {
               enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
             } else {
-              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y); // Fallback to advanced
             }
           }
 
