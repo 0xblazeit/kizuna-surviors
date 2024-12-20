@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import MenuScene from "./MenuScene";
 import UpgradeMenuScene from "./UpgradeMenuScene";
+import PauseMenuScene from "./PauseMenuScene"; // Import PauseMenuScene
 import MainPlayer from "../game/entities/MainPlayer";
 import { RotatingDogWeapon } from "../game/entities/weapons/RotatingDogWeapon";
 import { MagicWandWeapon } from "../game/entities/weapons/MagicWandWeapon";
@@ -49,6 +50,7 @@ const GameScene = Phaser.Class({
       kills: 0,
       selectedWeaponIndex: 0,
       isGameOver: false,
+      isPaused: false, // Add isPaused state
       coins: 0,
       maxEnemies: 50, // Increased initial max enemies
       spawnRate: 2000, // Slower initial spawn rate
@@ -1385,6 +1387,16 @@ const GameScene = Phaser.Class({
       this.scene.start("MenuScene");
     });
 
+    // Add P key for pause
+    this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+    this.pauseKey.on("down", () => {
+      if (!this.gameState.isGameOver && this.gameState.gameStarted) {
+        this.gameState.isPaused = true;
+        this.scene.pause();
+        this.scene.launch("PauseMenuScene");
+      }
+    });
+
     // Create WASTED overlay container (hidden by default)
     this.wastedOverlay = this.add.container(0, 0);
     this.wastedOverlay.setDepth(1000); // Ensure it's above everything
@@ -2319,8 +2331,6 @@ export default function Game() {
             parent: gameRef.current,
             width: 800,
             height: 600,
-            backgroundColor: "#000000",
-            pixelArt: true,
             physics: {
               default: "arcade",
               arcade: {
@@ -2332,7 +2342,7 @@ export default function Game() {
               activePointers: 1,
               pixelPerfect: false,
             },
-            scene: [MenuScene, CustomGameScene, UpgradeMenuScene],
+            scene: [MenuScene, CustomGameScene, UpgradeMenuScene, PauseMenuScene], // Add PauseMenuScene
           };
 
           // Final check before creating game instance
