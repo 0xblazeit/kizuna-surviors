@@ -8,7 +8,7 @@ class FlyingAxeWeapon extends BaseWeapon {
 
     // Initialize trail container for level 8
     this.trailPool = [];
-    this.trailMaxSize = 8; // Number of trail images per axe
+    this.trailMaxSize = 8;
 
     // Level-up configurations
     this.levelConfigs = {
@@ -118,45 +118,81 @@ class FlyingAxeWeapon extends BaseWeapon {
       },
     };
 
+    // Calculate pool size based on maximum possible projectiles and safety margin
+    const maxProjectiles = Math.max(...Object.values(this.levelConfigs).map((config) => config.projectileCount));
+    this.projectilePool = {
+      objects: [],
+      maxSize: maxProjectiles * 2, // Safety margin of 2x
+
+      get() {
+        return this.objects.find((obj) => !obj.active);
+      },
+
+      return(proj) {
+        if (!proj) return;
+        proj.active = false;
+        if (proj.sprite) {
+          proj.sprite.setActive(false).setVisible(false);
+          // Hide trail sprites for level 8
+          if (proj.trailSprites) {
+            proj.trailSprites.forEach((sprite) => {
+              sprite.setActive(false).setVisible(false);
+            });
+          }
+        }
+      },
+    };
+
     // Initialize at level 1
     this.currentLevel = 1;
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[1] };
-
-    this.maxProjectiles = this.stats.projectileCount; // Initialize with level 1 projectile count
-    this.activeProjectiles = [];
     this.lastFiredTime = 0;
 
-    this.createProjectiles();
+    this.createProjectilePool();
   }
 
-  createProjectiles() {
-    for (let i = 0; i < this.maxProjectiles; i++) {
+  createProjectilePool() {
+    // Clear existing pool
+    this.projectilePool.objects.forEach((proj) => {
+      if (proj.sprite) {
+        if (proj.trailSprites) {
+          proj.trailSprites.forEach((sprite) => sprite.destroy());
+        }
+        proj.sprite.destroy();
+      }
+    });
+    this.projectilePool.objects = [];
+
+    // Create new projectiles
+    for (let i = 0; i < this.projectilePool.maxSize; i++) {
       const sprite = this.scene.physics.add.sprite(0, 0, "weapon-axe-projectile");
       sprite.setScale(this.stats.scale);
       sprite.setDepth(5);
       sprite.setVisible(false);
       sprite.setActive(false);
-
-      // Enable physics for the projectile
       sprite.body.setSize(sprite.width * 0.6, sprite.height * 0.6);
 
-      // Create trail sprites for level 8
-      const trailSprites = [];
-      for (let j = 0; j < this.trailMaxSize; j++) {
-        const trailSprite = this.scene.add.sprite(0, 0, "weapon-axe-projectile");
-        trailSprite.setDepth(4); // Set below main sprite
-        trailSprite.setScale(this.stats.scale);
-        trailSprite.setActive(false).setVisible(false);
-        trailSprites.push(trailSprite);
-      }
-      this.trailPool.push(trailSprites);
+      let trailSprites = null;
 
-      this.activeProjectiles.push({
+      // Create trail sprites for level 8
+      if (this.currentLevel === 8) {
+        trailSprites = [];
+        for (let j = 0; j < this.trailMaxSize; j++) {
+          const trailSprite = this.scene.add.sprite(0, 0, "weapon-axe-projectile");
+          trailSprite.setDepth(4);
+          trailSprite.setScale(this.stats.scale);
+          trailSprite.setActive(false).setVisible(false);
+          trailSprites.push(trailSprite);
+        }
+      }
+
+      this.projectilePool.objects.push({
         sprite,
+        trailSprites,
         active: false,
-        pierceCount: this.stats.pierce,
         phase: "orbit",
+        pierceCount: this.stats.pierce,
         startX: 0,
         startY: 0,
         orbitAngle: 0,
@@ -164,44 +200,45 @@ class FlyingAxeWeapon extends BaseWeapon {
         orbitTime: 0,
         trailPositions: [],
         lastTrailTime: 0,
+        hitEnemies: new Set(),
       });
     }
   }
 
-  getInactiveProjectile() {
-    return this.activeProjectiles.find((p) => !p.active);
-  }
-
   fireProjectile(angleOffset = 0) {
-    // Check if we're at the maximum number of active projectiles
-    const currentActiveCount = this.activeProjectiles.filter((p) => p.active).length;
-    if (currentActiveCount >= this.maxProjectiles) return;
+    // First check if we're already at max projectiles
+    const currentActiveCount = this.projectilePool.objects.filter((p) => p.active).length;
+    if (currentActiveCount >= this.stats.projectileCount) {
+      return;
+    }
 
-    const proj = this.getInactiveProjectile();
+    const proj = this.projectilePool.get();
     if (!proj) return;
 
     const player = this.player.sprite;
 
-    // Set initial position with offset based on angle
-    const radius = this.stats.orbitRadius;
-    const startAngle = angleOffset;
-    const startX = player.x + Math.cos(startAngle) * radius;
-    const startY = player.y + Math.sin(startAngle) * radius;
-
+    // Reset all properties to ensure clean state
     proj.active = true;
     proj.sprite.setActive(true).setVisible(true);
-    proj.sprite.setPosition(startX, startY);
-    proj.sprite.setScale(this.stats.scale);
-
+    proj.sprite.body.enable = true; // Enable physics body
     proj.pierceCount = this.stats.pierce;
     proj.phase = "orbit";
     proj.startX = player.x;
     proj.startY = player.y;
-    proj.orbitAngle = startAngle;
+    proj.orbitAngle = angleOffset;
     proj.orbitTime = 0;
     proj.rotation = 0;
     proj.trailPositions = [];
     proj.lastTrailTime = 0;
+    proj.hitEnemies.clear();
+
+    // Set initial position
+    const radius = this.stats.orbitRadius;
+    const startX = player.x + Math.cos(angleOffset) * radius;
+    const startY = player.y + Math.sin(angleOffset) * radius;
+    proj.sprite.setPosition(startX, startY);
+    proj.sprite.setScale(this.stats.scale);
+    proj.sprite.body.setVelocity(0, 0);
   }
 
   findClosestEnemy(x, y) {
@@ -226,18 +263,15 @@ class FlyingAxeWeapon extends BaseWeapon {
   }
 
   update(time, delta) {
-    // Call base class update which includes death check
     if (!super.update(time, delta)) {
       return;
     }
 
-    // Auto-fire if cooldown has passed
     if (time - this.lastFiredTime >= this.stats.cooldown) {
       this.attack(time);
     }
 
-    // Update active projectiles
-    this.activeProjectiles.forEach((proj, index) => {
+    this.projectilePool.objects.forEach((proj) => {
       if (!proj.active || !proj.sprite || !proj.sprite.active) return;
 
       // Update rotation
@@ -260,14 +294,14 @@ class FlyingAxeWeapon extends BaseWeapon {
           const orbitY = proj.startY + Math.sin(proj.orbitAngle) * this.stats.orbitRadius;
           proj.sprite.setPosition(orbitX, orbitY);
 
-          // Transition to seeking phase after orbit time
-          if (proj.orbitTime >= this.stats.maxOrbitTime) {
+          // Check if orbit time exceeded and handle transition
+          if (proj.orbitTime >= (this.stats.maxOrbitTime || 2.0)) {
             const closestEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
             if (closestEnemy) {
               proj.phase = "seeking";
               proj.targetEnemy = closestEnemy;
             } else {
-              proj.phase = "return";
+              this.deactivateProjectile(proj);
             }
           }
           break;
@@ -329,7 +363,7 @@ class FlyingAxeWeapon extends BaseWeapon {
         proj.sprite.setTint(this.stats.glowTint);
 
         // Update trail positions
-        const trailSprites = this.trailPool[index];
+        const trailSprites = proj.trailSprites;
 
         // Store current position and rotation
         if (time - (proj.lastTrailTime || 0) >= this.stats.trailSpacing * 1000) {
@@ -463,34 +497,49 @@ class FlyingAxeWeapon extends BaseWeapon {
   deactivateProjectile(proj) {
     if (!proj) return;
 
-    // Hide trail sprites when deactivating projectile
-    if (this.currentLevel === 8) {
-      const index = this.activeProjectiles.indexOf(proj);
-      if (index !== -1) {
-        const trailSprites = this.trailPool[index];
-        trailSprites.forEach((sprite) => {
-          sprite.setActive(false).setVisible(false);
-        });
-      }
+    // Ensure the sprite is properly cleaned up
+    if (proj.sprite) {
+      proj.sprite.body.enable = false; // Disable physics body
+      proj.sprite.setActive(false).setVisible(false);
+      proj.sprite.body.setVelocity(0, 0);
     }
 
+    // Clean up trail sprites for level 8
+    if (this.currentLevel === 8 && proj.trailSprites) {
+      proj.trailSprites.forEach((sprite) => {
+        sprite.setActive(false).setVisible(false);
+      });
+    }
+
+    // Reset all properties
     proj.active = false;
-    proj.sprite.setActive(false).setVisible(false);
-    proj.sprite.body.setVelocity(0, 0);
-    proj.trailPositions = []; // Clear trail positions
+    proj.phase = "orbit";
+    proj.orbitTime = 0;
+    proj.hitEnemies.clear();
+    proj.trailPositions = [];
+
+    this.projectilePool.return(proj);
   }
 
   attack(time) {
     this.lastFiredTime = time;
 
-    // Get current active projectile count
-    const currentActiveCount = this.activeProjectiles.filter((p) => p.active).length;
+    // First, clean up any stuck projectiles
+    this.projectilePool.objects.forEach((proj) => {
+      if (proj.active && proj.phase === "orbit" && proj.orbitTime >= (this.stats.maxOrbitTime || 2.0)) {
+        this.deactivateProjectile(proj);
+      }
+    });
 
-    // Calculate how many new projectiles we can fire
-    const maxNewProjectiles = Math.min(this.stats.projectileCount, this.maxProjectiles - currentActiveCount);
+    // Count current active projectiles
+    const currentActiveCount = this.projectilePool.objects.filter((p) => p.active).length;
 
-    // Fire multiple projectiles based on available slots
-    for (let i = 0; i < maxNewProjectiles; i++) {
+    // Only fire new projectiles if we're under the projectile count limit
+    const availableSlots = this.stats.projectileCount - currentActiveCount;
+    if (availableSlots <= 0) return;
+
+    // Fire new projectiles
+    for (let i = 0; i < availableSlots; i++) {
       const angleOffset = ((i * 360) / this.stats.projectileCount) * (Math.PI / 180);
       this.fireProjectile(angleOffset);
     }
@@ -514,19 +563,10 @@ class FlyingAxeWeapon extends BaseWeapon {
       ...newStats,
     };
 
-    // Update maxProjectiles based on new level stats
-    this.maxProjectiles = this.stats.projectileCount;
-
     console.log(`Flying Axe leveled up to ${this.currentLevel}! New stats:`, this.stats);
 
     // Recreate projectiles with new stats
-    this.activeProjectiles.forEach((proj) => {
-      if (proj.sprite) {
-        proj.sprite.destroy();
-      }
-    });
-    this.activeProjectiles = [];
-    this.createProjectiles();
+    this.createProjectilePool();
 
     // Create level up effect around the player
     const burst = this.scene.add.sprite(this.player.x, this.player.y, "weapon-axe-projectile");
