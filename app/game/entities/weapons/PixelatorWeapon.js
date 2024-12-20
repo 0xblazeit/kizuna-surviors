@@ -133,35 +133,35 @@ class ShurikenStormWeapon extends BaseWeapon {
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
     // Calculate max projectiles needed from level configs
-    const maxProjectilesPerLevel = Object.values(this.levelConfigs).map(config => config.projectileCount);
+    const maxProjectilesPerLevel = Object.values(this.levelConfigs).map((config) => config.projectileCount);
     const maxProjectilesNeeded = Math.max(...maxProjectilesPerLevel);
 
     // Initialize object pool
     this.projectilePool = {
       objects: [],
       maxSize: maxProjectilesNeeded * 2, // Double to handle pierce and cooldown overlap
-      
+
       // Get an available object from the pool
       get() {
-        return this.objects.find(obj => !obj.active);
+        return this.objects.find((obj) => !obj.active);
       },
-      
+
       // Return an object to the pool
       return(obj) {
         obj.active = false;
         obj.sprite.setActive(false).setVisible(false);
         obj.sprite.body.setVelocity(0, 0);
-        
+
         // Clean up trail effects
         if (obj.trailEffects) {
-          obj.trailEffects.forEach(effect => {
+          obj.trailEffects.forEach((effect) => {
             if (effect.sprite) {
               effect.sprite.destroy();
             }
           });
           obj.trailEffects = [];
         }
-      }
+      },
     };
 
     // Create initial pool of projectiles
@@ -187,7 +187,7 @@ class ShurikenStormWeapon extends BaseWeapon {
         orbitTime: 0,
         targetEnemy: null,
         startX: 0,
-        startY: 0
+        startY: 0,
       };
 
       this.projectilePool.objects.push(projectile);
@@ -244,7 +244,7 @@ class ShurikenStormWeapon extends BaseWeapon {
     }
 
     // Update active projectiles from pool
-    this.projectilePool.objects.forEach(proj => {
+    this.projectilePool.objects.forEach((proj) => {
       if (!proj.active || !proj.sprite || !proj.sprite.active) return;
 
       // Update shuriken rotation
@@ -438,20 +438,6 @@ class ShurikenStormWeapon extends BaseWeapon {
     }
   }
 
-  updateTrailEffects(projectile, delta) {
-    if (!projectile.trailEffects) return;
-
-    projectile.trailEffects = projectile.trailEffects.filter((effect) => {
-      if (!effect.active) return false;
-
-      effect.sprite.x += effect.velocityX * (delta / 1000);
-      effect.sprite.y += effect.velocityY * (delta / 1000);
-      effect.sprite.rotation += effect.rotationSpeed * (delta / 1000);
-
-      return true;
-    });
-  }
-
   createShadowClone(enemy) {
     const enemies = this.scene.enemies.filter(
       (e) =>
@@ -499,9 +485,9 @@ class ShurikenStormWeapon extends BaseWeapon {
     if (this.currentLevel < this.maxLevel) {
       this.currentLevel++;
       this.stats = { ...this.levelConfigs[this.currentLevel] };
-      
+
       // Update existing projectiles with new stats
-      this.projectilePool.objects.forEach(proj => {
+      this.projectilePool.objects.forEach((proj) => {
         if (proj.sprite) {
           proj.sprite.setScale(this.stats.scale);
         }
