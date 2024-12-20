@@ -1982,7 +1982,10 @@ const GameScene = Phaser.Class({
 
   spawnInitialCollectibles: function () {
     // Initial spawn with more items
-    this.spawnCollectibles(14, 20); // 14 gems, 20 coins
+    this.spawnCollectibles(
+      Phaser.Math.Between(1, 16), // Random gems between 12-16
+      Phaser.Math.Between(5, 16) // Random coins between 16-24
+    );
   },
 
   spawnCollectibles: function (gemCount = 8, coinCount = 10) {
