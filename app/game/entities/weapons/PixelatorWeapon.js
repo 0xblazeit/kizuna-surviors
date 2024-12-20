@@ -132,92 +132,107 @@ class ShurikenStormWeapon extends BaseWeapon {
     this.maxLevel = 8;
     this.stats = { ...this.levelConfigs[this.currentLevel] };
 
-    this.maxProjectiles = 20;
-    this.activeProjectiles = [];
-    this.lastFiredTime = 0;
+    // Calculate max projectiles needed from level configs
+    const maxProjectilesPerLevel = Object.values(this.levelConfigs).map(config => config.projectileCount);
+    const maxProjectilesNeeded = Math.max(...maxProjectilesPerLevel);
 
-    // Create projectile pool
-    this.createProjectiles();
+    // Initialize object pool
+    this.projectilePool = {
+      objects: [],
+      maxSize: maxProjectilesNeeded * 2, // Double to handle pierce and cooldown overlap
+      
+      // Get an available object from the pool
+      get() {
+        return this.objects.find(obj => !obj.active);
+      },
+      
+      // Return an object to the pool
+      return(obj) {
+        obj.active = false;
+        obj.sprite.setActive(false).setVisible(false);
+        obj.sprite.body.setVelocity(0, 0);
+        
+        // Clean up trail effects
+        if (obj.trailEffects) {
+          obj.trailEffects.forEach(effect => {
+            if (effect.sprite) {
+              effect.sprite.destroy();
+            }
+          });
+          obj.trailEffects = [];
+        }
+      }
+    };
+
+    // Create initial pool of projectiles
+    this.createProjectilePool();
   }
 
-  createProjectiles() {
-    for (let i = 0; i < this.maxProjectiles; i++) {
+  createProjectilePool() {
+    for (let i = 0; i < this.projectilePool.maxSize; i++) {
       const sprite = this.scene.physics.add.sprite(0, 0, "weapon-ss-projectile");
       sprite.setScale(this.stats.scale);
       sprite.setDepth(5);
       sprite.setVisible(false);
       sprite.setActive(false);
 
-      // Enable physics for the projectile
-      sprite.body.setSize(16, 16);
-
-      this.activeProjectiles.push({
+      const projectile = {
         sprite,
         active: false,
+        trailEffects: [],
         pierceCount: this.stats.pierce,
         rotationAngle: 0,
         phase: "orbit",
-        orbitTime: 0,
-        startX: 0,
-        startY: 0,
         orbitAngle: 0,
+        orbitTime: 0,
         targetEnemy: null,
-        trailEffects: [],
-      });
+        startX: 0,
+        startY: 0
+      };
+
+      this.projectilePool.objects.push(projectile);
     }
   }
 
-  findClosestEnemy(x, y) {
-    const enemies = this.scene.enemies
-      ? this.scene.enemies.filter((e) => e && e.sprite && e.sprite.active && !e.isDead)
-      : [];
-
-    let closest = null;
-    let closestDist = Infinity;
-
-    enemies.forEach((enemy) => {
-      const dist = Phaser.Math.Distance.Between(x, y, enemy.sprite.x, enemy.sprite.y);
-      if (dist < closestDist) {
-        closest = enemy;
-        closestDist = dist;
-      }
-    });
-
-    return closest;
+  getInactiveProjectile() {
+    return this.projectilePool.get();
   }
 
-  handleHit(enemy, proj) {
-    if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+  deactivateProjectile(proj) {
+    this.projectilePool.return(proj);
+  }
+
+  fireProjectile(angleOffset) {
+    const proj = this.getInactiveProjectile();
+    if (!proj) {
+      console.warn("No projectiles available in pool");
       return;
     }
 
-    // Apply damage and screen shake
-    enemy.takeDamage(this.stats.damage);
-    this.scene.cameras.main.shake(50, 0.002);
+    const startX = this.player.sprite.x;
+    const startY = this.player.sprite.y;
 
-    // Create hit effect
-    this.createHitEffect(enemy, proj);
+    proj.active = true;
+    proj.sprite.setActive(true).setVisible(true);
+    proj.sprite.setPosition(startX, startY);
+    proj.sprite.setScale(this.stats.scale);
 
-    // Apply knockback
-    const hitAngle = Math.atan2(enemy.sprite.y - proj.sprite.y, enemy.sprite.x - proj.sprite.x);
-    enemy.sprite.body.velocity.x += Math.cos(hitAngle) * this.stats.knockbackForce;
-    enemy.sprite.body.velocity.y += Math.sin(hitAngle) * this.stats.knockbackForce;
+    // Initialize projectile state
+    proj.phase = "orbit";
+    proj.startX = startX;
+    proj.startY = startY;
+    proj.orbitAngle = angleOffset;
+    proj.orbitTime = 0;
+    proj.rotationAngle = 0;
+    proj.pierceCount = this.stats.pierce;
+    proj.trailEffects = [];
 
-    // Handle max level shadow clone effect
-    if (this.currentLevel === 8 && this.stats.shadowClone) {
-      this.createShadowClone(enemy);
-    }
-
-    // Reduce pierce count
-    proj.pierceCount--;
-    if (proj.pierceCount <= 0) {
-      this.deactivateProjectile(proj);
-    }
-
-    // Find new target if current one is dead
-    if (enemy === proj.targetEnemy) {
-      proj.targetEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
-    }
+    // Set initial velocity
+    const velocity = {
+      x: Math.cos(angleOffset) * this.stats.speed,
+      y: Math.sin(angleOffset) * this.stats.speed,
+    };
+    proj.sprite.body.setVelocity(velocity.x, velocity.y);
   }
 
   update(time, delta) {
@@ -228,8 +243,8 @@ class ShurikenStormWeapon extends BaseWeapon {
       this.attack(time);
     }
 
-    // Update active projectiles
-    this.activeProjectiles.forEach((proj) => {
+    // Update active projectiles from pool
+    this.projectilePool.objects.forEach(proj => {
       if (!proj.active || !proj.sprite || !proj.sprite.active) return;
 
       // Update shuriken rotation
@@ -327,6 +342,59 @@ class ShurikenStormWeapon extends BaseWeapon {
           break;
       }
     });
+  }
+
+  findClosestEnemy(x, y) {
+    const enemies = this.scene.enemies
+      ? this.scene.enemies.filter((e) => e && e.sprite && e.sprite.active && !e.isDead)
+      : [];
+
+    let closest = null;
+    let closestDist = Infinity;
+
+    enemies.forEach((enemy) => {
+      const dist = Phaser.Math.Distance.Between(x, y, enemy.sprite.x, enemy.sprite.y);
+      if (dist < closestDist) {
+        closest = enemy;
+        closestDist = dist;
+      }
+    });
+
+    return closest;
+  }
+
+  handleHit(enemy, proj) {
+    if (!enemy || !enemy.sprite || !enemy.sprite.active || enemy.isDead) {
+      return;
+    }
+
+    // Apply damage and screen shake
+    enemy.takeDamage(this.stats.damage);
+    this.scene.cameras.main.shake(50, 0.002);
+
+    // Create hit effect
+    this.createHitEffect(enemy, proj);
+
+    // Apply knockback
+    const hitAngle = Math.atan2(enemy.sprite.y - proj.sprite.y, enemy.sprite.x - proj.sprite.x);
+    enemy.sprite.body.velocity.x += Math.cos(hitAngle) * this.stats.knockbackForce;
+    enemy.sprite.body.velocity.y += Math.sin(hitAngle) * this.stats.knockbackForce;
+
+    // Handle max level shadow clone effect
+    if (this.currentLevel === 8 && this.stats.shadowClone) {
+      this.createShadowClone(enemy);
+    }
+
+    // Reduce pierce count
+    proj.pierceCount--;
+    if (proj.pierceCount <= 0) {
+      this.deactivateProjectile(proj);
+    }
+
+    // Find new target if current one is dead
+    if (enemy === proj.targetEnemy) {
+      proj.targetEnemy = this.findClosestEnemy(proj.sprite.x, proj.sprite.y);
+    }
   }
 
   createHitEffect(enemy, projectile) {
@@ -427,101 +495,13 @@ class ShurikenStormWeapon extends BaseWeapon {
     }
   }
 
-  fireProjectile(angleOffset) {
-    const proj = this.getInactiveProjectile();
-    if (!proj) return;
-
-    const startX = this.player.sprite.x;
-    const startY = this.player.sprite.y;
-
-    proj.active = true;
-    proj.sprite.setActive(true).setVisible(true);
-    proj.sprite.setPosition(startX, startY);
-    proj.sprite.setScale(this.stats.scale);
-
-    // Initialize orbit phase
-    proj.phase = "orbit";
-    proj.startX = startX;
-    proj.startY = startY;
-    proj.orbitAngle = angleOffset;
-    proj.orbitTime = 0;
-    proj.rotationAngle = 0;
-    proj.pierceCount = this.stats.pierce;
-    proj.trailEffects = [];
-
-    // Set initial velocity
-    const velocity = {
-      x: Math.cos(angleOffset) * this.stats.speed,
-      y: Math.sin(angleOffset) * this.stats.speed,
-    };
-    proj.sprite.body.setVelocity(velocity.x, velocity.y);
-  }
-
-  deactivateProjectile(proj) {
-    proj.active = false;
-    proj.sprite.setActive(false).setVisible(false);
-    proj.sprite.body.setVelocity(0, 0);
-
-    // Clean up trail effects
-    if (proj.trailEffects) {
-      proj.trailEffects.forEach((effect) => {
-        if (effect.sprite) {
-          effect.sprite.destroy();
-        }
-      });
-      proj.trailEffects = [];
-    }
-  }
-
-  getInactiveProjectile() {
-    return this.activeProjectiles.find((p) => !p.active);
-  }
-
-  getPlayerDirection() {
-    const cursors = this.scene.cursors;
-    const wasd = this.scene.wasd;
-    let dirX = 0;
-    let dirY = 0;
-
-    if (cursors.left.isDown || wasd.left.isDown) {
-      dirX = -1;
-    } else if (cursors.right.isDown || wasd.right.isDown) {
-      dirX = 1;
-    }
-
-    if (cursors.up.isDown || wasd.up.isDown) {
-      dirY = -1;
-    } else if (cursors.down.isDown || wasd.down.isDown) {
-      dirY = 1;
-    }
-
-    // If no direction is pressed, use the last known direction
-    if (dirX === 0 && dirY === 0) {
-      if (!this.lastDirection) {
-        this.lastDirection = { x: 1, y: 0 }; // Default right direction
-      }
-      return this.lastDirection;
-    }
-
-    // Normalize the direction vector
-    const length = Math.sqrt(dirX * dirX + dirY * dirY);
-    if (length > 0) {
-      dirX /= length;
-      dirY /= length;
-    }
-
-    // Store the current direction as the last direction
-    this.lastDirection = { x: dirX, y: dirY };
-    return this.lastDirection;
-  }
-
   levelUp() {
     if (this.currentLevel < this.maxLevel) {
       this.currentLevel++;
       this.stats = { ...this.levelConfigs[this.currentLevel] };
       
       // Update existing projectiles with new stats
-      this.activeProjectiles.forEach(proj => {
+      this.projectilePool.objects.forEach(proj => {
         if (proj.sprite) {
           proj.sprite.setScale(this.stats.scale);
         }
