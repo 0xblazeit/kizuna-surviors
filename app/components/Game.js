@@ -221,36 +221,6 @@ const GameScene = Phaser.Class({
   },
 
   startGame: function () {
-    // Initial enemy spawn for first wave
-    // const initialEnemies = Math.min(10, this.gameState.baseEnemiesPerWave);
-    // for (let i = 0; i < initialEnemies; i++) {
-    //   const spawnPos = this.getSpawnPosition();
-    //   const randomSprite = ENEMY_SPRITES[Phaser.Math.Between(0, ENEMY_SPRITES.length - 1)];
-
-    //   const enemy = new EnemyBasic(this, spawnPos.x, spawnPos.y, randomSprite, {
-    //     type: "basic",
-    //     scale: 0.3,
-    //     maxHealth: 100 * this.gameState.waveScaling.healthMultiplier,
-    //     attackDamage: 8 * this.gameState.waveScaling.damageMultiplier,
-    //     moveSpeed: 1.8 * this.gameState.waveScaling.speedMultiplier,
-    //   });
-
-    //   enemy.sprite.once("destroy", () => {
-    //     const index = this.enemies.indexOf(enemy);
-    //     if (index > -1) {
-    //       this.enemies.splice(index, 1);
-    //       this.gameState.enemiesRemainingInWave--;
-
-    //       // Check if wave is complete AND no enemies are left
-    //       if (this.gameState.enemiesRemainingInWave <= 0 && this.enemies.length === 0) {
-    //         this.startNextWave();
-    //       }
-    //     }
-    //   });
-
-    //   this.enemies.push(enemy);
-    // }
-
     // Start enemy spawn timer
     this.enemySpawnTimer = this.time.addEvent({
       delay: this.gameState.spawnRate,
@@ -1259,41 +1229,6 @@ const GameScene = Phaser.Class({
       this.weapons.push(new ShapecraftKeyWeapon(this, this.player));
     }
 
-    // Create enemy spawn timer with simpler configuration
-    // this.enemySpawnTimer = this.time.addEvent({
-    //   delay: this.gameState.spawnRate,
-    //   callback: () => {
-    //     // Simple spawn check
-    //     if (this.enemies.length < this.gameState.maxEnemies) {
-    //       const spawnPos = this.getSpawnPosition();
-
-    //       // Always spawn at least one type of enemy
-    //       let enemy;
-    //       const roll = Math.random();
-
-    //       if (roll < 0.4) {
-    //         enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-    //       } else if (roll < 0.7) {
-    //         enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-    //       } else if (roll < 0.9) {
-    //         enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
-    //       } else {
-    //         enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
-    //       }
-
-    //       // Add to physics system and enemies array if spawned successfully
-    //       if (enemy) {
-    //         if (!enemy.body) {
-    //           this.physics.add.existing(enemy);
-    //         }
-    //         this.enemies.push(enemy);
-    //       }
-    //     }
-    //   },
-    //   callbackScope: this,
-    //   loop: true,
-    // });
-
     // Modify wave management
     this.time.addEvent({
       delay: 60000, // Check every minute
@@ -1991,6 +1926,106 @@ const GameScene = Phaser.Class({
 
     // Hide overlay initially
     this.levelClearedOverlay.setVisible(false);
+
+    // Replace the direct spawning code with function calls
+    this.spawnInitialCollectibles();
+
+    // Set up first spawn after 10 seconds
+    this.collectibleSpawnTimer = this.time.addEvent({
+      delay: 165000, // First spawn after ~2:45 minutes
+      callback: () => {
+        // Create a visual or audio cue for the spawn
+        this.createSpawnAnnouncement();
+        this.spawnCollectibles();
+        this.setupNextSpawnTimer();
+      },
+      callbackScope: this,
+    });
+
+    // Initialize gem counter
+    this.gemCount = 0;
+  },
+
+  setupNextSpawnTimer: function () {
+    const baseDelay = Phaser.Math.Between(120000, 300000); // Random between 2-5 minutes
+    const randomAdditional = Phaser.Math.Between(0, 60000); // 0-60 seconds additional
+    const nextDelay = baseDelay + randomAdditional;
+
+    // Keep spawn amounts modest but worthwhile
+    const gemCount = 8; // Consistent amount of gems
+    const coinCount = 10; // Consistent amount of coins
+
+    // Set up next spawn
+    this.collectibleSpawnTimer = this.time.addEvent({
+      delay: nextDelay,
+      callback: () => {
+        // Create a visual or audio cue for the spawn
+        this.createSpawnAnnouncement();
+        this.spawnCollectibles(gemCount, coinCount);
+        this.setupNextSpawnTimer();
+      },
+      callbackScope: this,
+    });
+  },
+
+  createSpawnAnnouncement: function () {
+    // Count active collectibles
+    const activeGems = this.xpGems.filter((gem) => gem && !gem.collected).length;
+    const activeCoins = Coin.pool ? Coin.pool.filter((coin) => coin.isActive).length : 0;
+
+    console.log(`🎯 New Collectibles Spawned:
+      💎 XP Gems: ${activeGems}
+      🪙 Coins: ${activeCoins}
+      ⏰ Time: ${new Date().toLocaleTimeString()}`);
+  },
+
+  spawnInitialCollectibles: function () {
+    // Initial spawn with more items
+    this.spawnCollectibles(
+      Phaser.Math.Between(1, 16), // Random gems between 12-16
+      Phaser.Math.Between(5, 16) // Random coins between 16-24
+    );
+  },
+
+  spawnCollectibles: function (gemCount = 8, coinCount = 10) {
+    const { width: worldWidth, height: worldHeight } = this.physics.world.bounds;
+
+    // Debug log before spawning
+    console.log("Starting to spawn collectibles:", { gemCount, coinCount });
+
+    // Spawn XP gems
+    for (let i = 0; i < gemCount; i++) {
+      const x = Phaser.Math.Between(50, worldWidth - 50);
+      const y = Phaser.Math.Between(50, worldHeight - 50);
+      const gem = new XPGem(this, x, y);
+      this.xpGems.push(gem);
+      console.log(`Spawned XP gem at (${x}, ${y})`); // Debug each gem spawn
+    }
+
+    // Initialize coin pool before spawning coins
+    if (!Coin.pool) {
+      Coin.pool = [];
+      Coin.initializePool(this);
+    }
+
+    for (let i = 0; i < coinCount; i++) {
+      const x = Phaser.Math.Between(50, worldWidth - 50);
+      const y = Phaser.Math.Between(50, worldHeight - 50);
+
+      // Randomly choose coin value from tiers
+      const tiers = Object.values(Coin.VALUE_TIERS);
+      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+
+      // Spawn consolidated coins at random positions
+      Coin.spawnConsolidated(this, x, y, randomTier);
+    }
+
+    // Debug log after spawning
+    console.log("Finished spawning collectibles:", {
+      totalGems: this.xpGems.length,
+      activeGems: this.xpGems.filter((gem) => gem && !gem.collected).length,
+      activeCoins: Coin.pool.filter((coin) => coin.isActive).length,
+    });
   },
 
   update: function (time, delta) {
@@ -2177,7 +2212,11 @@ const GameScene = Phaser.Class({
 
     // Check for minimum enemy count and force spawn if needed
     const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
-    if (currentEnemyCount <= this.gameState.forceSpawnThreshold && !this.gameState.isPaused && !this.gameState.isGameOver) {
+    if (
+      currentEnemyCount <= this.gameState.forceSpawnThreshold &&
+      !this.gameState.isPaused &&
+      !this.gameState.isGameOver
+    ) {
       const needToSpawn = Math.max(this.gameState.minEnemies - currentEnemyCount, 0);
       if (needToSpawn > 0) {
         // Force immediate spawn of multiple enemies
@@ -2217,11 +2256,23 @@ const GameScene = Phaser.Class({
         }
       });
       this.xpGems = [];
+      this.gemCount = 0; // Reset the scene's counter
     }
 
     // Clean up enemy pool
     if (this.enemyPool) {
       this.enemyPool.cleanup();
+    }
+
+    // Clean up coin pool
+    if (Coin.pool) {
+      Coin.pool = [];
+      Coin.totalCoins = 0; // Reset coin counter too
+    }
+
+    // Clean up collectible spawn timer
+    if (this.collectibleSpawnTimer) {
+      this.collectibleSpawnTimer.destroy();
     }
   },
 

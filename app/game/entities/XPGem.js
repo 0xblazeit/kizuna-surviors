@@ -1,27 +1,22 @@
 class XPGem {
-  // Static property to track total gems
-  static totalGems = 0;
-  static MAX_GEMS = 50; // Lower than coins since these are more valuable
+  static MAX_GEMS = 50; // Keep this static as it's a constant
 
   // Static method to calculate XP value based on game time and enemy tier
   static calculateXPValue(scene, basexp = 50) {
-    // Get current wave or time (assuming scene has gameTime in seconds)
     const gameTime = scene.gameTime || 0;
-    const timeMultiplier = 1 + gameTime / 600; // Increase by 100% every 10 minutes
-
-    // Cap the multiplier at 3x to prevent excessive scaling
+    const timeMultiplier = 1 + gameTime / 600;
     const cappedMultiplier = Math.min(3, timeMultiplier);
-
     return Math.floor(basexp * cappedMultiplier);
   }
 
   constructor(scene, x, y, baseXPValue = 50, scale = 0.15) {
-    // Check if we're at the gem limit
-    if (XPGem.totalGems >= XPGem.MAX_GEMS) {
+    // Check if we're at the gem limit using scene's counter
+    if (!scene.gemCount) scene.gemCount = 0;
+    if (scene.gemCount >= XPGem.MAX_GEMS) {
       return null;
     }
 
-    XPGem.totalGems++;
+    scene.gemCount++; // Increment scene's counter instead of static
     this.scene = scene;
     this.isCollected = false;
 
@@ -82,9 +77,9 @@ class XPGem {
 
     // Define attraction parameters
     const ACTIVATION_DISTANCE = 80; // Reduced from 100
-    const COLLECTION_DISTANCE = 25;  // Reduced from 35
-    const BASE_SPEED = 0.5;         // Reduced from 0.8
-    const ORBITAL_SPEED = 0.04;     // Reduced from 0.06
+    const COLLECTION_DISTANCE = 25; // Reduced from 35
+    const BASE_SPEED = 0.5; // Reduced from 0.8
+    const ORBITAL_SPEED = 0.04; // Reduced from 0.06
 
     // Only process gems within activation distance
     if (distance <= ACTIVATION_DISTANCE) {
@@ -112,9 +107,8 @@ class XPGem {
     }
 
     if (distance <= COLLECTION_DISTANCE) {
-      // Mark as collected immediately to prevent double collection
       this.isCollected = true;
-      XPGem.totalGems--;
+      this.scene.gemCount--; // Decrement scene's counter instead of static
 
       // Store XP value before destroying the gem
       const xpValue = this.xpValue;
