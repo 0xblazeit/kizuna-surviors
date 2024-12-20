@@ -736,13 +736,22 @@ const GameScene = Phaser.Class({
     uiContainer.add(controlsText);
 
     const controlsText2 = this.add
-      .text(statsX, uiRowY + 134, "Move: Arrow Keys / WASD", {
+      .text(statsX, uiRowY + 134, "Move - Arrow Keys / WASD", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#aaaaaa",
       })
       .setOrigin(1, 0);
     uiContainer.add(controlsText2);
+
+    const controlsText3 = this.add
+      .text(statsX, uiRowY + 154, "Pause - P", {
+        fontFamily: "VT323",
+        fontSize: "18px",
+        color: "#aaaaaa",
+      })
+      .setOrigin(1, 0);
+    uiContainer.add(controlsText3);
 
     // Stats display (adjusted spacing)
     const statsStyle = {
