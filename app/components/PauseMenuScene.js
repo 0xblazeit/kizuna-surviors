@@ -94,6 +94,13 @@ const PauseMenuScene = Phaser.Class({
 
     // Handle P key press
     this.input.keyboard.on("keydown-P", () => {
+      const gameScene = this.scene.get("GameScene");
+      if (gameScene.gameState.pauseStartTime) {
+        const pauseDuration = Date.now() - gameScene.gameState.pauseStartTime;
+        gameScene.gameState.totalPauseTime = (gameScene.gameState.totalPauseTime || 0) + pauseDuration;
+        gameScene.gameState.pauseStartTime = null;
+      }
+      gameScene.gameState.isPaused = false;
       this.scene.resume("GameScene");
       this.scene.stop();
     });
