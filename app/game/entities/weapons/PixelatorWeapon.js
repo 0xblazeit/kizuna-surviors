@@ -22,6 +22,9 @@ class ShurikenStormWeapon extends BaseWeapon {
         spreadAngle: 0,
         homingSpeed: 0.1,
         orbitTime: 0.5,
+        pixelSize: 8,
+        particleCount: 8,
+        glitchIntensity: 0.1,
       },
       2: {
         damage: 40,
@@ -171,6 +174,9 @@ class ShurikenStormWeapon extends BaseWeapon {
   createProjectilePool() {
     for (let i = 0; i < this.projectilePool.maxSize; i++) {
       const sprite = this.scene.physics.add.sprite(0, 0, "weapon-ss-projectile");
+
+      // Basic projectile setup with original sprite color
+      sprite.setDisplaySize(48, 48);
       sprite.setScale(this.stats.scale);
       sprite.setDepth(5);
       sprite.setVisible(false);
@@ -398,16 +404,50 @@ class ShurikenStormWeapon extends BaseWeapon {
   }
 
   createHitEffect(enemy, projectile) {
-    const numParticles = 6;
-    const colors = [0x6a0dad, 0x4b0082, 0x800080]; // Purple shades for ninja-like effects
+    const numParticles = 8;
+    const colors = [0xff00ff, 0x00ffff, 0xff0000, 0x0000ff];
 
+    // Create glitch effect at hit point
+    for (let i = 0; i < 3; i++) {
+      const glitchSprite = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-ss-projectile");
+      glitchSprite.setPipeline("Pixelation");
+      glitchSprite.pipeline.set2f("resolution", window.innerWidth, window.innerHeight);
+      glitchSprite.pipeline.set1f("pixelSize", 12);
+      glitchSprite.setScale(0.8);
+      glitchSprite.setAlpha(0.8);
+      glitchSprite.setTint(colors[Math.floor(Math.random() * colors.length)]);
+
+      // Intense but brief glitch animation
+      this.scene.tweens.add({
+        targets: glitchSprite,
+        x: glitchSprite.x + (Math.random() - 0.5) * 50,
+        y: glitchSprite.y + (Math.random() - 0.5) * 50,
+        scaleX: 0.2,
+        scaleY: 0.2,
+        alpha: 0,
+        duration: 300,
+        ease: "Power2",
+        onUpdate: () => {
+          if (Math.random() < 0.3) {
+            // 30% chance per frame
+            glitchSprite.x += (Math.random() - 0.5) * 20;
+            glitchSprite.y += (Math.random() - 0.5) * 20;
+            glitchSprite.setTint(colors[Math.floor(Math.random() * colors.length)]);
+          }
+        },
+        onComplete: () => {
+          glitchSprite.destroy();
+        },
+      });
+    }
+
+    // Regular particle effects
     for (let i = 0; i < numParticles; i++) {
       const angle = (i / numParticles) * Math.PI * 2;
-      const speed = Math.random() * 100 + 50;
+      const speed = Math.random() * 150 + 100;
 
       const particle = this.scene.add.sprite(enemy.sprite.x, enemy.sprite.y, "weapon-ss-projectile");
-
-      particle.setScale(0.3);
+      particle.setScale(0.4);
       particle.setTint(colors[Math.floor(Math.random() * colors.length)]);
       particle.setAlpha(0.8);
 
@@ -415,19 +455,17 @@ class ShurikenStormWeapon extends BaseWeapon {
         sprite: particle,
         velocityX: Math.cos(angle) * speed,
         velocityY: Math.sin(angle) * speed,
-        rotationSpeed: (Math.random() - 0.5) * 8,
+        rotationSpeed: (Math.random() - 0.5) * 12,
         active: true,
       };
 
-      if (!projectile.trailEffects) {
-        projectile.trailEffects = [];
-      }
+      if (!projectile.trailEffects) projectile.trailEffects = [];
       projectile.trailEffects.push(effectData);
 
       this.scene.tweens.add({
         targets: particle,
-        alpha: 0,
         scale: 0.1,
+        alpha: 0,
         duration: 500,
         ease: "Power2",
         onComplete: () => {
