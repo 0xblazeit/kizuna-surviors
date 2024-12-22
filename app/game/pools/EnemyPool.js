@@ -268,10 +268,10 @@ export class EnemyPool {
       shooter: {
         maxHealth: 300 * waveScaling.healthMultiplier,
         moveSpeed: (0.7 + Math.random() * 0.2) * waveScaling.speedMultiplier,
-        attackDamage: 7 * waveScaling.damageMultiplier,
-        scale: 0.27 + Math.random() * 0.2,
+        attackDamage: 8 * waveScaling.damageMultiplier,
+        scale: 0.25 + Math.random() * 0.3,
         attackRange: 250 + Math.random() * 200,
-        projectileSpeed: 150 + Math.random() * 350,
+        projectileSpeed: 150 + Math.random() * 425,
       },
     };
 
