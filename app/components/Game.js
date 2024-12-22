@@ -79,6 +79,8 @@ const GameScene = Phaser.Class({
       finalTimeAliveMS: 0,
       gameDuration: 1500000, // 25 minutes in milliseconds
       isLevelCleared: false,
+      totalPauseTime: 0, // Add totalPauseTime state
+      pauseStartTime: null, // Add pauseStartTime state
     };
 
     // Debug log initial state
@@ -1343,6 +1345,7 @@ const GameScene = Phaser.Class({
     this.pauseKey.on("down", () => {
       if (!this.gameState.isGameOver && this.gameState.gameStarted) {
         this.gameState.isPaused = true;
+        this.gameState.pauseStartTime = Date.now();
         this.scene.pause();
         this.scene.launch("PauseMenuScene");
       }
@@ -1612,9 +1615,11 @@ const GameScene = Phaser.Class({
     this.timerEvent = this.time.addEvent({
       delay: 16,
       callback: () => {
-        if (this.gameState.gameStartTime && !this.gameState.gameEndTime) {
+        if (this.gameState.gameStartTime && !this.gameState.gameEndTime && !this.gameState.isPaused) {
           const currentTime = Date.now();
-          const elapsedMS = currentTime - this.gameState.gameStartTime;
+          // Subtract total pause time from elapsed time
+          const totalPauseTime = this.gameState.totalPauseTime || 0;
+          const elapsedMS = currentTime - this.gameState.gameStartTime - totalPauseTime;
           this.gameState.gameTimer = Math.floor(elapsedMS / 1000);
           this.gameState.finalTimeAliveMS = elapsedMS;
 
