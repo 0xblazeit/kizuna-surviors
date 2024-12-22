@@ -25,10 +25,6 @@ export class MagicWandWeapon extends BaseWeapon {
       energy: 0xf0f0ff, // Light blue-white
     };
 
-    // Initialize projectile pool
-    this.maxProjectiles = 10;
-    this.activeProjectiles = [];
-
     // Initialize level configuration
     this.currentLevel = 1;
     this.maxLevel = 8;
@@ -36,7 +32,7 @@ export class MagicWandWeapon extends BaseWeapon {
       1: {
         damage: 8,
         pierce: 2,
-        cooldown: 1000,
+        cooldown: 800,
         magicPower: 15,
         criticalChance: 0.08,
         range: 300,
@@ -45,7 +41,7 @@ export class MagicWandWeapon extends BaseWeapon {
       2: {
         damage: 12,
         pierce: 3,
-        cooldown: 900,
+        cooldown: 700,
         magicPower: 20,
         criticalChance: 0.1,
         range: 350,
@@ -54,7 +50,7 @@ export class MagicWandWeapon extends BaseWeapon {
       3: {
         damage: 16,
         pierce: 3,
-        cooldown: 800,
+        cooldown: 600,
         magicPower: 25,
         criticalChance: 0.12,
         range: 400,
@@ -63,7 +59,7 @@ export class MagicWandWeapon extends BaseWeapon {
       4: {
         damage: 20,
         pierce: 4,
-        cooldown: 700,
+        cooldown: 500,
         magicPower: 30,
         criticalChance: 0.15,
         range: 450,
@@ -72,7 +68,7 @@ export class MagicWandWeapon extends BaseWeapon {
       5: {
         damage: 25,
         pierce: 4,
-        cooldown: 600,
+        cooldown: 400,
         magicPower: 35,
         criticalChance: 0.17,
         range: 500,
@@ -81,29 +77,33 @@ export class MagicWandWeapon extends BaseWeapon {
       6: {
         damage: 30,
         pierce: 5,
-        cooldown: 500,
+        cooldown: 300,
         magicPower: 40,
         criticalChance: 0.2,
         range: 550,
         scale: 0.61,
       },
       7: {
-        damage: 30,
+        damage: 35,
         pierce: 5,
-        cooldown: 500,
+        cooldown: 200,
         magicPower: 45,
         criticalChance: 0.22,
         range: 600,
         scale: 0.62,
       },
       8: {
-        damage: 30,
-        pierce: 3,
-        cooldown: 600,
-        magicPower: 50,
-        criticalChance: 0.25,
-        range: 650,
-        scale: 0.63,
+        damage: 45,
+        pierce: 6,
+        cooldown: 150,
+        magicPower: 60,
+        criticalChance: 0.3,
+        range: 700,
+        scale: 0.65,
+        speed: 400,
+        elementalDamage: 15,
+        explosionRadius: 120,
+        explosionDamage: 30,
       },
     };
 
@@ -113,68 +113,87 @@ export class MagicWandWeapon extends BaseWeapon {
     // Initialize lastFiredTime
     this.lastFiredTime = 0;
 
-    this.createMagicProjectiles();
+    // Calculate max pool sizes
+    const maxProjectilesPerLevel = Object.values(this.levelConfigs).map(
+      (config) => config.pierce * 2 // Double for safety
+    );
+    const maxProjectilesNeeded = Math.max(...maxProjectilesPerLevel);
+
+    // Initialize object pools
+    this.projectilePool = {
+      objects: [],
+      maxSize: maxProjectilesNeeded * 3, // Triple for overlapping cooldowns and pierce
+
+      get() {
+        return this.objects.find((obj) => !obj.active);
+      },
+
+      return(obj) {
+        if (!obj) return;
+        obj.active = false;
+        if (obj.sprite) {
+          obj.sprite.setActive(false).setVisible(false);
+          obj.sprite.body.setVelocity(0, 0);
+        }
+        if (obj.sprite.glow) {
+          obj.sprite.glow.setActive(false).setVisible(false);
+        }
+      },
+    };
+
+    this.createProjectilePool();
   }
 
-  createMagicProjectiles() {
-    // Clear existing projectiles
-    this.activeProjectiles.forEach((proj) => {
-      if (proj.sprite) {
-        if (proj.sprite.glow) {
-          proj.sprite.glow.destroy();
+  createProjectilePool() {
+    // Clear existing projectiles if any
+    if (this.activeProjectiles) {
+      this.activeProjectiles.forEach((proj) => {
+        if (proj.sprite) {
+          if (proj.sprite.glow) {
+            proj.sprite.glow.destroy();
+          }
+          proj.sprite.destroy();
         }
-        proj.sprite.destroy();
-      }
-    });
-    this.activeProjectiles = [];
+      });
+    }
 
-    // Create new projectiles
-    for (let i = 0; i < this.maxProjectiles; i++) {
-      const sprite = this.scene.physics.add.sprite(this.player.x, this.player.y, "weapon-wand-projectile");
+    // Create new pool
+    for (let i = 0; i < this.projectilePool.maxSize; i++) {
+      const sprite = this.scene.physics.add.sprite(0, 0, "weapon-wand-projectile");
       sprite.setScale(this.stats.scale);
-      sprite.setActive(true);
-      sprite.setVisible(false);
+      sprite.setActive(false).setVisible(false);
       sprite.setTint(this.effectColors.primary);
 
-      // Set up physics body for better collision detection
-      sprite.body.setSize(30, 30); // Slightly larger hitbox
-      sprite.body.setCircle(15); // Circular collision area
-      sprite.body.setCollideWorldBounds(false); // Allow projectiles to go off-screen
-      sprite.body.setAllowGravity(false); // Projectiles don't use gravity
-      sprite.body.setImmovable(true); // Projectiles don't get pushed by collisions
+      // Set up physics body
+      sprite.body.setSize(30, 30);
+      sprite.body.setCircle(15);
+      sprite.body.setCollideWorldBounds(false);
+      sprite.body.setAllowGravity(false);
+      sprite.body.setImmovable(true);
 
-      // Add a simple glow effect using a second sprite
-      const glowSprite = this.scene.add.sprite(this.player.x, this.player.y, "weapon-wand-projectile");
+      // Add glow effect
+      const glowSprite = this.scene.add.sprite(0, 0, "weapon-wand-projectile");
       glowSprite.setScale(this.stats.scale * 1.4);
       glowSprite.setAlpha(0.3);
       glowSprite.setVisible(false);
       glowSprite.setTint(this.effectColors.secondary);
       glowSprite.setBlendMode(Phaser.BlendModes.ADD);
-
       sprite.glow = glowSprite;
 
-      this.activeProjectiles.push({
-        sprite: sprite,
+      this.projectilePool.objects.push({
+        sprite,
         active: false,
         angle: 0,
         pierceCount: this.stats.pierce,
-        hitEnemies: new Set(), // Track which enemies this projectile has hit
+        hitEnemies: new Set(),
       });
     }
   }
 
   deactivateProjectile(proj) {
     if (!proj) return;
-
-    proj.active = false;
-    proj.pierceCount = 0;
-
-    if (proj.sprite) {
-      proj.sprite.setVisible(false);
-      if (proj.sprite.glow) {
-        proj.sprite.glow.setVisible(false);
-      }
-    }
+    proj.hitEnemies.clear();
+    this.projectilePool.return(proj);
   }
 
   updateProjectile(proj, delta) {
@@ -251,10 +270,8 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Check if it's time to fire
     if (time - this.lastFiredTime >= this.stats.cooldown) {
-      // Find an inactive projectile or one that's ready to be recycled
-      const availableProj = this.activeProjectiles.find(
-        (proj) => !proj.active || !proj.sprite.visible || proj.pierceCount <= 0
-      );
+      // Find an inactive projectile
+      const availableProj = this.projectilePool.get();
 
       if (availableProj) {
         // Reset the projectile state before firing
@@ -264,8 +281,8 @@ export class MagicWandWeapon extends BaseWeapon {
       }
     }
 
-    // Update active projectiles and check collisions
-    this.activeProjectiles.forEach((proj) => {
+    // Update active projectiles
+    this.projectilePool.objects.forEach((proj) => {
       if (proj.active) {
         this.updateProjectile(proj, delta);
 
@@ -308,11 +325,15 @@ export class MagicWandWeapon extends BaseWeapon {
     finalDamage *= 1 + this.stats.magicPower / 100;
 
     const roundedDamage = Math.round(finalDamage);
-    // Apply damage with source position for proper hit effects
     enemy.takeDamage(roundedDamage, proj.sprite.x, proj.sprite.y);
 
     // Create hit effect
     this.createHitEffect(enemy, proj, isCritical);
+
+    // Create arcane explosion at max level
+    if (this.currentLevel === this.maxLevel) {
+      this.createArcaneExplosion(proj.sprite.x, proj.sprite.y);
+    }
 
     // Reduce pierce count and handle projectile state
     proj.pierceCount--;
@@ -322,17 +343,107 @@ export class MagicWandWeapon extends BaseWeapon {
     }
   }
 
-  fireProjectile(proj, time) {
-    if (!proj.sprite || !proj.sprite.active) return;
+  createArcaneExplosion(x, y) {
+    // Create main burst with smaller, more refined scale
+    const burst = this.scene.add.sprite(x, y, "weapon-wand-projectile");
+    burst.setScale(0.4); // Reduced from 0.8
+    burst.setTint(this.effectColors.primary);
+    burst.setBlendMode(Phaser.BlendModes.ADD);
 
-    // Reset pierce count and hit enemies set
+    // More subtle expanding ring effect
+    this.scene.tweens.add({
+      targets: burst,
+      scaleX: 1.5, // Reduced from 3
+      scaleY: 1.5, // Reduced from 3
+      alpha: { from: 0.7, to: 0 }, // Slightly more transparent
+      duration: 400, // Faster fade
+      ease: "Quad.out",
+      onComplete: () => burst.destroy(),
+    });
+
+    // Fewer, more subtle magical runes
+    const runeCount = 5; // Reduced from 8
+    for (let i = 0; i < runeCount; i++) {
+      const angle = (i / runeCount) * Math.PI * 2;
+      const distance = 25; // Reduced from 40
+      const rune = this.scene.add.sprite(
+        x + Math.cos(angle) * distance,
+        y + Math.sin(angle) * distance,
+        "weapon-wand-projectile"
+      );
+
+      rune.setScale(0.25); // Reduced from 0.4
+      rune.setTint(this.effectColors.secondary);
+      rune.setBlendMode(Phaser.BlendModes.ADD);
+      rune.setAlpha(0.6); // More transparent
+      rune.rotation = angle;
+
+      this.scene.tweens.add({
+        targets: rune,
+        scaleX: 0.4, // Reduced scale increase
+        scaleY: 0.4,
+        alpha: 0,
+        rotation: angle + Math.PI, // Half rotation for subtlety
+        duration: 400, // Faster animation
+        ease: "Sine.out",
+        onComplete: () => rune.destroy(),
+      });
+    }
+
+    // More refined energy particles
+    const particles = this.scene.add.particles(x, y, "weapon-wand-projectile", {
+      scale: { start: 0.2, end: 0.05 }, // Smaller particles
+      speed: { min: 50, max: 100 }, // Slower, more controlled speed
+      angle: { min: 0, max: 360 },
+      alpha: { start: 0.6, end: 0 },
+      tint: this.effectColors.energy,
+      blendMode: Phaser.BlendModes.ADD,
+      lifespan: 500, // Shorter lifespan
+      quantity: 8, // Fewer particles
+    });
+
+    this.scene.time.delayedCall(500, () => particles.destroy());
+
+    // Smaller damage zone
+    const radius = this.stats.explosionRadius * 0.8; // 20% smaller radius
+    const nearbyEnemies = this.scene.enemies.filter(
+      (enemy) =>
+        enemy &&
+        enemy.sprite &&
+        enemy.sprite.active &&
+        !enemy.isDead &&
+        Phaser.Math.Distance.Between(x, y, enemy.sprite.x, enemy.sprite.y) <= radius
+    );
+
+    // More subtle energy connections
+    nearbyEnemies.forEach((enemy) => {
+      const arcaneDamage = this.stats.explosionDamage;
+      enemy.takeDamage(arcaneDamage, x, y);
+
+      // Thinner, more elegant energy lines
+      const line = this.scene.add.line(0, 0, x, y, enemy.sprite.x, enemy.sprite.y, this.effectColors.primary);
+      line.setLineWidth(1.5); // Thinner lines
+      line.setAlpha(0.5); // More transparent
+      line.setBlendMode(Phaser.BlendModes.ADD);
+
+      this.scene.tweens.add({
+        targets: line,
+        alpha: 0,
+        duration: 200, // Faster fade
+        ease: "Linear",
+        onComplete: () => line.destroy(),
+      });
+    });
+  }
+
+  fireProjectile(proj, time) {
+    // Remove the active check since we just got an inactive projectile
+    if (!proj.sprite) return;
+
+    // Reset projectile state
     proj.pierceCount = this.stats.pierce;
     proj.hitEnemies.clear();
-
-    proj.sprite.setVisible(true);
-    if (proj.sprite.glow) {
-      proj.sprite.glow.setVisible(true);
-    }
+    proj.active = true;
 
     // Get target position
     const target = this.getTargetPosition();
@@ -345,13 +456,15 @@ export class MagicWandWeapon extends BaseWeapon {
 
     // Set initial position and rotation
     proj.sprite.setPosition(this.player.x, this.player.y);
-    proj.sprite.rotation = proj.angle;
+    proj.sprite.setRotation(proj.angle);
+    proj.sprite.setActive(true).setVisible(true); // Activate and show the sprite
+
     if (proj.sprite.glow) {
       proj.sprite.glow.setPosition(this.player.x, this.player.y);
       proj.sprite.glow.rotation = proj.angle;
+      proj.sprite.glow.setActive(true).setVisible(true); // Activate and show the glow
     }
 
-    proj.active = true;
     this.lastFiredTime = time;
   }
 
@@ -459,19 +572,8 @@ export class MagicWandWeapon extends BaseWeapon {
       onComplete: () => burst.destroy(),
     });
 
-    // Recreate projectiles with new stats
-    if (this.activeProjectiles) {
-      this.activeProjectiles.forEach((proj) => {
-        if (proj.sprite) {
-          if (proj.sprite.glow) {
-            proj.sprite.glow.destroy();
-          }
-          proj.sprite.destroy();
-        }
-      });
-      this.activeProjectiles = [];
-      this.createMagicProjectiles();
-    }
+    // Recreate projectile pool with new stats
+    this.createProjectilePool();
 
     return true;
   }
@@ -509,9 +611,7 @@ export class MagicWandWeapon extends BaseWeapon {
 
   attack(time) {
     // Find an inactive projectile or one that's ready to be recycled
-    const availableProj = this.activeProjectiles.find(
-      (proj) => !proj.active || !proj.sprite.visible || proj.pierceCount <= 0
-    );
+    const availableProj = this.projectilePool.get();
 
     if (availableProj) {
       // Reset the projectile state before firing

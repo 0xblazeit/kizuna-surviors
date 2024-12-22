@@ -13,6 +13,7 @@ import SonicBoomHammer from "../game/entities/weapons/SonicBoomHammer";
 import { MilkWeapon } from "../game/entities/weapons/MilkWeapon";
 import { AwakenWeapon } from "../game/entities/weapons/AwakenWeapon";
 import ShapecraftKeyWeapon from "../game/entities/weapons/ShapecraftKeyWeapon";
+import PixelatorWeapon from "../game/entities/weapons/PixelatorWeapon"; // Adding import statement for PixelatorWeapon
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import XPGem from "../game/entities/XPGem";
@@ -209,7 +210,10 @@ const GameScene = Phaser.Class({
     this.load.svg("weapon-shapecraft-key", "/assets/game/weapons/weapon-shapecraft-key.svg?v=1", {
       scale: 0.5,
     });
-    this.load.svg("weapon-ss-logo", "/assets/game/weapons/weapon-ss-logo.svg?v=1", {
+    this.load.svg("weapon-ss-projectile", "/assets/game/weapons/weapon-ss-logo.svg?v=1", {
+      scale: 0.15,
+    });
+    this.load.svg("weapon-ss-icon", "/assets/game/weapons/weapon-ss-logo.svg?v=1", {
       scale: 0.5,
     });
     this.load.svg("weapon-skull-projectile", "/assets/game/weapons/weapon-skull-projectile.svg?v=1", {
@@ -269,6 +273,7 @@ const GameScene = Phaser.Class({
         this.gameState.minSpawnRate,
         this.gameState.spawnRate * this.gameState.waveScaling.spawnRateMultiplier
       );
+
       this.enemySpawnTimer.reset({
         delay: currentWaveSpawnRate,
         callback: this.spawnEnemies,
@@ -369,16 +374,20 @@ const GameScene = Phaser.Class({
               enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
             }
           } else {
-            // Wave 7+: All enemy types with increasing epic chance
+            // Wave 7+: All enemy types with increasing epic and shooter chances
             const epicChance = Math.min(0.25, 0.1 + (wave - 7) * 0.02); // Caps at 25%
-            if (roll < 0.3) {
+            const shooterChance = Math.min(0.2, 0.08 + (wave - 7) * 0.015); // Starts at 8%, increases to max 20%
+
+            if (roll < 0.35) {
               enemy = this.enemyPool.spawn("basic", spawnPos.x, spawnPos.y);
-            } else if (roll < 0.55) {
+            } else if (roll < 0.7) {
               enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y);
-            } else if (roll < 0.75 + epicChance) {
+            } else if (roll < 0.7 + epicChance) {
+              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+            } else if (roll < 0.7 + epicChance + shooterChance) {
               enemy = this.enemyPool.spawn("shooter", spawnPos.x, spawnPos.y);
             } else {
-              enemy = this.enemyPool.spawn("epic", spawnPos.x, spawnPos.y);
+              enemy = this.enemyPool.spawn("advanced", spawnPos.x, spawnPos.y); // Fallback to advanced
             }
           }
 
@@ -567,6 +576,7 @@ const GameScene = Phaser.Class({
     let axeIcon = null; // Store axe icon reference
     let hammerIcon = null; // Store hammer icon reference
     let milkIcon = null; // Store milk icon reference
+    let pixelatorIcon = null; // Store pixelator icon reference
     let shapecraftIcon = null; // Store shapecraft icon reference
     let awakeIcon = null; // Store awake icon reference
 
@@ -642,6 +652,15 @@ const GameScene = Phaser.Class({
             );
             break;
           case 6:
+            pixelatorIcon = createWeaponIcon(
+              gridX + col * gridCellSize,
+              uiRowY + row * gridCellSize,
+              "weapon-ss-icon",
+              cellIndex,
+              gridCells
+            );
+            break;
+          case 7:
             // Only add Shapecraft weapon if user has access
             if (this.userInfo.isShapeCraftKeyHolder) {
               shapecraftIcon = createWeaponIcon(
@@ -653,7 +672,7 @@ const GameScene = Phaser.Class({
               );
             }
             break;
-          case 7:
+          case 8:
             // Only add Awaken weapon if user has access
             if (this.userInfo.isAwakenEyeHolder) {
               awakeIcon = createWeaponIcon(
@@ -901,6 +920,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new PixelatorWeapon(this, this.player),
     ];
 
     // Add Awaken weapon only if user has access
@@ -1101,7 +1121,7 @@ const GameScene = Phaser.Class({
 
           if (this.userInfo.isSSGHolder) {
             const ssg = this.add
-              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-ss-logo")
+              .image(centerX - 150 + textWidth + 20 + iconOffset, startY + 80 + index * 40 + 10, "weapon-ss-icon")
               .setScale(0.15)
               .setScrollFactor(0)
               .setDepth(10000);
@@ -1217,6 +1237,7 @@ const GameScene = Phaser.Class({
       new FlyingAxeWeapon(this, this.player),
       new SonicBoomHammer(this, this.player),
       new MilkWeapon(this, this.player),
+      new PixelatorWeapon(this, this.player),
     ];
 
     // Add Awaken weapon only if user has access

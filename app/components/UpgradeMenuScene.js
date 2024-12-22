@@ -65,24 +65,19 @@ const UpgradeMenuScene = Phaser.Class({
       targets: overlay,
       alpha: 0.7,
       duration: 400,
-      ease: 'Power2'
+      ease: "Power2",
     });
 
     // Add "LEVEL UP!" text centered above weapon panels with fade and scale effect
     const levelUpText = this.add
-      .text(
-        this.cameras.main.centerX,
-        100,
-        "LEVEL UP!",
-        {
-          fontFamily: "VT323",
-          fontSize: "48px",
-          color: "#ffff00",
-          stroke: "#000000",
-          strokeThickness: 4,
-          align: "center",
-        }
-      )
+      .text(this.cameras.main.centerX, 100, "LEVEL UP!", {
+        fontFamily: "VT323",
+        fontSize: "48px",
+        color: "#ffff00",
+        stroke: "#000000",
+        strokeThickness: 4,
+        align: "center",
+      })
       .setOrigin(0.5)
       .setAlpha(0)
       .setScale(0.5);
@@ -93,8 +88,8 @@ const UpgradeMenuScene = Phaser.Class({
       alpha: 1,
       scale: 1,
       duration: 500,
-      ease: 'Back.out',
-      delay: 200
+      ease: "Back.out",
+      delay: 200,
     });
 
     // Add subtle pulsing animation to the text after it appears
@@ -113,7 +108,9 @@ const UpgradeMenuScene = Phaser.Class({
     const cardWidth = 200;
     const cardHeight = 300;
     const cardSpacing = 20;
-    const startX = -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 + cardWidth / 2;
+    const startX =
+      -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 +
+      cardWidth / 2;
 
     // Track currently selected card index and selection state
     this.selectedCardIndex = 0;
@@ -125,7 +122,8 @@ const UpgradeMenuScene = Phaser.Class({
     const offScreenY = this.cameras.main.height + cardHeight;
 
     this.selectedWeapons.forEach((weapon, index) => {
-      const x = this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
+      const x =
+        this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
       const y = this.cameras.main.centerY;
 
       // Create card container for grouped animations
@@ -137,7 +135,14 @@ const UpgradeMenuScene = Phaser.Class({
       card.setInteractive({ useHandCursor: true });
 
       // Add glow effect (initially invisible for non-selected cards)
-      const glow = this.add.rectangle(0, 0, cardWidth + 10, cardHeight + 10, 0x00ff00, 0);
+      const glow = this.add.rectangle(
+        0,
+        0,
+        cardWidth + 10,
+        cardHeight + 10,
+        0x00ff00,
+        0
+      );
       glow.setVisible(index === 0);
 
       // Add down carrot indicator
@@ -156,14 +161,24 @@ const UpgradeMenuScene = Phaser.Class({
       // Add weapon icon (initially invisible)
       const iconKey = (() => {
         switch (weapon.name) {
-          case "Taco Doggie": return "weapon-dog-projectile";
-          case "Shamir's Shard": return "weapon-wand-icon";
-          case "Glizzy Blaster": return "weapon-hotdog-projectile";
-          case "Reverb Reaper": return "weapon-axe-projectile";
-          case "WattWhacker": return "weapon-hammer-projectile";
-          case "GooBoo": return "weapon-magic-milk";
-          case "Shapebinder": return "weapon-shapecraft-key";
-          case "Awakened": return "weapon-awaken";
+          case "Taco Doggie":
+            return "weapon-dog-projectile";
+          case "Shamir's Shard":
+            return "weapon-wand-icon";
+          case "Glizzy Blaster":
+            return "weapon-hotdog-projectile";
+          case "Reverb Reaper":
+            return "weapon-axe-projectile";
+          case "WattWhacker":
+            return "weapon-hammer-projectile";
+          case "GooBoo":
+            return "weapon-magic-milk";
+          case "Shapebinder":
+            return "weapon-shapecraft-key";
+          case "Awakened":
+            return "weapon-awaken";
+          case "Shapecraft Survivors Genesis":
+            return "weapon-ss-icon";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);
             return "weapon-dog-projectile";
@@ -182,6 +197,8 @@ const UpgradeMenuScene = Phaser.Class({
           fontSize: "24px",
           color: "#ffffff",
           align: "center",
+          wordWrap: { width: cardWidth - 20 },
+          lineSpacing: 2,
         })
         .setOrigin(0.5)
         .setAlpha(0);
@@ -205,7 +222,8 @@ const UpgradeMenuScene = Phaser.Class({
           const starY = startStarY + row * rowSpacing;
 
           const starSymbol = starIndex < weapon.currentLevel ? "★" : "☆";
-          const starColor = starIndex < weapon.currentLevel ? "#ffff00" : "#666666";
+          const starColor =
+            starIndex < weapon.currentLevel ? "#ffff00" : "#666666";
 
           const star = this.add
             .text(starX, starY, starSymbol, {
@@ -246,7 +264,8 @@ const UpgradeMenuScene = Phaser.Class({
       const statsText = [];
       if (stats.damage) statsText.push(`DMG: ${stats.damage}`);
       if (stats.pierce) statsText.push(`Pierce: ${stats.pierce}`);
-      if (stats.cooldown) statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
+      if (stats.cooldown)
+        statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
 
       const statsTextObj = this.add
         .text(0, startStarY + rowSpacing * 2 + 45, statsText.join("\n"), {
@@ -274,7 +293,7 @@ const UpgradeMenuScene = Phaser.Class({
           y: { from: offScreenY, to: y },
           scale: { from: 0.9, to: 1 },
           duration: 300,
-          ease: 'Back.out(1.7)',
+          ease: "Back.out(1.7)",
           onComplete: () => {
             // Fade in and scale up the icon
             this.tweens.add({
@@ -282,7 +301,7 @@ const UpgradeMenuScene = Phaser.Class({
               alpha: { from: 0, to: 1 },
               scale: { from: 0.7, to: scale },
               duration: 200,
-              ease: 'Back.out(2)',
+              ease: "Back.out(2)",
             });
 
             // Fade in and slide up the name
@@ -292,7 +311,7 @@ const UpgradeMenuScene = Phaser.Class({
               y: { from: 10, to: 0 },
               duration: 200,
               delay: 25,
-              ease: 'Power3'
+              ease: "Power3",
             });
 
             // Fade in stars one by one with scale effect
@@ -303,7 +322,7 @@ const UpgradeMenuScene = Phaser.Class({
                 scale: { from: 0.5, to: 1 },
                 duration: 150,
                 delay: 50 + starIndex * 15,
-                ease: 'Back.out(2)'
+                ease: "Back.out(2)",
               });
             });
 
@@ -311,20 +330,26 @@ const UpgradeMenuScene = Phaser.Class({
             this.tweens.add({
               targets: levelText,
               alpha: { from: 0, to: 1 },
-              x: { from: ((starsPerRow - 1) * starSpacing) / 2 + 40, to: ((starsPerRow - 1) * starSpacing) / 2 + 30 },
+              x: {
+                from: ((starsPerRow - 1) * starSpacing) / 2 + 40,
+                to: ((starsPerRow - 1) * starSpacing) / 2 + 30,
+              },
               duration: 200,
               delay: 150,
-              ease: 'Power2'
+              ease: "Power2",
             });
 
             // Fade in stats with slight slide up
             this.tweens.add({
               targets: statsTextObj,
               alpha: { from: 0, to: 1 },
-              y: { from: startStarY + rowSpacing * 2 + 55, to: startStarY + rowSpacing * 2 + 45 },
+              y: {
+                from: startStarY + rowSpacing * 2 + 55,
+                to: startStarY + rowSpacing * 2 + 45,
+              },
               duration: 200,
               delay: 200,
-              ease: 'Power2'
+              ease: "Power2",
             });
 
             // Add subtle hover effect to the card
@@ -335,31 +360,31 @@ const UpgradeMenuScene = Phaser.Class({
               duration: 1500,
               yoyo: true,
               repeat: -1,
-              ease: 'Sine.easeInOut'
+              ease: "Sine.easeInOut",
             });
-          }
+          },
         });
       });
 
       // Add hover effect to the card
-      card.on('pointerover', () => {
+      card.on("pointerover", () => {
         if (!this.isSelecting) {
           this.tweens.add({
             targets: container,
             scale: 1.05,
             duration: 200,
-            ease: 'Power2'
+            ease: "Power2",
           });
         }
       });
 
-      card.on('pointerout', () => {
+      card.on("pointerout", () => {
         if (!this.isSelecting) {
           this.tweens.add({
             targets: container,
             scale: 1,
             duration: 200,
-            ease: 'Power2'
+            ease: "Power2",
           });
         }
       });
@@ -394,7 +419,9 @@ const UpgradeMenuScene = Phaser.Class({
       this.cardIndicators[this.selectedCardIndex].carrot.setVisible(false);
 
       // Update selection
-      this.selectedCardIndex = (this.selectedCardIndex + direction + this.cards.length) % this.cards.length;
+      this.selectedCardIndex =
+        (this.selectedCardIndex + direction + this.cards.length) %
+        this.cards.length;
 
       // Show new indicators
       this.cardIndicators[this.selectedCardIndex].glow.setVisible(true);

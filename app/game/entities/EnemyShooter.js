@@ -1,4 +1,6 @@
 import EnemyBasic from "./EnemyBasic";
+import Coin from "../entities/Coin";
+import XPGem from "../entities/XPGem";
 
 class EnemyShooter extends EnemyBasic {
   constructor(scene, x, y, texture, config = {}) {
@@ -8,10 +10,10 @@ class EnemyShooter extends EnemyBasic {
       moveSpeed: Phaser.Math.FloatBetween(1.2, 1.4), // Slower than basic enemy
       defense: 0,
       attackSpeed: 1,
-      attackDamage: 15, 
+      attackDamage: 15,
       scale: 0.6, // Increased scale for better visibility
-      trailTint: 0xff4d4d, 
-      attackRange: 800, 
+      trailTint: 0xff4d4d,
+      attackRange: 800,
       ...config,
     };
 
@@ -19,18 +21,18 @@ class EnemyShooter extends EnemyBasic {
 
     // Shooter specific properties
     this.type = "shooter";
-    
+
     // Custom separation parameters for shooter enemies
     this.separationRadius = 120; // Largest separation radius since they attack from range
     this.baseSeparationForce = 0.7; // Strong base separation to maintain distance
     this.maxSeparationForce = 2.5; // Strong max separation
-    
+
     // Projectile properties
     this.projectiles = new Set();
-    this.projectileSpeed = 300; 
-    this.projectileLifetime = 4000; 
-    this.attackCooldown = 2000; 
-    this.minAttackDistance = 100; 
+    this.projectileSpeed = 300;
+    this.projectileLifetime = 4000;
+    this.attackCooldown = 2000;
+    this.minAttackDistance = 100;
 
     // Make sure sprite is visible and configured properly
     if (!this.sprite) {
@@ -48,7 +50,7 @@ class EnemyShooter extends EnemyBasic {
     this.sprite.setDepth(5);
     this.sprite.setActive(true);
     this.sprite.setVisible(true);
-    
+
     // Configure physics body
     this.sprite.body.setCollideWorldBounds(true);
     this.sprite.body.setCircle(20); // Adjust hitbox size
@@ -58,7 +60,7 @@ class EnemyShooter extends EnemyBasic {
 
     // Set target player
     this.targetPlayer = scene.player;
-    
+
     // Make sure movement is enabled
     this.movementEnabled = true;
     this.moveSpeed = shooterConfig.moveSpeed;
@@ -78,9 +80,9 @@ class EnemyShooter extends EnemyBasic {
       hasPhysics: this.sprite?.body ? "yes" : "no",
       targetPlayer: this.targetPlayer ? "set" : "missing",
       moveSpeed: this.moveSpeed,
-      movementEnabled: this.movementEnabled
+      movementEnabled: this.movementEnabled,
     });
-    
+
     // Initialize projectile pool
     this.initProjectilePool();
   }
@@ -91,24 +93,24 @@ class EnemyShooter extends EnemyBasic {
     const poolSize = 5;
 
     for (let i = 0; i < poolSize; i++) {
-      const projectile = this.scene.add.sprite(0, 0, 'weapon-skull-projectile');
+      const projectile = this.scene.add.sprite(0, 0, "weapon-skull-projectile");
       projectile.setActive(false);
       projectile.setVisible(false);
       projectile.setScale(0.6); // Increased scale for better visibility
       projectile.setDepth(5);
-      
+
       // Add to physics
       this.scene.physics.add.existing(projectile);
       projectile.body.setCircle(8); // Smaller hitbox for projectile
       projectile.body.setOffset(8, 8); // Center the hitbox
-      
+
       this.projectilePool.push(projectile);
     }
   }
 
   getProjectile() {
     // Get an inactive projectile from the pool
-    return this.projectilePool.find(p => !p.active) || null;
+    return this.projectilePool.find((p) => !p.active) || null;
   }
 
   shootProjectile() {
@@ -154,7 +156,7 @@ class EnemyShooter extends EnemyBasic {
 
   playShootEffect() {
     // Add visual feedback for shooting
-    const flash = this.scene.add.sprite(this.sprite.x, this.sprite.y, 'weapon-skull-projectile');
+    const flash = this.scene.add.sprite(this.sprite.x, this.sprite.y, "weapon-skull-projectile");
     flash.setScale(0.3);
     flash.setAlpha(0.7);
     flash.setTint(0xff0000);
@@ -164,16 +166,20 @@ class EnemyShooter extends EnemyBasic {
       scale: 0.1,
       alpha: 0,
       duration: 200,
-      ease: 'Power2',
-      onComplete: () => flash.destroy()
+      ease: "Power2",
+      onComplete: () => flash.destroy(),
     });
   }
 
   deactivateProjectile(projectile) {
-    projectile.setActive(false);
-    projectile.setVisible(false);
-    projectile.body.setVelocity(0, 0);
-    this.projectiles.delete(projectile);
+    if (projectile) {
+      projectile.setActive(false);
+      projectile.setVisible(false);
+      if (projectile.body) {
+        projectile.body.setVelocity(0, 0);
+      }
+      this.projectiles.delete(projectile);
+    }
   }
 
   onProjectileHitPlayer(projectile, playerSprite) {
@@ -181,7 +187,7 @@ class EnemyShooter extends EnemyBasic {
     if (this.targetPlayer && !this.targetPlayer.isDead) {
       this.targetPlayer.takeDamage(this.stats.attackDamage);
     }
-    
+
     // Deactivate the projectile
     this.deactivateProjectile(projectile);
   }
@@ -209,7 +215,7 @@ class EnemyShooter extends EnemyBasic {
         movementEnabled: this.movementEnabled,
         active: this.active,
         isDead: this.isDead,
-        velocity: { x: this.sprite.body.velocity.x, y: this.sprite.body.velocity.y }
+        velocity: { x: this.sprite.body.velocity.x, y: this.sprite.body.velocity.y },
       });
     }
 
@@ -238,10 +244,7 @@ class EnemyShooter extends EnemyBasic {
       }
       // If at good distance, just apply separation
       else {
-        this.sprite.body.setVelocity(
-          separation.x * 60,
-          separation.y * 60
-        );
+        this.sprite.body.setVelocity(separation.x * 60, separation.y * 60);
       }
 
       // Update sprite facing direction
@@ -259,15 +262,18 @@ class EnemyShooter extends EnemyBasic {
     }
 
     // Handle shooting
-    if (!this.isStaggered && distance <= this.attackRange && 
-        distance >= this.minAttackDistance && 
-        Date.now() - this.lastAttackTime >= this.attackCooldown) {
+    if (
+      !this.isStaggered &&
+      distance <= this.attackRange &&
+      distance >= this.minAttackDistance &&
+      Date.now() - this.lastAttackTime >= this.attackCooldown
+    ) {
       this.shootProjectile();
       this.lastAttackTime = Date.now();
     }
 
     // Update projectiles
-    this.projectiles.forEach(projectile => {
+    this.projectiles.forEach((projectile) => {
       if (projectile.active && projectile.body.velocity.length() > 0) {
         projectile.rotation = Math.atan2(projectile.body.velocity.y, projectile.body.velocity.x);
       }
@@ -276,16 +282,92 @@ class EnemyShooter extends EnemyBasic {
 
   destroy() {
     // Clean up projectiles
-    this.projectiles.forEach(projectile => {
+    this.projectiles.forEach((projectile) => {
       projectile.destroy();
     });
     this.projectiles.clear();
-    this.projectilePool.forEach(projectile => {
+    this.projectilePool.forEach((projectile) => {
       projectile.destroy();
     });
     this.projectilePool = [];
-    
+
     super.destroy();
+  }
+
+  die() {
+    // Prevent multiple death calls
+    if (this.isDead) return;
+    this.isDead = true;
+
+    // Initialize arrays if they don't exist
+    if (!this.scene.coins) {
+      this.scene.coins = [];
+    }
+    if (!this.scene.xpGems) {
+      this.scene.xpGems = [];
+    }
+
+    // Determine drop type - 70% chance for drops (highest chance)
+    const dropChance = Math.random();
+    if (dropChance < 0.7) {
+      // 40% chance for coins (28% total), 60% chance for XP gems (42% total)
+      if (dropChance < 0.28) {
+        // Shooter enemies drop very valuable consolidated coins
+        Coin.spawnConsolidated(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          150 // Highest coin value
+        );
+      } else {
+        // Shooter enemies drop highest value XP gems
+        const gem = new XPGem(
+          this.scene,
+          this.sprite.x,
+          this.sprite.y,
+          200, // Highest XP value
+          0.17 // Slightly larger gems
+        );
+        if (gem) {
+          this.scene.xpGems.push(gem);
+        }
+      }
+    }
+
+    // Increment kill counter
+    this.scene.gameState.kills++;
+    this.scene.killsText.setText(`Kills: ${this.scene.gameState.kills}`);
+
+    // Clean up projectiles before death
+    this.projectiles.forEach((projectile) => {
+      projectile.destroy();
+    });
+    this.projectiles.clear();
+    this.projectilePool.forEach((projectile) => {
+      projectile.destroy();
+    });
+    this.projectilePool = [];
+
+    // Play death animation and cleanup
+    this.playDeathAnimation().then(() => {
+      // Remove from scene's enemy list
+      if (this.scene.enemies) {
+        const index = this.scene.enemies.indexOf(this);
+        if (index > -1) {
+          this.scene.enemies.splice(index, 1);
+        }
+      }
+
+      // Cleanup health bar
+      if (this.healthBar) {
+        this.healthBar.container.destroy();
+      }
+
+      // Destroy sprite
+      if (this.sprite) {
+        this.sprite.destroy();
+      }
+    });
   }
 }
 
