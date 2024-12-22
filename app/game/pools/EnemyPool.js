@@ -47,12 +47,12 @@ export class EnemyPool {
       epic: new Set(),
       shooter: new Set(),
     };
-    this.poolSize = 200; // Initial pool size
-    this.maxPoolSize = 300; // Maximum pool size
+    this.poolSize = 300; // Increased from 200
+    this.maxPoolSize = 400; // Increased from 300
     this.lastCleanupTime = 0;
     this.cleanupInterval = 5000; // Cleanup every 5 seconds
-    this.cleanupThreshold = 1500; // Distance threshold for cleanup
-    this.maxCleanupPerInterval = 50; // Max enemies to cleanup per interval
+    this.cleanupThreshold = 2000; // Increased from 1500 to allow more enemies on screen
+    this.maxCleanupPerInterval = 75; // Increased from 50 to handle more enemies
   }
 
   initialize() {
