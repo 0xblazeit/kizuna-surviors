@@ -4,7 +4,7 @@ class ShurikenStormWeapon extends BaseWeapon {
   constructor(scene, player) {
     super(scene, player);
 
-    this.name = "Shuriken Storm";
+    this.name = "Shapecraft Survivors Genesis";
     this.description = "Unleash a barrage of homing shurikens that slice through enemies";
 
     // Level-up configurations

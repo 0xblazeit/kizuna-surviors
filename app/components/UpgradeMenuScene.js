@@ -167,7 +167,7 @@ const UpgradeMenuScene = Phaser.Class({
             return "weapon-shapecraft-key";
           case "Awakened":
             return "weapon-awaken";
-          case "Shuriken Storm":
+          case "Shapecraft Survivors Genesis":
             return "weapon-ss-icon";
           default:
             console.warn(`Unknown weapon type: ${weapon.name}`);
