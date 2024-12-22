@@ -58,12 +58,12 @@ export class EnemyPool {
   initialize() {
     console.log("🏊‍♂️ Initializing enemy pools...");
 
-    // Define pool sizes for each type
+    // Adjust pool sizes to ensure enough shooters
     const poolSizes = {
       basic: this.poolSize,
-      advanced: Math.floor(this.poolSize * 0.5),
-      epic: Math.floor(this.poolSize * 0.5),
-      shooter: Math.floor(this.poolSize * 0.5),
+      advanced: Math.floor(this.poolSize * 0.6),
+      epic: Math.floor(this.poolSize * 0.4),
+      shooter: Math.floor(this.poolSize * 0.6),
     };
 
     // Pre-create enemies for each type
