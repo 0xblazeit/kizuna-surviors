@@ -382,26 +382,51 @@ const GameScene = Phaser.Class({
 
     // Check if we need to force spawn more enemies
     const currentEnemyCount = this.enemies ? this.enemies.filter((e) => e && !e.isDead).length : 0;
-    if (currentEnemyCount < this.gameState.forceSpawnThreshold) {
+    if (currentEnemyCount <= this.gameState.forceSpawnThreshold) {
       const needToSpawn = Math.max(this.gameState.minEnemies - currentEnemyCount, 0);
-      for (let i = 0; i < Math.min(needToSpawn, 5); i++) {
-        const spawnPos = this.getSpawnPosition();
-        const roll = Math.random();
-        let enemyType = "basic";
+      if (needToSpawn > 0) {
+        for (let i = 0; i < Math.min(needToSpawn, 5); i++) {
+          const spawnPos = this.getSpawnPosition();
+          const wave = this.gameState.waveNumber;
+          const roll = Math.random();
 
-        if (wave > 6) {
-          const waveScaling = Math.min(1, (wave - 7) * 0.05);
-          if (roll < 0.4 + waveScaling * 0.1) enemyType = "advanced";
-          else if (roll < 0.7 + waveScaling * 0.1) enemyType = "shooter";
-          else if (roll < 0.85 + waveScaling * 0.05) enemyType = "epic";
-        }
+          let enemyType = "basic";
 
-        const enemy = this.enemyPool.spawn(enemyType, spawnPos.x, spawnPos.y);
-        if (enemy) {
-          if (!enemy.sprite.body) {
-            this.physics.add.existing(enemy.sprite);
+          // Improved wave-based enemy distribution
+          if (wave > 6) {
+            // Ensure minimum shooter presence in later waves
+            const shooterChance = 0.25; // 25% base chance for shooters
+            const advancedChance = 0.35; // 35% chance for advanced
+            const epicChance = 0.2; // 20% chance for epic
+            // Remaining 20% for basic
+
+            if (roll < shooterChance) {
+              enemyType = "shooter";
+            } else if (roll < shooterChance + advancedChance) {
+              enemyType = "advanced";
+            } else if (roll < shooterChance + advancedChance + epicChance) {
+              enemyType = "epic";
+            }
+
+            // Force spawn shooter if none are active
+            const activeShooters = this.enemies.filter((e) => e && !e.isDead && e.type === "shooter").length;
+
+            if (activeShooters === 0 && Math.random() < 0.5) {
+              enemyType = "shooter";
+            }
+          } else if (wave > 2) {
+            // Early wave distribution
+            if (roll < 0.3) enemyType = "shooter";
+            else if (roll < 0.7) enemyType = "advanced";
           }
-          this.enemies.push(enemy);
+
+          const enemy = this.enemyPool.spawn(enemyType, spawnPos.x, spawnPos.y);
+          if (enemy) {
+            if (!enemy.body) {
+              this.physics.add.existing(enemy);
+            }
+            this.enemies.push(enemy);
+          }
         }
       }
     }
@@ -2235,13 +2260,30 @@ const GameScene = Phaser.Class({
 
           let enemyType = "basic";
           if (wave > 6) {
-            const waveScaling = Math.min(1, (wave - 7) * 0.05);
-            if (roll < 0.4 + waveScaling * 0.1) enemyType = "advanced";
-            else if (roll < 0.7 + waveScaling * 0.1) enemyType = "shooter";
-            else if (roll < 0.85 + waveScaling * 0.05) enemyType = "epic";
+            // Ensure minimum shooter presence in later waves
+            const shooterChance = 0.25; // 25% base chance for shooters
+            const advancedChance = 0.35; // 35% chance for advanced
+            const epicChance = 0.2; // 20% chance for epic
+            // Remaining 20% for basic
+
+            if (roll < shooterChance) {
+              enemyType = "shooter";
+            } else if (roll < shooterChance + advancedChance) {
+              enemyType = "advanced";
+            } else if (roll < shooterChance + advancedChance + epicChance) {
+              enemyType = "epic";
+            }
+
+            // Force spawn shooter if none are active
+            const activeShooters = this.enemies.filter((e) => e && !e.isDead && e.type === "shooter").length;
+
+            if (activeShooters === 0 && Math.random() < 0.5) {
+              enemyType = "shooter";
+            }
           } else if (wave > 2) {
-            if (roll < 0.6) enemyType = "advanced";
-            else if (roll < 0.8) enemyType = "shooter";
+            // Early wave distribution
+            if (roll < 0.3) enemyType = "shooter";
+            else if (roll < 0.7) enemyType = "advanced";
           }
 
           const enemy = this.enemyPool.spawn(enemyType, spawnPos.x, spawnPos.y);

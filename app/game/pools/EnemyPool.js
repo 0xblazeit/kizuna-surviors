@@ -47,23 +47,23 @@ export class EnemyPool {
       epic: new Set(),
       shooter: new Set(),
     };
-    this.poolSize = 200; // Initial pool size
-    this.maxPoolSize = 300; // Maximum pool size
+    this.poolSize = 300; // Increased from 200
+    this.maxPoolSize = 400; // Increased from 300
     this.lastCleanupTime = 0;
     this.cleanupInterval = 5000; // Cleanup every 5 seconds
-    this.cleanupThreshold = 1500; // Distance threshold for cleanup
-    this.maxCleanupPerInterval = 50; // Max enemies to cleanup per interval
+    this.cleanupThreshold = 2000; // Increased from 1500 to allow more enemies on screen
+    this.maxCleanupPerInterval = 75; // Increased from 50 to handle more enemies
   }
 
   initialize() {
     console.log("🏊‍♂️ Initializing enemy pools...");
 
-    // Define pool sizes for each type
+    // Adjust pool sizes to ensure enough shooters
     const poolSizes = {
       basic: this.poolSize,
-      advanced: Math.floor(this.poolSize * 0.5),
-      epic: Math.floor(this.poolSize * 0.5),
-      shooter: Math.floor(this.poolSize * 0.5),
+      advanced: Math.floor(this.poolSize * 0.6),
+      epic: Math.floor(this.poolSize * 0.4),
+      shooter: Math.floor(this.poolSize * 0.6),
     };
 
     // Pre-create enemies for each type
@@ -266,12 +266,12 @@ export class EnemyPool {
         scale: 0.55 + Math.random() * 0.2,
       },
       shooter: {
-        maxHealth: 200 * waveScaling.healthMultiplier,
+        maxHealth: 300 * waveScaling.healthMultiplier,
         moveSpeed: (0.7 + Math.random() * 0.2) * waveScaling.speedMultiplier,
-        attackDamage: 7 * waveScaling.damageMultiplier,
-        scale: 0.27 + Math.random() * 0.2,
+        attackDamage: 8 * waveScaling.damageMultiplier,
+        scale: 0.25 + Math.random() * 0.3,
         attackRange: 250 + Math.random() * 200,
-        projectileSpeed: 150 + Math.random() * 200,
+        projectileSpeed: 150 + Math.random() * 425,
       },
     };
 

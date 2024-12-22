@@ -6,14 +6,14 @@ class EnemyEpic extends EnemyAdvanced {
   constructor(scene, x, y, texture, config = {}) {
     // Set epic enemy specific defaults with even higher stats
     const epicConfig = {
-      maxHealth: 400, // Double the advanced enemy health
-      moveSpeed: Phaser.Math.FloatBetween(2.4, 2.6), // Even faster than advanced
-      defense: 4, // Double defense
-      attackSpeed: 1.4, // 40% faster attacks
-      attackDamage: 18, // 50% more damage than advanced
-      scale: 0.15, // Slightly larger than advanced (0.42)
-      trailTint: 0xffa500, // Orange trail
-      attackRange: 120,
+      maxHealth: 888, // Doubled from 400 to 888
+      moveSpeed: Phaser.Math.FloatBetween(2.8, 3.0), // Much faster
+      defense: 8, // Doubled from 4 to 8
+      attackSpeed: 1.6, // Increased from 1.4 to 1.6
+      attackDamage: 25, // Increased from 18 to 25
+      scale: 0.2, // Larger size (up from 0.15)
+      trailTint: 0xff0000, // Changed to red for more menacing look
+      attackRange: 150, // Increased from 120 to 150
       ...config,
     };
 
@@ -23,9 +23,16 @@ class EnemyEpic extends EnemyAdvanced {
     this.type = "epic";
 
     // Custom separation parameters for epic enemies
-    this.separationRadius = 100; // Even larger separation radius for epic enemies
-    this.baseSeparationForce = 0.8; // Strongest base separation
-    this.maxSeparationForce = 3.0; // Strongest max separation
+    this.separationRadius = 120; // Increased from 100
+    this.baseSeparationForce = 1.0; // Increased from 0.8
+    this.maxSeparationForce = 3.5; // Increased from 3.0
+
+    // Add new properties for epic enemies
+    this.regenerationRate = 1; // Health regeneration per second
+    this.lastRegenTime = 0;
+    this.chargeAttackCooldown = 5000; // 5 seconds between charge attacks
+    this.lastChargeTime = 0;
+    this.isCharging = false;
 
     // Make sure sprite is visible and configured properly
     if (!this.sprite) {
@@ -43,7 +50,7 @@ class EnemyEpic extends EnemyAdvanced {
     this.sprite.setDepth(5);
     this.sprite.setActive(true);
     this.sprite.setVisible(true);
-    
+
     // Configure physics body
     this.sprite.body.setCollideWorldBounds(true);
     this.sprite.body.setCircle(20); // Adjust hitbox size
@@ -53,7 +60,7 @@ class EnemyEpic extends EnemyAdvanced {
 
     // Set target player
     this.targetPlayer = scene.player;
-    
+
     // Make sure movement is enabled
     this.movementEnabled = true;
     this.moveSpeed = epicConfig.moveSpeed;
@@ -73,7 +80,7 @@ class EnemyEpic extends EnemyAdvanced {
       hasPhysics: this.sprite?.body ? "yes" : "no",
       targetPlayer: this.targetPlayer ? "set" : "missing",
       moveSpeed: this.moveSpeed,
-      movementEnabled: this.movementEnabled
+      movementEnabled: this.movementEnabled,
     });
 
     // Create dark red aura
@@ -125,7 +132,7 @@ class EnemyEpic extends EnemyAdvanced {
         movementEnabled: this.movementEnabled,
         active: this.active,
         isDead: this.isDead,
-        velocity: { x: this.sprite.body.velocity.x, y: this.sprite.body.velocity.y }
+        velocity: { x: this.sprite.body.velocity.x, y: this.sprite.body.velocity.y },
       });
     }
 
@@ -154,10 +161,7 @@ class EnemyEpic extends EnemyAdvanced {
       }
       // If at good distance, just apply separation
       else {
-        this.sprite.body.setVelocity(
-          separation.x * 60,
-          separation.y * 60
-        );
+        this.sprite.body.setVelocity(separation.x * 60, separation.y * 60);
       }
 
       // Update sprite facing direction
@@ -175,8 +179,7 @@ class EnemyEpic extends EnemyAdvanced {
     }
 
     // Handle attack cooldown and damage
-    if (!this.isStaggered && distance <= this.attackRange && 
-        Date.now() - this.lastAttackTime >= this.attackCooldown) {
+    if (!this.isStaggered && distance <= this.attackRange && Date.now() - this.lastAttackTime >= this.attackCooldown) {
       this.attack();
       this.lastAttackTime = Date.now();
     }
