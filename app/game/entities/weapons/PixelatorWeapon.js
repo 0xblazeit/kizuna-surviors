@@ -12,7 +12,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       1: {
         damage: 15,
         pierce: 1,
-        cooldown: 600,
+        cooldown: 1200,
         range: 300,
         speed: 400,
         scale: 0.4,
@@ -29,7 +29,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       2: {
         damage: 20,
         pierce: 1,
-        cooldown: 550,
+        cooldown: 1100,
         range: 320,
         speed: 420,
         scale: 0.45,
@@ -43,7 +43,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       3: {
         damage: 28,
         pierce: 2,
-        cooldown: 500,
+        cooldown: 1000,
         range: 340,
         speed: 440,
         scale: 0.5,
@@ -57,7 +57,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       4: {
         damage: 38,
         pierce: 2,
-        cooldown: 450,
+        cooldown: 900,
         range: 360,
         speed: 460,
         scale: 0.55,
@@ -71,7 +71,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       5: {
         damage: 50,
         pierce: 2,
-        cooldown: 400,
+        cooldown: 800,
         range: 380,
         speed: 480,
         scale: 0.6,
@@ -85,7 +85,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       6: {
         damage: 65,
         pierce: 3,
-        cooldown: 350,
+        cooldown: 700,
         range: 400,
         speed: 500,
         scale: 0.65,
@@ -99,7 +99,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       7: {
         damage: 83,
         pierce: 3,
-        cooldown: 300,
+        cooldown: 600,
         range: 420,
         speed: 520,
         scale: 0.7,
@@ -113,7 +113,7 @@ class ShurikenStormWeapon extends BaseWeapon {
       8: {
         damage: 103,
         pierce: 4,
-        cooldown: 250,
+        cooldown: 500,
         range: 450,
         speed: 550,
         scale: 0.75,
