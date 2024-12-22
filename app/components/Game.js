@@ -251,15 +251,15 @@ const GameScene = Phaser.Class({
 
     // Calculate wave scaling factors
     const waveScaling = {
-      spawnRate: Math.min(2.5, 1 + (this.gameState.waveNumber - 1) * 0.1), // Increases spawn rate up to 2.5x
-      quantity: Math.min(3, 1 + (this.gameState.waveNumber - 1) * 0.15), // Increases quantity up to 3x
-      healthMultiplier: 1 + (this.gameState.waveNumber - 1) * 0.2, // Continuous health scaling
-      damageMultiplier: 1 + (this.gameState.waveNumber - 1) * 0.1, // Continuous damage scaling
+      spawnRate: Math.min(4.0, 1 + (this.gameState.waveNumber - 1) * 0.2), // Increased max rate to 4x
+      quantity: Math.min(6, 1 + (this.gameState.waveNumber - 1) * 0.3), // Increased max quantity to 6x
+      healthMultiplier: 1 + (this.gameState.waveNumber - 1) * 0.2,
+      damageMultiplier: 1 + (this.gameState.waveNumber - 1) * 0.1,
     };
 
-    // Calculate base enemies per wave with scaling
-    const baseEnemies = Math.floor(12 * waveScaling.quantity); // Starts at 12, scales up
-    const bonusEnemies = Math.floor(this.gameState.waveNumber * 2); // Additional enemies per wave
+    // Calculate base enemies with much more aggressive scaling
+    const baseEnemies = Math.floor(20 * waveScaling.quantity); // Increased base from 15 to 20
+    const bonusEnemies = Math.floor(this.gameState.waveNumber * 5); // Increased multiplier from 3 to 5
     this.gameState.enemiesRemainingInWave = baseEnemies + bonusEnemies;
 
     // Calculate spawn interval with scaling (faster spawns in later waves)
@@ -326,8 +326,8 @@ const GameScene = Phaser.Class({
     const wave = this.gameState.waveNumber;
 
     // Calculate how many enemies to spawn per tick
-    const baseSpawnCount = 1;
-    const additionalSpawns = Math.floor(Math.min(3, (wave - 1) * 0.2)); // Up to 3 additional spawns
+    const baseSpawnCount = 2; // Increased base spawn count from 1 to 2
+    const additionalSpawns = Math.floor(Math.min(6, (wave - 1) * 0.35)); // Increased max additional spawns to 6
     const spawnCount = baseSpawnCount + additionalSpawns;
 
     // Spawn multiple enemies
