@@ -108,7 +108,9 @@ const UpgradeMenuScene = Phaser.Class({
     const cardWidth = 200;
     const cardHeight = 300;
     const cardSpacing = 20;
-    const startX = -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 + cardWidth / 2;
+    const startX =
+      -((cardWidth + cardSpacing) * this.selectedWeapons.length) / 2 +
+      cardWidth / 2;
 
     // Track currently selected card index and selection state
     this.selectedCardIndex = 0;
@@ -120,7 +122,8 @@ const UpgradeMenuScene = Phaser.Class({
     const offScreenY = this.cameras.main.height + cardHeight;
 
     this.selectedWeapons.forEach((weapon, index) => {
-      const x = this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
+      const x =
+        this.cameras.main.centerX + startX + (cardWidth + cardSpacing) * index;
       const y = this.cameras.main.centerY;
 
       // Create card container for grouped animations
@@ -132,7 +135,14 @@ const UpgradeMenuScene = Phaser.Class({
       card.setInteractive({ useHandCursor: true });
 
       // Add glow effect (initially invisible for non-selected cards)
-      const glow = this.add.rectangle(0, 0, cardWidth + 10, cardHeight + 10, 0x00ff00, 0);
+      const glow = this.add.rectangle(
+        0,
+        0,
+        cardWidth + 10,
+        cardHeight + 10,
+        0x00ff00,
+        0
+      );
       glow.setVisible(index === 0);
 
       // Add down carrot indicator
@@ -187,6 +197,8 @@ const UpgradeMenuScene = Phaser.Class({
           fontSize: "24px",
           color: "#ffffff",
           align: "center",
+          wordWrap: { width: cardWidth - 20 },
+          lineSpacing: 2,
         })
         .setOrigin(0.5)
         .setAlpha(0);
@@ -210,7 +222,8 @@ const UpgradeMenuScene = Phaser.Class({
           const starY = startStarY + row * rowSpacing;
 
           const starSymbol = starIndex < weapon.currentLevel ? "★" : "☆";
-          const starColor = starIndex < weapon.currentLevel ? "#ffff00" : "#666666";
+          const starColor =
+            starIndex < weapon.currentLevel ? "#ffff00" : "#666666";
 
           const star = this.add
             .text(starX, starY, starSymbol, {
@@ -251,7 +264,8 @@ const UpgradeMenuScene = Phaser.Class({
       const statsText = [];
       if (stats.damage) statsText.push(`DMG: ${stats.damage}`);
       if (stats.pierce) statsText.push(`Pierce: ${stats.pierce}`);
-      if (stats.cooldown) statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
+      if (stats.cooldown)
+        statsText.push(`Speed: ${(1000 / stats.cooldown).toFixed(1)}/s`);
 
       const statsTextObj = this.add
         .text(0, startStarY + rowSpacing * 2 + 45, statsText.join("\n"), {
@@ -316,7 +330,10 @@ const UpgradeMenuScene = Phaser.Class({
             this.tweens.add({
               targets: levelText,
               alpha: { from: 0, to: 1 },
-              x: { from: ((starsPerRow - 1) * starSpacing) / 2 + 40, to: ((starsPerRow - 1) * starSpacing) / 2 + 30 },
+              x: {
+                from: ((starsPerRow - 1) * starSpacing) / 2 + 40,
+                to: ((starsPerRow - 1) * starSpacing) / 2 + 30,
+              },
               duration: 200,
               delay: 150,
               ease: "Power2",
@@ -326,7 +343,10 @@ const UpgradeMenuScene = Phaser.Class({
             this.tweens.add({
               targets: statsTextObj,
               alpha: { from: 0, to: 1 },
-              y: { from: startStarY + rowSpacing * 2 + 55, to: startStarY + rowSpacing * 2 + 45 },
+              y: {
+                from: startStarY + rowSpacing * 2 + 55,
+                to: startStarY + rowSpacing * 2 + 45,
+              },
               duration: 200,
               delay: 200,
               ease: "Power2",
@@ -399,7 +419,9 @@ const UpgradeMenuScene = Phaser.Class({
       this.cardIndicators[this.selectedCardIndex].carrot.setVisible(false);
 
       // Update selection
-      this.selectedCardIndex = (this.selectedCardIndex + direction + this.cards.length) % this.cards.length;
+      this.selectedCardIndex =
+        (this.selectedCardIndex + direction + this.cards.length) %
+        this.cards.length;
 
       // Show new indicators
       this.cardIndicators[this.selectedCardIndex].glow.setVisible(true);
