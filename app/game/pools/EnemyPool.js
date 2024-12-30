@@ -271,7 +271,7 @@ export class EnemyPool {
         attackDamage: 8 * waveScaling.damageMultiplier,
         scale: 0.25 + Math.random() * 0.3,
         attackRange: 250 + Math.random() * 200,
-        projectileSpeed: 150 + Math.random() * 425,
+        projectileSpeed: 125 + Math.random() * 375,
       },
     };
 
