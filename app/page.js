@@ -35,7 +35,7 @@ export default function Home() {
             Survive the horde. Forge weapons. Climb the ranks.
           </h1>
           <p className="mb-6 text-2xl tracking-tight md:text-3xl text-slate-200">
-            A 2D roguelike survival game where players unleash chaos in a relentless bullet firestorm to fend off
+            A 2D top/down shooter survival game where players unleash chaos in a relentless bullet firestorm to fend off
             endless waves of enemies while upgrading weapons found on-chain @{" "}
             <a
               href="https://shape.network/"
