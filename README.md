@@ -59,11 +59,3 @@ ALCHEMY_API_KEY=
 NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_DOMAIN=
 ```
-
-## Note to Shapecraft Judges:
-
-Indie game development is my new favorite hobby ^\_^ so i'll be continously pushing updates to keep my self from withering in anticipation. I've frozen branch `MASTER-HACKATON-SUBMISSON` with all commits prior to hackaton deadline. That branch is pretty similar to master, but ill be fine tuning performance, game logic and UI/UX.
-
-I've also removed the token gated access to the game. I figured best to open the game to everyone to get the most feedback, and reward users for holding certain NFTs by making them available as in game assets.
-
-Thanks again and hope you have fun playing!!
